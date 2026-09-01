@@ -1,0 +1,555 @@
+Total DAG nodes: 545
+vgpr_start_addr = 0
+Group ID = 0 使用的 SGPR 数量 = 7, VGPR 数量 = 8
+sgpr_count = 7	vgpr_count = 8
+最大活跃 SGPR 数量 = 36
+最大活跃 VGPR 数量 = 32
+最大活跃状态数量 = 32
+t=0, issue load node 1 gpr=0 mem=0 latency=3
+t=1, issue load node 3 gpr=1 mem=1 latency=3
+t=2, issue load node 18 gpr=8 mem=2 latency=3
+t=3, issue ve node 2 with op reduce_max src0=0 src1=-1 dst=0 latency=7 penalty=0
+t=3, issue load node 20 gpr=9 mem=3 latency=3
+t=4, issue ve node 4 with op reduce_max src0=1 src1=-1 dst=1 latency=7 penalty=0
+t=4, issue load node 35 gpr=16 mem=4 latency=3
+t=5, issue ve node 19 with op reduce_max src0=8 src1=-1 dst=7 latency=7 penalty=0
+t=5, issue load node 37 gpr=17 mem=5 latency=3
+t=6, issue ve node 21 with op reduce_max src0=9 src1=-1 dst=8 latency=7 penalty=0
+t=6, issue load node 52 gpr=24 mem=6 latency=3
+t=7, issue ve node 36 with op reduce_max src0=16 src1=-1 dst=14 latency=7 penalty=0
+t=7, issue load node 54 gpr=25 mem=7 latency=3
+t=8, issue ve node 38 with op reduce_max src0=17 src1=-1 dst=15 latency=7 penalty=0
+t=8, issue load node 69 gpr=32 mem=8 latency=3
+t=9, issue ve node 53 with op reduce_max src0=24 src1=-1 dst=21 latency=7 penalty=0
+t=9, issue load node 71 gpr=33 mem=9 latency=3
+t=10, issue ve node 55 with op reduce_max src0=25 src1=-1 dst=22 latency=7 penalty=0
+t=10, issue load node 86 gpr=40 mem=10 latency=3
+t=11, issue scalar node 5 with op max src0=0 src1=1 dst=2 latency=7 penalty=0
+t=11, issue ve node 70 with op reduce_max src0=32 src1=-1 dst=28 latency=7 penalty=0
+t=11, issue load node 88 gpr=41 mem=11 latency=3
+t=12, issue ve node 72 with op reduce_max src0=33 src1=-1 dst=29 latency=7 penalty=0
+t=12, issue load node 103 gpr=48 mem=12 latency=3
+t=13, issue scalar node 22 with op max src0=7 src1=8 dst=9 latency=7 penalty=0
+t=13, issue ve node 87 with op reduce_max src0=40 src1=-1 dst=35 latency=7 penalty=0
+t=13, issue load node 105 gpr=49 mem=13 latency=3
+t=14, issue ve node 89 with op reduce_max src0=41 src1=-1 dst=36 latency=7 penalty=0
+t=14, issue load node 120 gpr=56 mem=14 latency=3
+t=15, issue scalar node 39 with op max src0=14 src1=15 dst=16 latency=7 penalty=0
+t=15, issue ve node 104 with op reduce_max src0=48 src1=-1 dst=42 latency=7 penalty=0
+t=15, issue load node 122 gpr=57 mem=15 latency=3
+t=16, issue ve node 106 with op reduce_max src0=49 src1=-1 dst=43 latency=7 penalty=0
+t=16, issue load node 137 gpr=64 mem=16 latency=3
+t=17, issue scalar node 56 with op max src0=21 src1=22 dst=23 latency=7 penalty=0
+t=17, issue ve node 121 with op reduce_max src0=56 src1=-1 dst=49 latency=7 penalty=0
+t=17, issue load node 139 gpr=65 mem=17 latency=3
+t=18, issue ve node 6 with op sub src0=0 src1=2 dst=2 latency=7 penalty=0 half=0
+t=18, issue load node 154 gpr=72 mem=18 latency=3
+t=19, issue ve node 9 with op sub src0=1 src1=2 dst=4 latency=7 penalty=0 half=0
+t=19, issue scalar node 73 with op max src0=28 src1=29 dst=30 latency=7 penalty=0
+t=19, issue load node 156 gpr=73 mem=19 latency=3
+t=20, issue ve node 23 with op sub src0=8 src1=9 dst=10 latency=7 penalty=0 half=0
+t=20, issue load node 171 gpr=80 mem=20 latency=3
+t=21, issue ve node 26 with op sub src0=9 src1=9 dst=12 latency=7 penalty=0 half=0
+t=21, issue scalar node 90 with op max src0=35 src1=36 dst=37 latency=7 penalty=0
+t=21, issue load node 173 gpr=81 mem=21 latency=3
+t=22, issue ve node 40 with op sub src0=16 src1=16 dst=18 latency=7 penalty=0 half=0
+t=22, issue load node 188 gpr=88 mem=22 latency=3
+t=23, issue ve node 43 with op sub src0=17 src1=16 dst=20 latency=7 penalty=0 half=0
+t=23, issue scalar node 107 with op max src0=42 src1=43 dst=44 latency=7 penalty=0
+t=23, issue load node 190 gpr=89 mem=23 latency=3
+t=24, issue ve node 57 with op sub src0=24 src1=23 dst=26 latency=7 penalty=0 half=0
+t=24, issue load node 205 gpr=96 mem=24 latency=3
+t=25, issue sfu node 7 with op exp src0=2 src1=-1 dst=3 latency=30 rounds=6 penalty=0 borrow=1
+t=25, issue ve node 60 with op sub src0=25 src1=23 dst=28 latency=7 penalty=0 half=0
+t=25, issue load node 207 gpr=97 mem=25 latency=3
+t=26, issue ve node 74 with op sub src0=32 src1=30 dst=34 latency=7 penalty=0 half=0
+t=26, issue load node 222 gpr=104 mem=26 latency=3
+t=27, issue ve node 77 with op sub src0=33 src1=30 dst=36 latency=7 penalty=0 half=0
+t=27, issue load node 224 gpr=105 mem=27 latency=3
+t=28, issue ve node 91 with op sub src0=40 src1=37 dst=42 latency=7 penalty=0 half=0
+t=28, issue load node 239 gpr=112 mem=28 latency=3
+t=29, issue ve node 94 with op sub src0=41 src1=37 dst=44 latency=7 penalty=0 half=0
+t=29, issue load node 241 gpr=113 mem=29 latency=3
+t=30, issue ve node 108 with op sub src0=48 src1=44 dst=50 latency=7 penalty=0 half=0
+t=30, issue load node 256 gpr=120 mem=30 latency=3
+t=31, issue sfu node 10 with op exp src0=4 src1=-1 dst=5 latency=30 rounds=6 penalty=0 borrow=1
+t=31, issue ve node 111 with op sub src0=49 src1=44 dst=52 latency=7 penalty=0 half=0
+t=31, issue load node 258 gpr=121 mem=31 latency=3
+t=32, issue ve node 123 with op reduce_max src0=57 src1=-1 dst=50 latency=7 penalty=0
+t=32, issue load node 273 gpr=128 mem=32 latency=3
+t=33, issue ve node 138 with op reduce_max src0=64 src1=-1 dst=56 latency=7 penalty=0
+t=33, issue load node 275 gpr=129 mem=33 latency=3
+t=34, issue ve node 140 with op reduce_max src0=65 src1=-1 dst=57 latency=7 penalty=0
+t=34, issue load node 290 gpr=136 mem=34 latency=3
+t=35, issue ve node 155 with op reduce_max src0=72 src1=-1 dst=63 latency=7 penalty=0
+t=35, issue load node 292 gpr=137 mem=35 latency=3
+t=36, issue ve node 157 with op reduce_max src0=73 src1=-1 dst=64 latency=7 penalty=0
+t=36, issue load node 307 gpr=144 mem=36 latency=3
+t=37, issue sfu node 24 with op exp src0=10 src1=-1 dst=11 latency=30 rounds=6 penalty=0 borrow=1
+t=37, issue ve node 172 with op reduce_max src0=80 src1=-1 dst=70 latency=7 penalty=0
+t=37, issue load node 309 gpr=145 mem=37 latency=3
+t=38, issue ve node 174 with op reduce_max src0=81 src1=-1 dst=71 latency=7 penalty=0
+t=38, issue load node 324 gpr=152 mem=38 latency=3
+t=39, issue scalar node 124 with op max src0=49 src1=50 dst=51 latency=7 penalty=0
+t=39, issue ve node 189 with op reduce_max src0=88 src1=-1 dst=77 latency=7 penalty=0
+t=39, issue load node 326 gpr=153 mem=39 latency=3
+t=40, issue ve node 191 with op reduce_max src0=89 src1=-1 dst=78 latency=7 penalty=0
+t=40, issue load node 341 gpr=160 mem=40 latency=3
+t=41, issue scalar node 141 with op max src0=56 src1=57 dst=58 latency=7 penalty=0
+t=41, issue ve node 206 with op reduce_max src0=96 src1=-1 dst=84 latency=7 penalty=0
+t=41, issue load node 343 gpr=161 mem=41 latency=3
+t=42, issue ve node 208 with op reduce_max src0=97 src1=-1 dst=85 latency=7 penalty=0
+t=42, issue load node 358 gpr=168 mem=42 latency=3
+t=43, issue sfu node 27 with op exp src0=12 src1=-1 dst=13 latency=30 rounds=6 penalty=0 borrow=1
+t=43, issue scalar node 158 with op max src0=63 src1=64 dst=65 latency=7 penalty=0
+t=43, issue ve node 225 with op reduce_max src0=105 src1=-1 dst=92 latency=7 penalty=0
+t=43, issue load node 360 gpr=169 mem=43 latency=3
+t=44, issue ve node 223 with op reduce_max src0=104 src1=-1 dst=91 latency=7 penalty=0
+t=44, issue load node 375 gpr=176 mem=44 latency=3
+t=45, issue scalar node 175 with op max src0=70 src1=71 dst=72 latency=7 penalty=0
+t=45, issue ve node 240 with op reduce_max src0=112 src1=-1 dst=98 latency=7 penalty=0
+t=45, issue load node 377 gpr=177 mem=45 latency=3
+t=46, issue ve node 125 with op sub src0=56 src1=51 dst=58 latency=7 penalty=0 half=2
+t=46, issue load node 392 gpr=184 mem=46 latency=3
+t=47, issue scalar node 192 with op max src0=77 src1=78 dst=79 latency=7 penalty=0
+t=47, issue ve node 257 with op reduce_max src0=120 src1=-1 dst=105 latency=7 penalty=0
+t=47, issue load node 394 gpr=185 mem=47 latency=3
+t=48, issue ve node 242 with op reduce_max src0=113 src1=-1 dst=99 latency=7 penalty=0
+t=48, issue load node 409 gpr=192 mem=48 latency=3
+t=49, issue sfu node 41 with op exp src0=18 src1=-1 dst=19 latency=30 rounds=6 penalty=0 borrow=1
+t=49, issue scalar node 209 with op max src0=84 src1=85 dst=86 latency=7 penalty=0
+t=49, issue ve node 274 with op reduce_max src0=128 src1=-1 dst=112 latency=7 penalty=0
+t=49, issue load node 411 gpr=193 mem=49 latency=3
+t=50, issue ve node 128 with op sub src0=57 src1=51 dst=60 latency=7 penalty=0 half=2
+t=50, issue load node 426 gpr=200 mem=50 latency=3
+t=51, issue scalar node 226 with op max src0=91 src1=92 dst=93 latency=7 penalty=0
+t=51, issue ve node 259 with op reduce_max src0=121 src1=-1 dst=106 latency=7 penalty=0
+t=51, issue load node 428 gpr=201 mem=51 latency=3
+t=52, issue ve node 276 with op reduce_max src0=129 src1=-1 dst=113 latency=7 penalty=0
+t=52, issue load node 443 gpr=208 mem=52 latency=3
+t=53, issue ve node 291 with op reduce_max src0=136 src1=-1 dst=119 latency=7 penalty=0
+t=53, issue load node 445 gpr=209 mem=53 latency=3
+t=54, issue ve node 142 with op sub src0=64 src1=58 dst=66 latency=7 penalty=0 half=2
+t=54, issue load node 460 gpr=216 mem=54 latency=3
+t=55, issue ve node 8 with op reduce_sum src0=3 src1=-1 dst=3 latency=12 penalty=0
+t=55, issue sfu node 44 with op exp src0=20 src1=-1 dst=21 latency=30 rounds=6 penalty=0 borrow=1
+t=55, issue scalar node 243 with op max src0=98 src1=99 dst=100 latency=7 penalty=0
+t=55, issue load node 462 gpr=217 mem=55 latency=3
+t=56, issue ve node 293 with op reduce_max src0=137 src1=-1 dst=120 latency=7 penalty=0
+t=56, issue load node 477 gpr=224 mem=56 latency=3
+t=57, issue ve node 308 with op reduce_max src0=144 src1=-1 dst=126 latency=7 penalty=0
+t=57, issue load node 479 gpr=225 mem=57 latency=3
+t=58, issue ve node 145 with op sub src0=65 src1=58 dst=68 latency=7 penalty=0 half=2
+t=58, issue load node 494 gpr=232 mem=58 latency=3
+t=59, issue scalar node 260 with op max src0=105 src1=106 dst=107 latency=7 penalty=0
+t=59, issue ve node 325 with op reduce_max src0=152 src1=-1 dst=133 latency=7 penalty=0
+t=59, issue load node 496 gpr=233 mem=59 latency=3
+t=60, issue scalar node 277 with op max src0=112 src1=113 dst=114 latency=7 penalty=0
+t=60, issue ve node 342 with op reduce_max src0=160 src1=-1 dst=140 latency=7 penalty=0
+t=60, issue load node 511 gpr=240 mem=60 latency=3
+t=61, issue ve node 11 with op reduce_sum src0=5 src1=-1 dst=4 latency=12 penalty=0
+t=61, issue sfu node 58 with op exp src0=26 src1=-1 dst=27 latency=30 rounds=6 penalty=0 borrow=1
+t=61, issue load node 513 gpr=241 mem=61 latency=3
+t=62, issue ve node 159 with op sub src0=72 src1=65 dst=74 latency=7 penalty=0 half=2
+t=62, issue load node 528 gpr=248 mem=62 latency=3
+t=63, issue scalar node 294 with op max src0=119 src1=120 dst=121 latency=7 penalty=0
+t=63, issue ve node 310 with op reduce_max src0=145 src1=-1 dst=127 latency=7 penalty=0
+t=63, issue load node 530 gpr=249 mem=63 latency=3
+t=64, issue ve node 327 with op reduce_max src0=153 src1=-1 dst=134 latency=7 penalty=0
+t=65, issue ve node 344 with op reduce_max src0=161 src1=-1 dst=141 latency=7 penalty=0
+t=66, issue ve node 162 with op sub src0=73 src1=65 dst=76 latency=7 penalty=0 half=2
+t=67, issue ve node 25 with op reduce_sum src0=11 src1=-1 dst=10 latency=12 penalty=0
+t=67, issue sfu node 61 with op exp src0=28 src1=-1 dst=29 latency=30 rounds=6 penalty=0 borrow=1
+t=68, issue ve node 359 with op reduce_max src0=168 src1=-1 dst=147 latency=7 penalty=0
+t=69, issue ve node 361 with op reduce_max src0=169 src1=-1 dst=148 latency=7 penalty=0
+t=70, issue ve node 176 with op sub src0=80 src1=72 dst=82 latency=7 penalty=0 half=2
+t=70, issue scalar node 311 with op max src0=126 src1=127 dst=128 latency=7 penalty=0
+t=71, issue scalar node 328 with op max src0=133 src1=134 dst=135 latency=7 penalty=0
+t=71, issue ve node 376 with op reduce_max src0=176 src1=-1 dst=154 latency=7 penalty=0
+t=72, issue ve node 378 with op reduce_max src0=177 src1=-1 dst=155 latency=7 penalty=0
+t=73, issue scalar node 12 with op add src0=3 src1=4 dst=5 latency=7 penalty=0
+t=73, issue ve node 28 with op reduce_sum src0=13 src1=-1 dst=11 latency=12 penalty=0
+t=73, issue sfu node 75 with op exp src0=34 src1=-1 dst=35 latency=30 rounds=6 penalty=0 borrow=1
+t=74, issue ve node 179 with op sub src0=81 src1=72 dst=84 latency=7 penalty=0 half=2
+t=75, issue scalar node 345 with op max src0=140 src1=141 dst=142 latency=7 penalty=0
+t=75, issue ve node 393 with op reduce_max src0=184 src1=-1 dst=161 latency=7 penalty=0
+t=76, issue scalar node 362 with op max src0=147 src1=148 dst=149 latency=7 penalty=0
+t=76, issue ve node 395 with op reduce_max src0=185 src1=-1 dst=162 latency=7 penalty=0
+t=77, issue ve node 410 with op reduce_max src0=192 src1=-1 dst=168 latency=7 penalty=0
+t=78, issue ve node 193 with op sub src0=88 src1=79 dst=90 latency=7 penalty=0 half=2
+t=79, issue ve node 42 with op reduce_sum src0=19 src1=-1 dst=17 latency=12 penalty=0
+t=79, issue sfu node 78 with op exp src0=36 src1=-1 dst=37 latency=30 rounds=6 penalty=0 borrow=1
+t=79, issue scalar node 379 with op max src0=154 src1=155 dst=156 latency=7 penalty=0
+t=80, issue sfu node 13 with op inv src0=5 src1=-1 dst=6 latency=19 rounds=0 penalty=0 borrow=1
+t=80, issue ve node 412 with op reduce_max src0=193 src1=-1 dst=169 latency=7 penalty=0
+t=81, issue ve node 427 with op reduce_max src0=200 src1=-1 dst=175 latency=7 penalty=0
+t=82, issue ve node 196 with op sub src0=89 src1=79 dst=92 latency=7 penalty=0 half=2
+t=83, issue scalar node 396 with op max src0=161 src1=162 dst=163 latency=7 penalty=0
+t=83, issue ve node 429 with op reduce_max src0=201 src1=-1 dst=176 latency=7 penalty=0
+t=84, issue ve node 444 with op reduce_max src0=208 src1=-1 dst=182 latency=7 penalty=0
+t=85, issue scalar node 29 with op add src0=10 src1=11 dst=12 latency=7 penalty=0
+t=85, issue ve node 45 with op reduce_sum src0=21 src1=-1 dst=18 latency=12 penalty=0
+t=85, issue sfu node 92 with op exp src0=42 src1=-1 dst=43 latency=30 rounds=6 penalty=0 borrow=1
+t=86, issue ve node 210 with op sub src0=96 src1=86 dst=98 latency=7 penalty=0 half=2
+t=87, issue scalar node 413 with op max src0=168 src1=169 dst=170 latency=7 penalty=0
+t=87, issue ve node 446 with op reduce_max src0=209 src1=-1 dst=183 latency=7 penalty=0
+t=88, issue ve node 461 with op reduce_max src0=216 src1=-1 dst=189 latency=7 penalty=0
+t=89, issue ve node 463 with op reduce_max src0=217 src1=-1 dst=190 latency=7 penalty=0
+t=90, issue ve node 213 with op sub src0=97 src1=86 dst=100 latency=7 penalty=0 half=2
+t=90, issue scalar node 430 with op max src0=175 src1=176 dst=177 latency=7 penalty=0
+t=91, issue ve node 59 with op reduce_sum src0=27 src1=-1 dst=24 latency=12 penalty=0
+t=91, issue sfu node 95 with op exp src0=44 src1=-1 dst=45 latency=30 rounds=6 penalty=0 borrow=1
+t=92, issue sfu node 30 with op inv src0=12 src1=-1 dst=13 latency=19 rounds=0 penalty=0 borrow=1
+t=92, issue ve node 478 with op reduce_max src0=224 src1=-1 dst=196 latency=7 penalty=0
+t=93, issue ve node 480 with op reduce_max src0=225 src1=-1 dst=197 latency=7 penalty=0
+t=94, issue ve node 227 with op sub src0=104 src1=93 dst=106 latency=7 penalty=0 half=2
+t=94, issue scalar node 447 with op max src0=182 src1=183 dst=184 latency=7 penalty=0
+t=95, issue ve node 495 with op reduce_max src0=232 src1=-1 dst=203 latency=7 penalty=0
+t=96, issue scalar node 464 with op max src0=189 src1=190 dst=191 latency=7 penalty=0
+t=96, issue ve node 512 with op reduce_max src0=240 src1=-1 dst=210 latency=7 penalty=0
+t=97, issue scalar node 46 with op add src0=17 src1=18 dst=19 latency=7 penalty=0
+t=97, issue ve node 62 with op reduce_sum src0=29 src1=-1 dst=25 latency=12 penalty=0
+t=97, issue sfu node 109 with op exp src0=50 src1=-1 dst=51 latency=30 rounds=6 penalty=0 borrow=1
+t=98, issue ve node 230 with op sub src0=105 src1=93 dst=108 latency=7 penalty=0 half=2
+t=99, issue ve node 497 with op reduce_max src0=233 src1=-1 dst=204 latency=7 penalty=0
+t=100, issue scalar node 481 with op max src0=196 src1=197 dst=198 latency=7 penalty=0
+t=100, issue ve node 514 with op reduce_max src0=241 src1=-1 dst=211 latency=7 penalty=0
+t=101, issue ve node 529 with op reduce_max src0=248 src1=-1 dst=217 latency=7 penalty=0
+t=102, issue ve node 14 with op mul src0=3 src1=6 dst=6 latency=7 penalty=0 half=2
+t=103, issue ve node 76 with op reduce_sum src0=35 src1=-1 dst=31 latency=12 penalty=0
+t=103, issue sfu node 112 with op exp src0=52 src1=-1 dst=53 latency=30 rounds=6 penalty=0 borrow=1
+t=104, issue sfu node 47 with op inv src0=19 src1=-1 dst=20 latency=19 rounds=0 penalty=0 borrow=1
+t=104, issue ve node 531 with op reduce_max src0=249 src1=-1 dst=218 latency=7 penalty=0
+t=106, issue ve node 16 with op mul src0=5 src1=6 dst=7 latency=7 penalty=0 half=2
+t=106, issue scalar node 498 with op max src0=203 src1=204 dst=205 latency=7 penalty=0
+t=107, issue scalar node 515 with op max src0=210 src1=211 dst=212 latency=7 penalty=0
+t=109, issue scalar node 63 with op add src0=24 src1=25 dst=26 latency=7 penalty=0
+t=109, issue ve node 79 with op reduce_sum src0=37 src1=-1 dst=32 latency=12 penalty=0
+t=109, issue sfu node 126 with op exp src0=58 src1=-1 dst=59 latency=30 rounds=6 penalty=0 borrow=1
+t=110, issue ve node 244 with op sub src0=112 src1=100 dst=114 latency=7 penalty=0 half=2
+t=111, issue scalar node 532 with op max src0=217 src1=218 dst=219 latency=7 penalty=0
+t=112, issue store node 15 mem=0 latency=0
+t=114, issue ve node 31 with op mul src0=11 src1=13 dst=14 latency=7 penalty=0 half=2
+t=115, issue ve node 93 with op reduce_sum src0=43 src1=-1 dst=38 latency=12 penalty=0
+t=115, issue sfu node 129 with op exp src0=60 src1=-1 dst=61 latency=30 rounds=6 penalty=0 borrow=1
+t=116, issue store node 17 mem=1 latency=0
+t=116, issue sfu node 64 with op inv src0=26 src1=-1 dst=27 latency=19 rounds=0 penalty=0 borrow=1
+t=118, issue ve node 33 with op mul src0=13 src1=13 dst=15 latency=7 penalty=0 half=2
+t=121, issue scalar node 80 with op add src0=31 src1=32 dst=33 latency=7 penalty=0
+t=121, issue ve node 96 with op reduce_sum src0=45 src1=-1 dst=39 latency=12 penalty=0
+t=121, issue sfu node 143 with op exp src0=66 src1=-1 dst=67 latency=30 rounds=6 penalty=0 borrow=1
+t=122, issue ve node 247 with op sub src0=113 src1=100 dst=116 latency=7 penalty=0 half=2
+t=124, issue store node 32 mem=2 latency=0
+t=126, issue ve node 48 with op mul src0=19 src1=20 dst=22 latency=7 penalty=0 half=2
+t=127, issue ve node 110 with op reduce_sum src0=51 src1=-1 dst=45 latency=12 penalty=0
+t=127, issue sfu node 146 with op exp src0=68 src1=-1 dst=69 latency=30 rounds=6 penalty=0 borrow=1
+t=128, issue store node 34 mem=3 latency=0
+t=128, issue sfu node 81 with op inv src0=33 src1=-1 dst=34 latency=19 rounds=0 penalty=0 borrow=1
+t=130, issue ve node 50 with op mul src0=21 src1=20 dst=23 latency=7 penalty=0 half=2
+t=133, issue scalar node 97 with op add src0=38 src1=39 dst=40 latency=7 penalty=0
+t=133, issue ve node 113 with op reduce_sum src0=53 src1=-1 dst=46 latency=12 penalty=0
+t=133, issue sfu node 160 with op exp src0=74 src1=-1 dst=75 latency=30 rounds=6 penalty=0 borrow=1
+t=134, issue ve node 261 with op sub src0=120 src1=107 dst=122 latency=7 penalty=0 half=2
+t=136, issue store node 49 mem=4 latency=0
+t=138, issue ve node 65 with op mul src0=27 src1=27 dst=30 latency=7 penalty=0 half=2
+t=139, issue ve node 127 with op reduce_sum src0=59 src1=-1 dst=52 latency=12 penalty=0
+t=139, issue sfu node 163 with op exp src0=76 src1=-1 dst=77 latency=30 rounds=6 penalty=0 borrow=1
+t=140, issue store node 51 mem=5 latency=0
+t=140, issue sfu node 98 with op inv src0=40 src1=-1 dst=41 latency=19 rounds=0 penalty=0 borrow=1
+t=142, issue ve node 67 with op mul src0=29 src1=27 dst=31 latency=7 penalty=0 half=2
+t=145, issue scalar node 114 with op add src0=45 src1=46 dst=47 latency=7 penalty=0
+t=145, issue ve node 130 with op reduce_sum src0=61 src1=-1 dst=53 latency=12 penalty=0
+t=145, issue sfu node 177 with op exp src0=82 src1=-1 dst=83 latency=30 rounds=6 penalty=0 borrow=1
+t=146, issue ve node 264 with op sub src0=121 src1=107 dst=124 latency=7 penalty=0 half=2
+t=148, issue store node 66 mem=6 latency=0
+t=150, issue ve node 82 with op mul src0=35 src1=34 dst=38 latency=7 penalty=0 half=2
+t=151, issue ve node 144 with op reduce_sum src0=67 src1=-1 dst=59 latency=12 penalty=0
+t=151, issue sfu node 180 with op exp src0=84 src1=-1 dst=85 latency=30 rounds=6 penalty=0 borrow=1
+t=152, issue store node 68 mem=7 latency=0
+t=152, issue sfu node 115 with op inv src0=47 src1=-1 dst=48 latency=19 rounds=0 penalty=0 borrow=1
+t=154, issue ve node 84 with op mul src0=37 src1=34 dst=39 latency=7 penalty=0 half=2
+t=157, issue scalar node 131 with op add src0=52 src1=53 dst=54 latency=7 penalty=0
+t=157, issue ve node 147 with op reduce_sum src0=69 src1=-1 dst=60 latency=12 penalty=0
+t=157, issue sfu node 194 with op exp src0=90 src1=-1 dst=91 latency=30 rounds=6 penalty=0 borrow=1
+t=158, issue ve node 278 with op sub src0=128 src1=114 dst=130 latency=7 penalty=0 half=2
+t=160, issue store node 83 mem=8 latency=0
+t=162, issue ve node 99 with op mul src0=43 src1=41 dst=46 latency=7 penalty=0 half=2
+t=163, issue ve node 161 with op reduce_sum src0=75 src1=-1 dst=66 latency=12 penalty=0
+t=163, issue sfu node 197 with op exp src0=92 src1=-1 dst=93 latency=30 rounds=6 penalty=0 borrow=1
+t=164, issue store node 85 mem=9 latency=0
+t=164, issue sfu node 132 with op inv src0=54 src1=-1 dst=55 latency=19 rounds=0 penalty=0 borrow=1
+t=166, issue ve node 101 with op mul src0=45 src1=41 dst=47 latency=7 penalty=0 half=2
+t=169, issue scalar node 148 with op add src0=59 src1=60 dst=61 latency=7 penalty=0
+t=169, issue ve node 164 with op reduce_sum src0=77 src1=-1 dst=67 latency=12 penalty=0
+t=169, issue sfu node 211 with op exp src0=98 src1=-1 dst=99 latency=30 rounds=6 penalty=0 borrow=1
+t=170, issue ve node 281 with op sub src0=129 src1=114 dst=132 latency=7 penalty=0 half=2
+t=172, issue store node 100 mem=10 latency=0
+t=174, issue ve node 116 with op mul src0=51 src1=48 dst=54 latency=7 penalty=0 half=2
+t=175, issue ve node 178 with op reduce_sum src0=83 src1=-1 dst=73 latency=12 penalty=0
+t=175, issue sfu node 214 with op exp src0=100 src1=-1 dst=101 latency=30 rounds=6 penalty=0 borrow=1
+t=176, issue store node 102 mem=11 latency=0
+t=176, issue sfu node 149 with op inv src0=61 src1=-1 dst=62 latency=19 rounds=0 penalty=0 borrow=1
+t=178, issue ve node 118 with op mul src0=53 src1=48 dst=55 latency=7 penalty=0 half=2
+t=181, issue scalar node 165 with op add src0=66 src1=67 dst=68 latency=7 penalty=0
+t=181, issue ve node 181 with op reduce_sum src0=85 src1=-1 dst=74 latency=12 penalty=0
+t=181, issue sfu node 228 with op exp src0=106 src1=-1 dst=107 latency=30 rounds=6 penalty=0 borrow=1
+t=182, issue ve node 295 with op sub src0=136 src1=121 dst=138 latency=7 penalty=0 half=2
+t=184, issue store node 117 mem=12 latency=0
+t=186, issue ve node 133 with op mul src0=59 src1=55 dst=62 latency=7 penalty=0 half=2
+t=187, issue ve node 195 with op reduce_sum src0=91 src1=-1 dst=80 latency=12 penalty=0
+t=187, issue sfu node 231 with op exp src0=108 src1=-1 dst=109 latency=30 rounds=6 penalty=0 borrow=1
+t=188, issue store node 119 mem=13 latency=0
+t=188, issue sfu node 166 with op inv src0=68 src1=-1 dst=69 latency=19 rounds=0 penalty=0 borrow=1
+t=190, issue ve node 135 with op mul src0=61 src1=55 dst=63 latency=7 penalty=0 half=2
+t=193, issue scalar node 182 with op add src0=73 src1=74 dst=75 latency=7 penalty=0
+t=193, issue ve node 198 with op reduce_sum src0=93 src1=-1 dst=81 latency=12 penalty=0
+t=193, issue sfu node 245 with op exp src0=114 src1=-1 dst=115 latency=30 rounds=6 penalty=0 borrow=1
+t=194, issue ve node 298 with op sub src0=137 src1=121 dst=140 latency=7 penalty=0 half=2
+t=196, issue store node 134 mem=14 latency=0
+t=198, issue ve node 150 with op mul src0=67 src1=62 dst=70 latency=7 penalty=0 half=2
+t=199, issue ve node 212 with op reduce_sum src0=99 src1=-1 dst=87 latency=12 penalty=0
+t=199, issue sfu node 248 with op exp src0=116 src1=-1 dst=117 latency=30 rounds=6 penalty=0 borrow=1
+t=200, issue store node 136 mem=15 latency=0
+t=200, issue sfu node 183 with op inv src0=75 src1=-1 dst=76 latency=19 rounds=0 penalty=0 borrow=1
+t=202, issue ve node 152 with op mul src0=69 src1=62 dst=71 latency=7 penalty=0 half=2
+t=205, issue scalar node 199 with op add src0=80 src1=81 dst=82 latency=7 penalty=0
+t=205, issue ve node 215 with op reduce_sum src0=101 src1=-1 dst=88 latency=12 penalty=0
+t=205, issue sfu node 262 with op exp src0=122 src1=-1 dst=123 latency=30 rounds=6 penalty=0 borrow=1
+t=206, issue ve node 312 with op sub src0=144 src1=128 dst=146 latency=7 penalty=0 half=2
+t=208, issue store node 151 mem=16 latency=0
+t=210, issue ve node 167 with op mul src0=75 src1=69 dst=78 latency=7 penalty=0 half=2
+t=211, issue ve node 229 with op reduce_sum src0=107 src1=-1 dst=94 latency=12 penalty=0
+t=211, issue sfu node 265 with op exp src0=124 src1=-1 dst=125 latency=30 rounds=6 penalty=0 borrow=1
+t=212, issue store node 153 mem=17 latency=0
+t=212, issue sfu node 200 with op inv src0=82 src1=-1 dst=83 latency=19 rounds=0 penalty=0 borrow=1
+t=214, issue ve node 169 with op mul src0=77 src1=69 dst=79 latency=7 penalty=0 half=2
+t=217, issue scalar node 216 with op add src0=87 src1=88 dst=89 latency=7 penalty=0
+t=217, issue ve node 232 with op reduce_sum src0=109 src1=-1 dst=95 latency=12 penalty=0
+t=217, issue sfu node 279 with op exp src0=130 src1=-1 dst=131 latency=30 rounds=6 penalty=0 borrow=1
+t=218, issue ve node 315 with op sub src0=145 src1=128 dst=148 latency=7 penalty=0 half=2
+t=220, issue store node 168 mem=18 latency=0
+t=222, issue ve node 184 with op mul src0=83 src1=76 dst=86 latency=7 penalty=0 half=2
+t=223, issue ve node 246 with op reduce_sum src0=115 src1=-1 dst=101 latency=12 penalty=0
+t=223, issue sfu node 282 with op exp src0=132 src1=-1 dst=133 latency=30 rounds=6 penalty=0 borrow=1
+t=224, issue store node 170 mem=19 latency=0
+t=224, issue sfu node 217 with op inv src0=89 src1=-1 dst=90 latency=19 rounds=0 penalty=0 borrow=1
+t=226, issue ve node 186 with op mul src0=85 src1=76 dst=87 latency=7 penalty=0 half=2
+t=229, issue scalar node 233 with op add src0=94 src1=95 dst=96 latency=7 penalty=0
+t=229, issue ve node 249 with op reduce_sum src0=117 src1=-1 dst=102 latency=12 penalty=0
+t=229, issue sfu node 296 with op exp src0=138 src1=-1 dst=139 latency=30 rounds=6 penalty=0 borrow=1
+t=230, issue ve node 329 with op sub src0=152 src1=135 dst=154 latency=7 penalty=0 half=2
+t=232, issue store node 185 mem=20 latency=0
+t=234, issue ve node 201 with op mul src0=91 src1=83 dst=94 latency=7 penalty=0 half=2
+t=235, issue ve node 263 with op reduce_sum src0=123 src1=-1 dst=108 latency=12 penalty=0
+t=235, issue sfu node 299 with op exp src0=140 src1=-1 dst=141 latency=30 rounds=6 penalty=0 borrow=1
+t=236, issue store node 187 mem=21 latency=0
+t=236, issue sfu node 234 with op inv src0=96 src1=-1 dst=97 latency=19 rounds=0 penalty=0 borrow=1
+t=238, issue ve node 203 with op mul src0=93 src1=83 dst=95 latency=7 penalty=0 half=2
+t=241, issue scalar node 250 with op add src0=101 src1=102 dst=103 latency=7 penalty=0
+t=241, issue ve node 266 with op reduce_sum src0=125 src1=-1 dst=109 latency=12 penalty=0
+t=241, issue sfu node 313 with op exp src0=146 src1=-1 dst=147 latency=30 rounds=6 penalty=0 borrow=1
+t=242, issue ve node 332 with op sub src0=153 src1=135 dst=156 latency=7 penalty=0 half=2
+t=244, issue store node 202 mem=22 latency=0
+t=246, issue ve node 218 with op mul src0=99 src1=90 dst=102 latency=7 penalty=0 half=2
+t=247, issue ve node 280 with op reduce_sum src0=131 src1=-1 dst=115 latency=12 penalty=0
+t=247, issue sfu node 316 with op exp src0=148 src1=-1 dst=149 latency=30 rounds=6 penalty=0 borrow=1
+t=248, issue store node 204 mem=23 latency=0
+t=248, issue sfu node 251 with op inv src0=103 src1=-1 dst=104 latency=19 rounds=0 penalty=0 borrow=1
+t=250, issue ve node 220 with op mul src0=101 src1=90 dst=103 latency=7 penalty=0 half=2
+t=253, issue scalar node 267 with op add src0=108 src1=109 dst=110 latency=7 penalty=0
+t=253, issue ve node 283 with op reduce_sum src0=133 src1=-1 dst=116 latency=12 penalty=0
+t=253, issue sfu node 330 with op exp src0=154 src1=-1 dst=155 latency=30 rounds=6 penalty=0 borrow=1
+t=254, issue ve node 346 with op sub src0=160 src1=142 dst=162 latency=7 penalty=0 half=2
+t=256, issue store node 219 mem=24 latency=0
+t=258, issue ve node 235 with op mul src0=107 src1=97 dst=110 latency=7 penalty=0 half=2
+t=259, issue ve node 297 with op reduce_sum src0=139 src1=-1 dst=122 latency=12 penalty=0
+t=259, issue sfu node 333 with op exp src0=156 src1=-1 dst=157 latency=30 rounds=6 penalty=0 borrow=1
+t=260, issue store node 221 mem=25 latency=0
+t=260, issue sfu node 268 with op inv src0=110 src1=-1 dst=111 latency=19 rounds=0 penalty=0 borrow=1
+t=262, issue ve node 237 with op mul src0=109 src1=97 dst=111 latency=7 penalty=0 half=2
+t=265, issue scalar node 284 with op add src0=115 src1=116 dst=117 latency=7 penalty=0
+t=265, issue ve node 300 with op reduce_sum src0=141 src1=-1 dst=123 latency=12 penalty=0
+t=265, issue sfu node 347 with op exp src0=162 src1=-1 dst=163 latency=30 rounds=6 penalty=0 borrow=1
+t=266, issue ve node 349 with op sub src0=161 src1=142 dst=164 latency=7 penalty=0 half=2
+t=268, issue store node 236 mem=26 latency=0
+t=270, issue ve node 252 with op mul src0=115 src1=104 dst=118 latency=7 penalty=0 half=2
+t=271, issue ve node 314 with op reduce_sum src0=147 src1=-1 dst=129 latency=12 penalty=0
+t=272, issue store node 238 mem=27 latency=0
+t=272, issue sfu node 285 with op inv src0=117 src1=-1 dst=118 latency=19 rounds=0 penalty=0 borrow=1
+t=274, issue ve node 254 with op mul src0=117 src1=104 dst=119 latency=7 penalty=0 half=2
+t=276, issue sfu node 350 with op exp src0=164 src1=-1 dst=165 latency=30 rounds=6 penalty=0 borrow=1
+t=277, issue scalar node 301 with op add src0=122 src1=123 dst=124 latency=7 penalty=0
+t=277, issue ve node 317 with op reduce_sum src0=149 src1=-1 dst=130 latency=12 penalty=0
+t=278, issue ve node 363 with op sub src0=168 src1=149 dst=170 latency=7 penalty=0 half=2
+t=280, issue store node 253 mem=28 latency=0
+t=283, issue ve node 331 with op reduce_sum src0=155 src1=-1 dst=136 latency=12 penalty=0
+t=284, issue store node 255 mem=29 latency=0
+t=284, issue ve node 271 with op mul src0=125 src1=111 dst=127 latency=7 penalty=0 half=2
+t=284, issue sfu node 302 with op inv src0=124 src1=-1 dst=125 latency=19 rounds=0 penalty=0 borrow=1
+t=288, issue ve node 269 with op mul src0=123 src1=111 dst=126 latency=7 penalty=0 half=2
+t=288, issue sfu node 364 with op exp src0=170 src1=-1 dst=171 latency=30 rounds=6 penalty=0 borrow=1
+t=289, issue scalar node 318 with op add src0=129 src1=130 dst=131 latency=7 penalty=0
+t=289, issue ve node 334 with op reduce_sum src0=157 src1=-1 dst=137 latency=12 penalty=0
+t=294, issue store node 272 mem=31 latency=0
+t=295, issue ve node 348 with op reduce_sum src0=163 src1=-1 dst=143 latency=12 penalty=0
+t=296, issue ve node 286 with op mul src0=131 src1=118 dst=134 latency=7 penalty=0 half=2
+t=296, issue sfu node 319 with op inv src0=131 src1=-1 dst=132 latency=19 rounds=0 penalty=0 borrow=1
+t=298, issue store node 270 mem=30 latency=0
+t=300, issue ve node 288 with op mul src0=133 src1=118 dst=135 latency=7 penalty=0 half=2
+t=301, issue scalar node 335 with op add src0=136 src1=137 dst=138 latency=7 penalty=0
+t=306, issue store node 287 mem=32 latency=0
+t=306, issue ve node 351 with op reduce_sum src0=165 src1=-1 dst=144 latency=12 penalty=0
+t=308, issue sfu node 336 with op inv src0=138 src1=-1 dst=139 latency=19 rounds=0 penalty=0 borrow=1
+t=310, issue store node 289 mem=33 latency=0
+t=311, issue ve node 303 with op mul src0=139 src1=125 dst=142 latency=7 penalty=0 half=0
+t=312, issue ve node 305 with op mul src0=141 src1=125 dst=143 latency=7 penalty=0 half=0
+t=313, issue ve node 366 with op sub src0=169 src1=149 dst=172 latency=7 penalty=0 half=0
+t=314, issue ve node 380 with op sub src0=176 src1=156 dst=178 latency=7 penalty=0 half=0
+t=315, issue ve node 320 with op mul src0=147 src1=132 dst=150 latency=7 penalty=0 half=0
+t=316, issue ve node 322 with op mul src0=149 src1=132 dst=151 latency=7 penalty=0 half=0
+t=317, issue ve node 383 with op sub src0=177 src1=156 dst=180 latency=7 penalty=0 half=0
+t=318, issue store node 304 mem=34 latency=0
+t=318, issue scalar node 352 with op add src0=143 src1=144 dst=145 latency=7 penalty=0
+t=318, issue ve node 365 with op reduce_sum src0=171 src1=-1 dst=150 latency=12 penalty=0
+t=319, issue store node 306 mem=35 latency=0
+t=319, issue ve node 397 with op sub src0=184 src1=163 dst=186 latency=7 penalty=0 half=0
+t=320, issue sfu node 367 with op exp src0=172 src1=-1 dst=173 latency=30 rounds=6 penalty=0 borrow=1
+t=320, issue ve node 400 with op sub src0=185 src1=163 dst=188 latency=7 penalty=0 half=0
+t=321, issue ve node 414 with op sub src0=192 src1=170 dst=194 latency=7 penalty=0 half=0
+t=322, issue store node 321 mem=36 latency=0
+t=322, issue ve node 417 with op sub src0=193 src1=170 dst=196 latency=7 penalty=0 half=0
+t=323, issue store node 323 mem=37 latency=0
+t=323, issue ve node 431 with op sub src0=200 src1=177 dst=202 latency=7 penalty=0 half=0
+t=324, issue ve node 434 with op sub src0=201 src1=177 dst=204 latency=7 penalty=0 half=0
+t=325, issue sfu node 353 with op inv src0=145 src1=-1 dst=146 latency=19 rounds=0 penalty=0 borrow=1
+t=325, issue ve node 448 with op sub src0=208 src1=184 dst=210 latency=7 penalty=0 half=0
+t=326, issue sfu node 381 with op exp src0=178 src1=-1 dst=179 latency=30 rounds=6 penalty=0 borrow=1
+t=326, issue ve node 451 with op sub src0=209 src1=184 dst=212 latency=7 penalty=0 half=0
+t=327, issue ve node 337 with op mul src0=155 src1=139 dst=158 latency=7 penalty=0 half=0
+t=328, issue ve node 339 with op mul src0=157 src1=139 dst=159 latency=7 penalty=0 half=2
+t=332, issue sfu node 384 with op exp src0=180 src1=-1 dst=181 latency=30 rounds=6 penalty=0 borrow=1
+t=332, issue ve node 468 with op sub src0=217 src1=191 dst=220 latency=7 penalty=0 half=2
+t=334, issue store node 338 mem=38 latency=0
+t=336, issue ve node 465 with op sub src0=216 src1=191 dst=218 latency=7 penalty=0 half=2
+t=338, issue store node 340 mem=39 latency=0
+t=338, issue sfu node 398 with op exp src0=186 src1=-1 dst=187 latency=30 rounds=6 penalty=0 borrow=1
+t=340, issue ve node 482 with op sub src0=224 src1=198 dst=226 latency=7 penalty=0 half=2
+t=344, issue ve node 354 with op mul src0=163 src1=146 dst=166 latency=7 penalty=0 half=2
+t=344, issue sfu node 401 with op exp src0=188 src1=-1 dst=189 latency=30 rounds=6 penalty=0 borrow=1
+t=348, issue ve node 356 with op mul src0=165 src1=146 dst=167 latency=7 penalty=0 half=2
+t=350, issue ve node 368 with op reduce_sum src0=173 src1=-1 dst=151 latency=12 penalty=0
+t=350, issue sfu node 415 with op exp src0=194 src1=-1 dst=195 latency=30 rounds=6 penalty=0 borrow=1
+t=352, issue ve node 485 with op sub src0=225 src1=198 dst=228 latency=7 penalty=0 half=2
+t=354, issue store node 355 mem=40 latency=0
+t=356, issue ve node 382 with op reduce_sum src0=179 src1=-1 dst=157 latency=12 penalty=0
+t=356, issue sfu node 418 with op exp src0=196 src1=-1 dst=197 latency=30 rounds=6 penalty=0 borrow=1
+t=357, issue ve node 499 with op sub src0=232 src1=205 dst=234 latency=7 penalty=0 half=2
+t=358, issue store node 357 mem=41 latency=0
+t=361, issue ve node 502 with op sub src0=233 src1=205 dst=236 latency=7 penalty=0 half=2
+t=362, issue scalar node 369 with op add src0=150 src1=151 dst=152 latency=7 penalty=0
+t=362, issue ve node 385 with op reduce_sum src0=181 src1=-1 dst=158 latency=12 penalty=0
+t=362, issue sfu node 432 with op exp src0=202 src1=-1 dst=203 latency=30 rounds=6 penalty=0 borrow=1
+t=365, issue ve node 516 with op sub src0=240 src1=212 dst=242 latency=7 penalty=0 half=2
+t=368, issue ve node 399 with op reduce_sum src0=187 src1=-1 dst=164 latency=12 penalty=0
+t=368, issue sfu node 435 with op exp src0=204 src1=-1 dst=205 latency=30 rounds=6 penalty=0 borrow=1
+t=369, issue sfu node 370 with op inv src0=152 src1=-1 dst=153 latency=19 rounds=0 penalty=0 borrow=1
+t=369, issue ve node 533 with op sub src0=248 src1=219 dst=250 latency=7 penalty=0 half=2
+t=373, issue ve node 519 with op sub src0=241 src1=212 dst=244 latency=7 penalty=0 half=2
+t=374, issue scalar node 386 with op add src0=157 src1=158 dst=159 latency=7 penalty=0
+t=374, issue ve node 402 with op reduce_sum src0=189 src1=-1 dst=165 latency=12 penalty=0
+t=374, issue sfu node 449 with op exp src0=210 src1=-1 dst=211 latency=30 rounds=6 penalty=0 borrow=1
+t=377, issue ve node 536 with op sub src0=249 src1=219 dst=252 latency=7 penalty=0 half=2
+t=380, issue ve node 416 with op reduce_sum src0=195 src1=-1 dst=171 latency=12 penalty=0
+t=380, issue sfu node 452 with op exp src0=212 src1=-1 dst=213 latency=30 rounds=6 penalty=0 borrow=1
+t=381, issue sfu node 387 with op inv src0=159 src1=-1 dst=160 latency=19 rounds=0 penalty=0 borrow=1
+t=386, issue scalar node 403 with op add src0=164 src1=165 dst=166 latency=7 penalty=0
+t=386, issue ve node 419 with op reduce_sum src0=197 src1=-1 dst=172 latency=12 penalty=0
+t=386, issue sfu node 466 with op exp src0=218 src1=-1 dst=219 latency=30 rounds=6 penalty=0 borrow=1
+t=388, issue ve node 371 with op mul src0=171 src1=153 dst=174 latency=7 penalty=0 half=2
+t=392, issue ve node 373 with op mul src0=173 src1=153 dst=175 latency=7 penalty=0 half=2
+t=392, issue sfu node 469 with op exp src0=220 src1=-1 dst=221 latency=30 rounds=6 penalty=0 borrow=1
+t=393, issue sfu node 404 with op inv src0=166 src1=-1 dst=167 latency=19 rounds=0 penalty=0 borrow=1
+t=393, issue ve node 433 with op reduce_sum src0=203 src1=-1 dst=178 latency=12 penalty=0
+t=398, issue store node 372 mem=42 latency=0
+t=398, issue scalar node 420 with op add src0=171 src1=172 dst=173 latency=7 penalty=0
+t=398, issue ve node 436 with op reduce_sum src0=205 src1=-1 dst=179 latency=12 penalty=0
+t=398, issue sfu node 486 with op exp src0=228 src1=-1 dst=229 latency=30 rounds=6 penalty=0 borrow=1
+t=400, issue ve node 388 with op mul src0=179 src1=160 dst=182 latency=7 penalty=0 half=2
+t=402, issue store node 374 mem=43 latency=0
+t=404, issue ve node 390 with op mul src0=181 src1=160 dst=183 latency=7 penalty=0 half=2
+t=404, issue sfu node 483 with op exp src0=226 src1=-1 dst=227 latency=30 rounds=6 penalty=0 borrow=1
+t=405, issue sfu node 421 with op inv src0=173 src1=-1 dst=174 latency=19 rounds=0 penalty=0 borrow=1
+t=405, issue ve node 450 with op reduce_sum src0=211 src1=-1 dst=185 latency=12 penalty=0
+t=410, issue store node 389 mem=44 latency=0
+t=410, issue scalar node 437 with op add src0=178 src1=179 dst=180 latency=7 penalty=0
+t=410, issue ve node 453 with op reduce_sum src0=213 src1=-1 dst=186 latency=12 penalty=0
+t=410, issue sfu node 503 with op exp src0=236 src1=-1 dst=237 latency=30 rounds=6 penalty=0 borrow=1
+t=412, issue ve node 405 with op mul src0=187 src1=167 dst=190 latency=7 penalty=0 half=2
+t=414, issue store node 391 mem=45 latency=0
+t=416, issue ve node 407 with op mul src0=189 src1=167 dst=191 latency=7 penalty=0 half=2
+t=416, issue sfu node 500 with op exp src0=234 src1=-1 dst=235 latency=30 rounds=6 penalty=0 borrow=1
+t=417, issue sfu node 438 with op inv src0=180 src1=-1 dst=181 latency=19 rounds=0 penalty=0 borrow=1
+t=417, issue ve node 467 with op reduce_sum src0=219 src1=-1 dst=192 latency=12 penalty=0
+t=422, issue store node 406 mem=46 latency=0
+t=422, issue scalar node 454 with op add src0=185 src1=186 dst=187 latency=7 penalty=0
+t=422, issue ve node 470 with op reduce_sum src0=221 src1=-1 dst=193 latency=12 penalty=0
+t=422, issue sfu node 520 with op exp src0=244 src1=-1 dst=245 latency=30 rounds=6 penalty=0 borrow=1
+t=424, issue ve node 422 with op mul src0=195 src1=174 dst=198 latency=7 penalty=0 half=2
+t=426, issue store node 408 mem=47 latency=0
+t=428, issue ve node 424 with op mul src0=197 src1=174 dst=199 latency=7 penalty=0 half=2
+t=428, issue sfu node 517 with op exp src0=242 src1=-1 dst=243 latency=30 rounds=6 penalty=0 borrow=1
+t=429, issue sfu node 455 with op inv src0=187 src1=-1 dst=188 latency=19 rounds=0 penalty=0 borrow=1
+t=429, issue ve node 487 with op reduce_sum src0=229 src1=-1 dst=200 latency=12 penalty=0
+t=434, issue store node 423 mem=48 latency=0
+t=434, issue scalar node 471 with op add src0=192 src1=193 dst=194 latency=7 penalty=0
+t=434, issue ve node 484 with op reduce_sum src0=227 src1=-1 dst=199 latency=12 penalty=0
+t=434, issue sfu node 537 with op exp src0=252 src1=-1 dst=253 latency=30 rounds=6 penalty=0 borrow=1
+t=436, issue ve node 439 with op mul src0=203 src1=181 dst=206 latency=7 penalty=0 half=2
+t=438, issue store node 425 mem=49 latency=0
+t=440, issue ve node 441 with op mul src0=205 src1=181 dst=207 latency=7 penalty=0 half=2
+t=440, issue sfu node 534 with op exp src0=250 src1=-1 dst=251 latency=30 rounds=6 penalty=0 borrow=1
+t=441, issue sfu node 472 with op inv src0=194 src1=-1 dst=195 latency=19 rounds=0 penalty=0 borrow=1
+t=441, issue ve node 504 with op reduce_sum src0=237 src1=-1 dst=207 latency=12 penalty=0
+t=446, issue store node 440 mem=50 latency=0
+t=446, issue scalar node 488 with op add src0=199 src1=200 dst=201 latency=7 penalty=0
+t=446, issue ve node 501 with op reduce_sum src0=235 src1=-1 dst=206 latency=12 penalty=0
+t=448, issue ve node 456 with op mul src0=211 src1=188 dst=214 latency=7 penalty=0 half=2
+t=450, issue store node 442 mem=51 latency=0
+t=452, issue ve node 458 with op mul src0=213 src1=188 dst=215 latency=7 penalty=0 half=2
+t=453, issue sfu node 489 with op inv src0=201 src1=-1 dst=202 latency=19 rounds=0 penalty=0 borrow=1
+t=453, issue ve node 521 with op reduce_sum src0=245 src1=-1 dst=214 latency=12 penalty=0
+t=458, issue store node 457 mem=52 latency=0
+t=458, issue scalar node 505 with op add src0=206 src1=207 dst=208 latency=7 penalty=0
+t=458, issue ve node 518 with op reduce_sum src0=243 src1=-1 dst=213 latency=12 penalty=0
+t=462, issue store node 459 mem=53 latency=0
+t=463, issue ve node 473 with op mul src0=219 src1=195 dst=222 latency=7 penalty=0 half=0
+t=464, issue ve node 475 with op mul src0=221 src1=195 dst=223 latency=7 penalty=0 half=0
+t=465, issue sfu node 506 with op inv src0=208 src1=-1 dst=209 latency=19 rounds=0 penalty=0 borrow=1
+t=465, issue ve node 538 with op reduce_sum src0=253 src1=-1 dst=221 latency=12 penalty=0
+t=470, issue store node 474 mem=54 latency=0
+t=470, issue scalar node 522 with op add src0=213 src1=214 dst=215 latency=7 penalty=0
+t=470, issue ve node 535 with op reduce_sum src0=251 src1=-1 dst=220 latency=12 penalty=0
+t=471, issue store node 476 mem=55 latency=0
+t=472, issue ve node 490 with op mul src0=227 src1=202 dst=230 latency=7 penalty=0 half=0
+t=473, issue ve node 492 with op mul src0=229 src1=202 dst=231 latency=7 penalty=0 half=0
+t=477, issue sfu node 523 with op inv src0=215 src1=-1 dst=216 latency=19 rounds=0 penalty=0 borrow=1
+t=479, issue store node 491 mem=56 latency=0
+t=480, issue store node 493 mem=57 latency=0
+t=482, issue scalar node 539 with op add src0=220 src1=221 dst=222 latency=7 penalty=0
+t=484, issue ve node 507 with op mul src0=235 src1=209 dst=238 latency=7 penalty=0 half=0
+t=485, issue ve node 509 with op mul src0=237 src1=209 dst=239 latency=7 penalty=0 half=0
+t=489, issue sfu node 540 with op inv src0=222 src1=-1 dst=223 latency=19 rounds=0 penalty=0 borrow=1
+t=491, issue store node 508 mem=58 latency=0
+t=492, issue store node 510 mem=59 latency=0
+t=496, issue ve node 524 with op mul src0=243 src1=216 dst=246 latency=7 penalty=0 half=0
+t=497, issue ve node 526 with op mul src0=245 src1=216 dst=247 latency=7 penalty=0 half=0
+t=503, issue store node 525 mem=60 latency=0
+t=504, issue store node 527 mem=61 latency=0
+t=508, issue ve node 541 with op mul src0=251 src1=223 dst=254 latency=7 penalty=0 half=0
+t=509, issue ve node 543 with op mul src0=253 src1=223 dst=255 latency=7 penalty=0 half=0
+t=515, issue store node 542 mem=62 latency=0
+t=516, issue store node 544 mem=63 latency=0
+调度完成，周期数 = 518
+统计已完成，结果已输出到 /Users/maghu/Desktop/work at school/compress/compress-vliw/analysis_output/softmax_x32_y512_mode1performance.txt
+Saved VE usage to: /Users/maghu/Desktop/work at school/compress/compress-vliw/analysis_output/softmax_x32_y512_mode1/ve_usage.csv
+Saved SFU usage to: /Users/maghu/Desktop/work at school/compress/compress-vliw/analysis_output/softmax_x32_y512_mode1/sfu_usage.csv

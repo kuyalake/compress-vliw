@@ -1,0 +1,1163 @@
+Total DAG nodes: 1153
+vgpr_start_addr = 0
+Group ID = 0 使用的 SGPR 数量 = 0, VGPR 数量 = 24
+sgpr_count = 1	vgpr_count = 24
+最大活跃 SGPR 数量 = 256
+最大活跃 VGPR 数量 = 10
+最大活跃状态数量 = 10
+t=0, issue load node 1 gpr=0 mem=0 latency=3
+t=1, issue load node 4 gpr=2 mem=1 latency=3
+t=2, issue load node 7 gpr=4 mem=2 latency=3
+t=3, issue sfu node 2 with op gelu src0=0 src1=-1 dst=1 latency=23 rounds=4 penalty=0 borrow=2
+t=3, issue load node 10 gpr=6 mem=3 latency=3
+t=4, issue load node 13 gpr=8 mem=4 latency=3
+t=5, issue load node 16 gpr=10 mem=5 latency=3
+t=6, issue load node 19 gpr=12 mem=6 latency=3
+t=7, issue sfu node 5 with op gelu src0=2 src1=-1 dst=3 latency=23 rounds=4 penalty=0 borrow=2
+t=7, issue load node 22 gpr=14 mem=7 latency=3
+t=8, issue load node 25 gpr=16 mem=8 latency=3
+t=9, issue load node 28 gpr=18 mem=9 latency=3
+t=10, issue load node 31 gpr=20 mem=10 latency=3
+t=11, issue sfu node 8 with op gelu src0=4 src1=-1 dst=5 latency=23 rounds=4 penalty=0 borrow=2
+t=11, issue load node 34 gpr=22 mem=11 latency=3
+t=12, issue load node 37 gpr=24 mem=12 latency=3
+t=13, issue load node 40 gpr=26 mem=13 latency=3
+t=14, issue load node 43 gpr=28 mem=14 latency=3
+t=15, issue sfu node 11 with op gelu src0=6 src1=-1 dst=7 latency=23 rounds=4 penalty=0 borrow=2
+t=15, issue load node 46 gpr=30 mem=15 latency=3
+t=16, issue load node 49 gpr=32 mem=16 latency=3
+t=17, issue load node 52 gpr=34 mem=17 latency=3
+t=18, issue load node 55 gpr=36 mem=18 latency=3
+t=19, issue sfu node 14 with op gelu src0=8 src1=-1 dst=9 latency=23 rounds=4 penalty=0 borrow=2
+t=19, issue load node 58 gpr=38 mem=19 latency=3
+t=20, issue load node 61 gpr=40 mem=20 latency=3
+t=21, issue load node 64 gpr=42 mem=21 latency=3
+t=22, issue load node 67 gpr=44 mem=22 latency=3
+t=23, issue sfu node 17 with op gelu src0=10 src1=-1 dst=11 latency=23 rounds=4 penalty=0 borrow=2
+t=23, issue load node 70 gpr=46 mem=23 latency=3
+t=24, issue load node 73 gpr=48 mem=24 latency=3
+t=25, issue load node 76 gpr=50 mem=25 latency=3
+t=26, issue store node 3 mem=0 latency=0
+t=26, issue load node 79 gpr=52 mem=26 latency=3
+t=27, issue sfu node 20 with op gelu src0=12 src1=-1 dst=13 latency=23 rounds=4 penalty=0 borrow=2
+t=27, issue load node 82 gpr=54 mem=27 latency=3
+t=28, issue load node 85 gpr=56 mem=28 latency=3
+t=29, issue load node 88 gpr=58 mem=29 latency=3
+t=30, issue store node 6 mem=1 latency=0
+t=30, issue load node 91 gpr=60 mem=30 latency=3
+t=31, issue sfu node 23 with op gelu src0=14 src1=-1 dst=15 latency=23 rounds=4 penalty=0 borrow=2
+t=31, issue load node 94 gpr=62 mem=31 latency=3
+t=32, issue load node 97 gpr=64 mem=32 latency=3
+t=33, issue load node 100 gpr=66 mem=33 latency=3
+t=34, issue store node 9 mem=2 latency=0
+t=34, issue load node 103 gpr=68 mem=34 latency=3
+t=35, issue sfu node 26 with op gelu src0=16 src1=-1 dst=17 latency=23 rounds=4 penalty=0 borrow=2
+t=35, issue load node 106 gpr=70 mem=35 latency=3
+t=36, issue load node 109 gpr=72 mem=36 latency=3
+t=37, issue load node 112 gpr=74 mem=37 latency=3
+t=38, issue store node 12 mem=3 latency=0
+t=38, issue load node 115 gpr=76 mem=38 latency=3
+t=39, issue sfu node 29 with op gelu src0=18 src1=-1 dst=19 latency=23 rounds=4 penalty=0 borrow=2
+t=39, issue load node 118 gpr=78 mem=39 latency=3
+t=40, issue load node 121 gpr=80 mem=40 latency=3
+t=41, issue load node 124 gpr=82 mem=41 latency=3
+t=42, issue store node 15 mem=4 latency=0
+t=42, issue load node 127 gpr=84 mem=42 latency=3
+t=43, issue sfu node 32 with op gelu src0=20 src1=-1 dst=21 latency=23 rounds=4 penalty=0 borrow=2
+t=43, issue load node 130 gpr=86 mem=43 latency=3
+t=44, issue load node 133 gpr=88 mem=44 latency=3
+t=45, issue load node 136 gpr=90 mem=45 latency=3
+t=46, issue store node 18 mem=5 latency=0
+t=46, issue load node 139 gpr=92 mem=46 latency=3
+t=47, issue sfu node 35 with op gelu src0=22 src1=-1 dst=23 latency=23 rounds=4 penalty=0 borrow=2
+t=47, issue load node 142 gpr=94 mem=47 latency=3
+t=48, issue load node 145 gpr=96 mem=48 latency=3
+t=49, issue load node 148 gpr=98 mem=49 latency=3
+t=50, issue store node 21 mem=6 latency=0
+t=50, issue load node 151 gpr=100 mem=50 latency=3
+t=51, issue sfu node 38 with op gelu src0=24 src1=-1 dst=25 latency=23 rounds=4 penalty=0 borrow=2
+t=51, issue load node 154 gpr=102 mem=51 latency=3
+t=52, issue load node 157 gpr=104 mem=52 latency=3
+t=53, issue load node 160 gpr=106 mem=53 latency=3
+t=54, issue store node 24 mem=7 latency=0
+t=54, issue load node 163 gpr=108 mem=54 latency=3
+t=55, issue sfu node 41 with op gelu src0=26 src1=-1 dst=27 latency=23 rounds=4 penalty=0 borrow=2
+t=55, issue load node 166 gpr=110 mem=55 latency=3
+t=56, issue load node 169 gpr=112 mem=56 latency=3
+t=57, issue load node 172 gpr=114 mem=57 latency=3
+t=58, issue store node 27 mem=8 latency=0
+t=58, issue load node 175 gpr=116 mem=58 latency=3
+t=59, issue sfu node 44 with op gelu src0=28 src1=-1 dst=29 latency=23 rounds=4 penalty=0 borrow=2
+t=59, issue load node 178 gpr=118 mem=59 latency=3
+t=60, issue load node 181 gpr=120 mem=60 latency=3
+t=61, issue load node 184 gpr=122 mem=61 latency=3
+t=62, issue store node 30 mem=9 latency=0
+t=62, issue load node 187 gpr=124 mem=62 latency=3
+t=63, issue sfu node 47 with op gelu src0=30 src1=-1 dst=31 latency=23 rounds=4 penalty=0 borrow=2
+t=63, issue load node 190 gpr=126 mem=63 latency=3
+t=64, issue load node 193 gpr=128 mem=64 latency=3
+t=65, issue load node 196 gpr=130 mem=65 latency=3
+t=66, issue store node 33 mem=10 latency=0
+t=66, issue load node 199 gpr=132 mem=66 latency=3
+t=67, issue sfu node 50 with op gelu src0=32 src1=-1 dst=33 latency=23 rounds=4 penalty=0 borrow=2
+t=67, issue load node 202 gpr=134 mem=67 latency=3
+t=68, issue load node 205 gpr=136 mem=68 latency=3
+t=69, issue load node 208 gpr=138 mem=69 latency=3
+t=70, issue store node 36 mem=11 latency=0
+t=70, issue load node 211 gpr=140 mem=70 latency=3
+t=71, issue sfu node 53 with op gelu src0=34 src1=-1 dst=35 latency=23 rounds=4 penalty=0 borrow=2
+t=71, issue load node 214 gpr=142 mem=71 latency=3
+t=72, issue load node 217 gpr=144 mem=72 latency=3
+t=73, issue load node 220 gpr=146 mem=73 latency=3
+t=74, issue store node 39 mem=12 latency=0
+t=74, issue load node 223 gpr=148 mem=74 latency=3
+t=75, issue sfu node 56 with op gelu src0=36 src1=-1 dst=37 latency=23 rounds=4 penalty=0 borrow=2
+t=75, issue load node 226 gpr=150 mem=75 latency=3
+t=76, issue load node 229 gpr=152 mem=76 latency=3
+t=77, issue load node 232 gpr=154 mem=77 latency=3
+t=78, issue store node 42 mem=13 latency=0
+t=78, issue load node 235 gpr=156 mem=78 latency=3
+t=79, issue sfu node 59 with op gelu src0=38 src1=-1 dst=39 latency=23 rounds=4 penalty=0 borrow=2
+t=79, issue load node 238 gpr=158 mem=79 latency=3
+t=80, issue load node 241 gpr=160 mem=80 latency=3
+t=81, issue load node 244 gpr=162 mem=81 latency=3
+t=82, issue store node 45 mem=14 latency=0
+t=82, issue load node 247 gpr=164 mem=82 latency=3
+t=83, issue sfu node 62 with op gelu src0=40 src1=-1 dst=41 latency=23 rounds=4 penalty=0 borrow=2
+t=83, issue load node 250 gpr=166 mem=83 latency=3
+t=84, issue load node 253 gpr=168 mem=84 latency=3
+t=85, issue load node 256 gpr=170 mem=85 latency=3
+t=86, issue store node 48 mem=15 latency=0
+t=86, issue load node 259 gpr=172 mem=86 latency=3
+t=87, issue sfu node 65 with op gelu src0=42 src1=-1 dst=43 latency=23 rounds=4 penalty=0 borrow=2
+t=87, issue load node 262 gpr=174 mem=87 latency=3
+t=88, issue load node 265 gpr=176 mem=88 latency=3
+t=89, issue load node 268 gpr=178 mem=89 latency=3
+t=90, issue store node 51 mem=16 latency=0
+t=90, issue load node 271 gpr=180 mem=90 latency=3
+t=91, issue sfu node 68 with op gelu src0=44 src1=-1 dst=45 latency=23 rounds=4 penalty=0 borrow=2
+t=91, issue load node 274 gpr=182 mem=91 latency=3
+t=92, issue load node 277 gpr=184 mem=92 latency=3
+t=93, issue load node 280 gpr=186 mem=93 latency=3
+t=94, issue store node 54 mem=17 latency=0
+t=94, issue load node 283 gpr=188 mem=94 latency=3
+t=95, issue sfu node 71 with op gelu src0=46 src1=-1 dst=47 latency=23 rounds=4 penalty=0 borrow=2
+t=95, issue load node 286 gpr=190 mem=95 latency=3
+t=96, issue load node 289 gpr=192 mem=96 latency=3
+t=97, issue load node 292 gpr=194 mem=97 latency=3
+t=98, issue store node 57 mem=18 latency=0
+t=98, issue load node 295 gpr=196 mem=98 latency=3
+t=99, issue sfu node 74 with op gelu src0=48 src1=-1 dst=49 latency=23 rounds=4 penalty=0 borrow=2
+t=99, issue load node 298 gpr=198 mem=99 latency=3
+t=100, issue load node 301 gpr=200 mem=100 latency=3
+t=101, issue load node 304 gpr=202 mem=101 latency=3
+t=102, issue store node 60 mem=19 latency=0
+t=102, issue load node 307 gpr=204 mem=102 latency=3
+t=103, issue sfu node 77 with op gelu src0=50 src1=-1 dst=51 latency=23 rounds=4 penalty=0 borrow=2
+t=103, issue load node 310 gpr=206 mem=103 latency=3
+t=104, issue load node 313 gpr=208 mem=104 latency=3
+t=105, issue load node 316 gpr=210 mem=105 latency=3
+t=106, issue store node 63 mem=20 latency=0
+t=106, issue load node 319 gpr=212 mem=106 latency=3
+t=107, issue sfu node 80 with op gelu src0=52 src1=-1 dst=53 latency=23 rounds=4 penalty=0 borrow=2
+t=107, issue load node 322 gpr=214 mem=107 latency=3
+t=108, issue load node 325 gpr=216 mem=108 latency=3
+t=109, issue load node 328 gpr=218 mem=109 latency=3
+t=110, issue store node 66 mem=21 latency=0
+t=110, issue load node 331 gpr=220 mem=110 latency=3
+t=111, issue sfu node 83 with op gelu src0=54 src1=-1 dst=55 latency=23 rounds=4 penalty=0 borrow=2
+t=111, issue load node 334 gpr=222 mem=111 latency=3
+t=112, issue load node 337 gpr=224 mem=112 latency=3
+t=113, issue load node 340 gpr=226 mem=113 latency=3
+t=114, issue store node 69 mem=22 latency=0
+t=114, issue load node 343 gpr=228 mem=114 latency=3
+t=115, issue sfu node 86 with op gelu src0=56 src1=-1 dst=57 latency=23 rounds=4 penalty=0 borrow=2
+t=115, issue load node 346 gpr=230 mem=115 latency=3
+t=116, issue load node 349 gpr=232 mem=116 latency=3
+t=117, issue load node 352 gpr=234 mem=117 latency=3
+t=118, issue store node 72 mem=23 latency=0
+t=118, issue load node 355 gpr=236 mem=118 latency=3
+t=119, issue sfu node 89 with op gelu src0=58 src1=-1 dst=59 latency=23 rounds=4 penalty=0 borrow=2
+t=119, issue load node 358 gpr=238 mem=119 latency=3
+t=120, issue load node 361 gpr=240 mem=120 latency=3
+t=121, issue load node 364 gpr=242 mem=121 latency=3
+t=122, issue store node 75 mem=24 latency=0
+t=122, issue load node 367 gpr=244 mem=122 latency=3
+t=123, issue sfu node 92 with op gelu src0=60 src1=-1 dst=61 latency=23 rounds=4 penalty=0 borrow=2
+t=123, issue load node 370 gpr=246 mem=123 latency=3
+t=124, issue load node 373 gpr=248 mem=124 latency=3
+t=125, issue load node 376 gpr=250 mem=125 latency=3
+t=126, issue store node 78 mem=25 latency=0
+t=126, issue load node 379 gpr=252 mem=126 latency=3
+t=127, issue sfu node 95 with op gelu src0=62 src1=-1 dst=63 latency=23 rounds=4 penalty=0 borrow=2
+t=127, issue load node 382 gpr=254 mem=127 latency=3
+t=128, issue load node 385 gpr=0 mem=128 latency=3
+t=129, issue load node 388 gpr=2 mem=129 latency=3
+t=130, issue store node 81 mem=26 latency=0
+t=130, issue load node 391 gpr=4 mem=130 latency=3
+t=131, issue sfu node 98 with op gelu src0=64 src1=-1 dst=65 latency=23 rounds=4 penalty=0 borrow=2
+t=131, issue load node 394 gpr=6 mem=131 latency=3
+t=132, issue load node 397 gpr=8 mem=132 latency=3
+t=133, issue load node 400 gpr=10 mem=133 latency=3
+t=134, issue store node 84 mem=27 latency=0
+t=134, issue load node 403 gpr=12 mem=134 latency=3
+t=135, issue sfu node 101 with op gelu src0=66 src1=-1 dst=67 latency=23 rounds=4 penalty=0 borrow=2
+t=135, issue load node 406 gpr=14 mem=135 latency=3
+t=136, issue load node 409 gpr=16 mem=136 latency=3
+t=137, issue load node 412 gpr=18 mem=137 latency=3
+t=138, issue store node 87 mem=28 latency=0
+t=138, issue load node 415 gpr=20 mem=138 latency=3
+t=139, issue sfu node 104 with op gelu src0=68 src1=-1 dst=69 latency=23 rounds=4 penalty=0 borrow=2
+t=139, issue load node 418 gpr=22 mem=139 latency=3
+t=140, issue load node 421 gpr=24 mem=140 latency=3
+t=141, issue load node 424 gpr=26 mem=141 latency=3
+t=142, issue store node 90 mem=29 latency=0
+t=142, issue load node 427 gpr=28 mem=142 latency=3
+t=143, issue sfu node 107 with op gelu src0=70 src1=-1 dst=71 latency=23 rounds=4 penalty=0 borrow=2
+t=143, issue load node 430 gpr=30 mem=143 latency=3
+t=146, issue store node 93 mem=30 latency=0
+t=147, issue sfu node 110 with op gelu src0=72 src1=-1 dst=73 latency=23 rounds=4 penalty=0 borrow=2
+t=150, issue store node 96 mem=31 latency=0
+t=151, issue sfu node 113 with op gelu src0=74 src1=-1 dst=75 latency=23 rounds=4 penalty=0 borrow=2
+t=154, issue store node 99 mem=32 latency=0
+t=155, issue sfu node 116 with op gelu src0=76 src1=-1 dst=77 latency=23 rounds=4 penalty=0 borrow=2
+t=158, issue store node 102 mem=33 latency=0
+t=159, issue sfu node 119 with op gelu src0=78 src1=-1 dst=79 latency=23 rounds=4 penalty=0 borrow=2
+t=162, issue store node 105 mem=34 latency=0
+t=163, issue sfu node 122 with op gelu src0=80 src1=-1 dst=81 latency=23 rounds=4 penalty=0 borrow=2
+t=166, issue store node 108 mem=35 latency=0
+t=166, issue load node 433 gpr=32 mem=144 latency=3
+t=167, issue sfu node 125 with op gelu src0=82 src1=-1 dst=83 latency=23 rounds=4 penalty=0 borrow=2
+t=167, issue load node 436 gpr=34 mem=145 latency=3
+t=168, issue load node 439 gpr=36 mem=146 latency=3
+t=169, issue load node 442 gpr=38 mem=147 latency=3
+t=170, issue store node 111 mem=36 latency=0
+t=170, issue load node 445 gpr=40 mem=148 latency=3
+t=171, issue sfu node 128 with op gelu src0=84 src1=-1 dst=85 latency=23 rounds=4 penalty=0 borrow=2
+t=171, issue load node 448 gpr=42 mem=149 latency=3
+t=172, issue load node 451 gpr=44 mem=150 latency=3
+t=173, issue load node 454 gpr=46 mem=151 latency=3
+t=174, issue store node 114 mem=37 latency=0
+t=174, issue load node 457 gpr=48 mem=152 latency=3
+t=175, issue sfu node 131 with op gelu src0=86 src1=-1 dst=87 latency=23 rounds=4 penalty=0 borrow=2
+t=175, issue load node 460 gpr=50 mem=153 latency=3
+t=176, issue load node 463 gpr=52 mem=154 latency=3
+t=177, issue load node 466 gpr=54 mem=155 latency=3
+t=178, issue store node 117 mem=38 latency=0
+t=179, issue sfu node 134 with op gelu src0=88 src1=-1 dst=89 latency=23 rounds=4 penalty=0 borrow=2
+t=182, issue store node 120 mem=39 latency=0
+t=183, issue sfu node 137 with op gelu src0=90 src1=-1 dst=91 latency=23 rounds=4 penalty=0 borrow=2
+t=186, issue store node 123 mem=40 latency=0
+t=187, issue sfu node 140 with op gelu src0=92 src1=-1 dst=93 latency=23 rounds=4 penalty=0 borrow=2
+t=190, issue store node 126 mem=41 latency=0
+t=191, issue sfu node 143 with op gelu src0=94 src1=-1 dst=95 latency=23 rounds=4 penalty=0 borrow=2
+t=194, issue store node 129 mem=42 latency=0
+t=195, issue sfu node 146 with op gelu src0=96 src1=-1 dst=97 latency=23 rounds=4 penalty=0 borrow=2
+t=198, issue store node 132 mem=43 latency=0
+t=199, issue sfu node 149 with op gelu src0=98 src1=-1 dst=99 latency=23 rounds=4 penalty=0 borrow=2
+t=202, issue store node 135 mem=44 latency=0
+t=203, issue sfu node 152 with op gelu src0=100 src1=-1 dst=101 latency=23 rounds=4 penalty=0 borrow=2
+t=206, issue store node 138 mem=45 latency=0
+t=207, issue sfu node 155 with op gelu src0=102 src1=-1 dst=103 latency=23 rounds=4 penalty=0 borrow=2
+t=210, issue store node 141 mem=46 latency=0
+t=211, issue sfu node 158 with op gelu src0=104 src1=-1 dst=105 latency=23 rounds=4 penalty=0 borrow=2
+t=214, issue store node 144 mem=47 latency=0
+t=214, issue load node 469 gpr=56 mem=156 latency=3
+t=215, issue sfu node 161 with op gelu src0=106 src1=-1 dst=107 latency=23 rounds=4 penalty=0 borrow=2
+t=215, issue load node 472 gpr=58 mem=157 latency=3
+t=216, issue load node 475 gpr=60 mem=158 latency=3
+t=217, issue load node 478 gpr=62 mem=159 latency=3
+t=218, issue store node 147 mem=48 latency=0
+t=218, issue load node 481 gpr=64 mem=160 latency=3
+t=219, issue sfu node 164 with op gelu src0=108 src1=-1 dst=109 latency=23 rounds=4 penalty=0 borrow=2
+t=219, issue load node 484 gpr=66 mem=161 latency=3
+t=220, issue load node 487 gpr=68 mem=162 latency=3
+t=221, issue load node 490 gpr=70 mem=163 latency=3
+t=222, issue store node 150 mem=49 latency=0
+t=222, issue load node 493 gpr=72 mem=164 latency=3
+t=223, issue sfu node 167 with op gelu src0=110 src1=-1 dst=111 latency=23 rounds=4 penalty=0 borrow=2
+t=223, issue load node 496 gpr=74 mem=165 latency=3
+t=224, issue load node 499 gpr=76 mem=166 latency=3
+t=225, issue load node 502 gpr=78 mem=167 latency=3
+t=226, issue store node 153 mem=50 latency=0
+t=227, issue sfu node 170 with op gelu src0=112 src1=-1 dst=113 latency=23 rounds=4 penalty=0 borrow=2
+t=230, issue store node 156 mem=51 latency=0
+t=231, issue sfu node 173 with op gelu src0=114 src1=-1 dst=115 latency=23 rounds=4 penalty=0 borrow=2
+t=234, issue store node 159 mem=52 latency=0
+t=235, issue sfu node 176 with op gelu src0=116 src1=-1 dst=117 latency=23 rounds=4 penalty=0 borrow=2
+t=238, issue store node 162 mem=53 latency=0
+t=239, issue sfu node 179 with op gelu src0=118 src1=-1 dst=119 latency=23 rounds=4 penalty=0 borrow=2
+t=242, issue store node 165 mem=54 latency=0
+t=243, issue sfu node 182 with op gelu src0=120 src1=-1 dst=121 latency=23 rounds=4 penalty=0 borrow=2
+t=246, issue store node 168 mem=55 latency=0
+t=247, issue sfu node 185 with op gelu src0=122 src1=-1 dst=123 latency=23 rounds=4 penalty=0 borrow=2
+t=250, issue store node 171 mem=56 latency=0
+t=251, issue sfu node 188 with op gelu src0=124 src1=-1 dst=125 latency=23 rounds=4 penalty=0 borrow=2
+t=254, issue store node 174 mem=57 latency=0
+t=255, issue sfu node 191 with op gelu src0=126 src1=-1 dst=127 latency=23 rounds=4 penalty=0 borrow=2
+t=258, issue store node 177 mem=58 latency=0
+t=259, issue sfu node 194 with op gelu src0=128 src1=-1 dst=129 latency=23 rounds=4 penalty=0 borrow=2
+t=262, issue store node 180 mem=59 latency=0
+t=262, issue load node 505 gpr=80 mem=168 latency=3
+t=263, issue sfu node 197 with op gelu src0=130 src1=-1 dst=131 latency=23 rounds=4 penalty=0 borrow=2
+t=263, issue load node 508 gpr=82 mem=169 latency=3
+t=264, issue load node 511 gpr=84 mem=170 latency=3
+t=265, issue load node 514 gpr=86 mem=171 latency=3
+t=266, issue store node 183 mem=60 latency=0
+t=266, issue load node 517 gpr=88 mem=172 latency=3
+t=267, issue sfu node 200 with op gelu src0=132 src1=-1 dst=133 latency=23 rounds=4 penalty=0 borrow=2
+t=267, issue load node 520 gpr=90 mem=173 latency=3
+t=268, issue load node 523 gpr=92 mem=174 latency=3
+t=269, issue load node 526 gpr=94 mem=175 latency=3
+t=270, issue store node 186 mem=61 latency=0
+t=270, issue load node 529 gpr=96 mem=176 latency=3
+t=271, issue sfu node 203 with op gelu src0=134 src1=-1 dst=135 latency=23 rounds=4 penalty=0 borrow=2
+t=271, issue load node 532 gpr=98 mem=177 latency=3
+t=272, issue load node 535 gpr=100 mem=178 latency=3
+t=273, issue load node 538 gpr=102 mem=179 latency=3
+t=274, issue store node 189 mem=62 latency=0
+t=275, issue sfu node 206 with op gelu src0=136 src1=-1 dst=137 latency=23 rounds=4 penalty=0 borrow=2
+t=278, issue store node 192 mem=63 latency=0
+t=279, issue sfu node 209 with op gelu src0=138 src1=-1 dst=139 latency=23 rounds=4 penalty=0 borrow=2
+t=282, issue store node 195 mem=64 latency=0
+t=283, issue sfu node 212 with op gelu src0=140 src1=-1 dst=141 latency=23 rounds=4 penalty=0 borrow=2
+t=286, issue store node 198 mem=65 latency=0
+t=287, issue sfu node 215 with op gelu src0=142 src1=-1 dst=143 latency=23 rounds=4 penalty=0 borrow=2
+t=290, issue store node 201 mem=66 latency=0
+t=291, issue sfu node 218 with op gelu src0=144 src1=-1 dst=145 latency=23 rounds=4 penalty=0 borrow=2
+t=294, issue store node 204 mem=67 latency=0
+t=295, issue sfu node 221 with op gelu src0=146 src1=-1 dst=147 latency=23 rounds=4 penalty=0 borrow=2
+t=298, issue store node 207 mem=68 latency=0
+t=299, issue sfu node 224 with op gelu src0=148 src1=-1 dst=149 latency=23 rounds=4 penalty=0 borrow=2
+t=302, issue store node 210 mem=69 latency=0
+t=303, issue sfu node 227 with op gelu src0=150 src1=-1 dst=151 latency=23 rounds=4 penalty=0 borrow=2
+t=306, issue store node 213 mem=70 latency=0
+t=307, issue sfu node 230 with op gelu src0=152 src1=-1 dst=153 latency=23 rounds=4 penalty=0 borrow=2
+t=310, issue store node 216 mem=71 latency=0
+t=310, issue load node 541 gpr=104 mem=180 latency=3
+t=311, issue sfu node 233 with op gelu src0=154 src1=-1 dst=155 latency=23 rounds=4 penalty=0 borrow=2
+t=311, issue load node 544 gpr=106 mem=181 latency=3
+t=312, issue load node 547 gpr=108 mem=182 latency=3
+t=313, issue load node 550 gpr=110 mem=183 latency=3
+t=314, issue store node 219 mem=72 latency=0
+t=314, issue load node 553 gpr=112 mem=184 latency=3
+t=315, issue sfu node 236 with op gelu src0=156 src1=-1 dst=157 latency=23 rounds=4 penalty=0 borrow=2
+t=315, issue load node 556 gpr=114 mem=185 latency=3
+t=316, issue load node 559 gpr=116 mem=186 latency=3
+t=317, issue load node 562 gpr=118 mem=187 latency=3
+t=318, issue store node 222 mem=73 latency=0
+t=318, issue load node 565 gpr=120 mem=188 latency=3
+t=319, issue sfu node 239 with op gelu src0=158 src1=-1 dst=159 latency=23 rounds=4 penalty=0 borrow=2
+t=319, issue load node 568 gpr=122 mem=189 latency=3
+t=320, issue load node 571 gpr=124 mem=190 latency=3
+t=321, issue load node 574 gpr=126 mem=191 latency=3
+t=322, issue store node 225 mem=74 latency=0
+t=323, issue sfu node 242 with op gelu src0=160 src1=-1 dst=161 latency=23 rounds=4 penalty=0 borrow=2
+t=326, issue store node 228 mem=75 latency=0
+t=327, issue sfu node 245 with op gelu src0=162 src1=-1 dst=163 latency=23 rounds=4 penalty=0 borrow=2
+t=330, issue store node 231 mem=76 latency=0
+t=331, issue sfu node 248 with op gelu src0=164 src1=-1 dst=165 latency=23 rounds=4 penalty=0 borrow=2
+t=334, issue store node 234 mem=77 latency=0
+t=335, issue sfu node 251 with op gelu src0=166 src1=-1 dst=167 latency=23 rounds=4 penalty=0 borrow=2
+t=338, issue store node 237 mem=78 latency=0
+t=339, issue sfu node 254 with op gelu src0=168 src1=-1 dst=169 latency=23 rounds=4 penalty=0 borrow=2
+t=342, issue store node 240 mem=79 latency=0
+t=343, issue sfu node 257 with op gelu src0=170 src1=-1 dst=171 latency=23 rounds=4 penalty=0 borrow=2
+t=346, issue store node 243 mem=80 latency=0
+t=347, issue sfu node 260 with op gelu src0=172 src1=-1 dst=173 latency=23 rounds=4 penalty=0 borrow=2
+t=350, issue store node 246 mem=81 latency=0
+t=351, issue sfu node 263 with op gelu src0=174 src1=-1 dst=175 latency=23 rounds=4 penalty=0 borrow=2
+t=354, issue store node 249 mem=82 latency=0
+t=355, issue sfu node 266 with op gelu src0=176 src1=-1 dst=177 latency=23 rounds=4 penalty=0 borrow=2
+t=358, issue store node 252 mem=83 latency=0
+t=358, issue load node 577 gpr=128 mem=192 latency=3
+t=359, issue sfu node 269 with op gelu src0=178 src1=-1 dst=179 latency=23 rounds=4 penalty=0 borrow=2
+t=359, issue load node 580 gpr=130 mem=193 latency=3
+t=360, issue load node 583 gpr=132 mem=194 latency=3
+t=361, issue load node 586 gpr=134 mem=195 latency=3
+t=362, issue store node 255 mem=84 latency=0
+t=362, issue load node 589 gpr=136 mem=196 latency=3
+t=363, issue sfu node 272 with op gelu src0=180 src1=-1 dst=181 latency=23 rounds=4 penalty=0 borrow=2
+t=363, issue load node 592 gpr=138 mem=197 latency=3
+t=364, issue load node 595 gpr=140 mem=198 latency=3
+t=365, issue load node 598 gpr=142 mem=199 latency=3
+t=366, issue store node 258 mem=85 latency=0
+t=366, issue load node 601 gpr=144 mem=200 latency=3
+t=367, issue sfu node 275 with op gelu src0=182 src1=-1 dst=183 latency=23 rounds=4 penalty=0 borrow=2
+t=367, issue load node 604 gpr=146 mem=201 latency=3
+t=368, issue load node 607 gpr=148 mem=202 latency=3
+t=369, issue load node 610 gpr=150 mem=203 latency=3
+t=370, issue store node 261 mem=86 latency=0
+t=371, issue sfu node 278 with op gelu src0=184 src1=-1 dst=185 latency=23 rounds=4 penalty=0 borrow=2
+t=374, issue store node 264 mem=87 latency=0
+t=375, issue sfu node 281 with op gelu src0=186 src1=-1 dst=187 latency=23 rounds=4 penalty=0 borrow=2
+t=378, issue store node 267 mem=88 latency=0
+t=379, issue sfu node 284 with op gelu src0=188 src1=-1 dst=189 latency=23 rounds=4 penalty=0 borrow=2
+t=382, issue store node 270 mem=89 latency=0
+t=383, issue sfu node 287 with op gelu src0=190 src1=-1 dst=191 latency=23 rounds=4 penalty=0 borrow=2
+t=386, issue store node 273 mem=90 latency=0
+t=387, issue sfu node 290 with op gelu src0=192 src1=-1 dst=193 latency=23 rounds=4 penalty=0 borrow=2
+t=390, issue store node 276 mem=91 latency=0
+t=391, issue sfu node 293 with op gelu src0=194 src1=-1 dst=195 latency=23 rounds=4 penalty=0 borrow=2
+t=394, issue store node 279 mem=92 latency=0
+t=395, issue sfu node 296 with op gelu src0=196 src1=-1 dst=197 latency=23 rounds=4 penalty=0 borrow=2
+t=398, issue store node 282 mem=93 latency=0
+t=399, issue sfu node 299 with op gelu src0=198 src1=-1 dst=199 latency=23 rounds=4 penalty=0 borrow=2
+t=402, issue store node 285 mem=94 latency=0
+t=403, issue sfu node 302 with op gelu src0=200 src1=-1 dst=201 latency=23 rounds=4 penalty=0 borrow=2
+t=406, issue store node 288 mem=95 latency=0
+t=406, issue load node 613 gpr=152 mem=204 latency=3
+t=407, issue sfu node 305 with op gelu src0=202 src1=-1 dst=203 latency=23 rounds=4 penalty=0 borrow=2
+t=407, issue load node 616 gpr=154 mem=205 latency=3
+t=408, issue load node 619 gpr=156 mem=206 latency=3
+t=409, issue load node 622 gpr=158 mem=207 latency=3
+t=410, issue store node 291 mem=96 latency=0
+t=410, issue load node 625 gpr=160 mem=208 latency=3
+t=411, issue sfu node 308 with op gelu src0=204 src1=-1 dst=205 latency=23 rounds=4 penalty=0 borrow=2
+t=411, issue load node 628 gpr=162 mem=209 latency=3
+t=412, issue load node 631 gpr=164 mem=210 latency=3
+t=413, issue load node 634 gpr=166 mem=211 latency=3
+t=414, issue store node 294 mem=97 latency=0
+t=414, issue load node 637 gpr=168 mem=212 latency=3
+t=415, issue sfu node 311 with op gelu src0=206 src1=-1 dst=207 latency=23 rounds=4 penalty=0 borrow=2
+t=415, issue load node 640 gpr=170 mem=213 latency=3
+t=416, issue load node 643 gpr=172 mem=214 latency=3
+t=417, issue load node 646 gpr=174 mem=215 latency=3
+t=418, issue store node 297 mem=98 latency=0
+t=419, issue sfu node 314 with op gelu src0=208 src1=-1 dst=209 latency=23 rounds=4 penalty=0 borrow=2
+t=422, issue store node 300 mem=99 latency=0
+t=423, issue sfu node 317 with op gelu src0=210 src1=-1 dst=211 latency=23 rounds=4 penalty=0 borrow=2
+t=426, issue store node 303 mem=100 latency=0
+t=427, issue sfu node 320 with op gelu src0=212 src1=-1 dst=213 latency=23 rounds=4 penalty=0 borrow=2
+t=430, issue store node 306 mem=101 latency=0
+t=431, issue sfu node 323 with op gelu src0=214 src1=-1 dst=215 latency=23 rounds=4 penalty=0 borrow=2
+t=434, issue store node 309 mem=102 latency=0
+t=435, issue sfu node 326 with op gelu src0=216 src1=-1 dst=217 latency=23 rounds=4 penalty=0 borrow=2
+t=438, issue store node 312 mem=103 latency=0
+t=439, issue sfu node 329 with op gelu src0=218 src1=-1 dst=219 latency=23 rounds=4 penalty=0 borrow=2
+t=442, issue store node 315 mem=104 latency=0
+t=443, issue sfu node 332 with op gelu src0=220 src1=-1 dst=221 latency=23 rounds=4 penalty=0 borrow=2
+t=446, issue store node 318 mem=105 latency=0
+t=447, issue sfu node 335 with op gelu src0=222 src1=-1 dst=223 latency=23 rounds=4 penalty=0 borrow=2
+t=450, issue store node 321 mem=106 latency=0
+t=451, issue sfu node 338 with op gelu src0=224 src1=-1 dst=225 latency=23 rounds=4 penalty=0 borrow=2
+t=454, issue store node 324 mem=107 latency=0
+t=454, issue load node 649 gpr=176 mem=216 latency=3
+t=455, issue sfu node 341 with op gelu src0=226 src1=-1 dst=227 latency=23 rounds=4 penalty=0 borrow=2
+t=455, issue load node 652 gpr=178 mem=217 latency=3
+t=456, issue load node 655 gpr=180 mem=218 latency=3
+t=457, issue load node 658 gpr=182 mem=219 latency=3
+t=458, issue store node 327 mem=108 latency=0
+t=458, issue load node 661 gpr=184 mem=220 latency=3
+t=459, issue sfu node 344 with op gelu src0=228 src1=-1 dst=229 latency=23 rounds=4 penalty=0 borrow=2
+t=459, issue load node 664 gpr=186 mem=221 latency=3
+t=460, issue load node 667 gpr=188 mem=222 latency=3
+t=461, issue load node 670 gpr=190 mem=223 latency=3
+t=462, issue store node 330 mem=109 latency=0
+t=462, issue load node 673 gpr=192 mem=224 latency=3
+t=463, issue sfu node 347 with op gelu src0=230 src1=-1 dst=231 latency=23 rounds=4 penalty=0 borrow=2
+t=463, issue load node 676 gpr=194 mem=225 latency=3
+t=464, issue load node 679 gpr=196 mem=226 latency=3
+t=465, issue load node 682 gpr=198 mem=227 latency=3
+t=466, issue store node 333 mem=110 latency=0
+t=467, issue sfu node 350 with op gelu src0=232 src1=-1 dst=233 latency=23 rounds=4 penalty=0 borrow=2
+t=470, issue store node 336 mem=111 latency=0
+t=471, issue sfu node 353 with op gelu src0=234 src1=-1 dst=235 latency=23 rounds=4 penalty=0 borrow=2
+t=474, issue store node 339 mem=112 latency=0
+t=475, issue sfu node 356 with op gelu src0=236 src1=-1 dst=237 latency=23 rounds=4 penalty=0 borrow=2
+t=478, issue store node 342 mem=113 latency=0
+t=479, issue sfu node 359 with op gelu src0=238 src1=-1 dst=239 latency=23 rounds=4 penalty=0 borrow=2
+t=482, issue store node 345 mem=114 latency=0
+t=483, issue sfu node 362 with op gelu src0=240 src1=-1 dst=241 latency=23 rounds=4 penalty=0 borrow=2
+t=486, issue store node 348 mem=115 latency=0
+t=487, issue sfu node 365 with op gelu src0=242 src1=-1 dst=243 latency=23 rounds=4 penalty=0 borrow=2
+t=490, issue store node 351 mem=116 latency=0
+t=491, issue sfu node 368 with op gelu src0=244 src1=-1 dst=245 latency=23 rounds=4 penalty=0 borrow=2
+t=494, issue store node 354 mem=117 latency=0
+t=495, issue sfu node 371 with op gelu src0=246 src1=-1 dst=247 latency=23 rounds=4 penalty=0 borrow=2
+t=498, issue store node 357 mem=118 latency=0
+t=499, issue sfu node 374 with op gelu src0=248 src1=-1 dst=249 latency=23 rounds=4 penalty=0 borrow=2
+t=502, issue store node 360 mem=119 latency=0
+t=502, issue load node 685 gpr=200 mem=228 latency=3
+t=503, issue sfu node 377 with op gelu src0=250 src1=-1 dst=251 latency=23 rounds=4 penalty=0 borrow=2
+t=503, issue load node 688 gpr=202 mem=229 latency=3
+t=504, issue load node 691 gpr=204 mem=230 latency=3
+t=505, issue load node 694 gpr=206 mem=231 latency=3
+t=506, issue store node 363 mem=120 latency=0
+t=506, issue load node 697 gpr=208 mem=232 latency=3
+t=507, issue sfu node 380 with op gelu src0=252 src1=-1 dst=253 latency=23 rounds=4 penalty=0 borrow=2
+t=507, issue load node 700 gpr=210 mem=233 latency=3
+t=508, issue load node 703 gpr=212 mem=234 latency=3
+t=509, issue load node 706 gpr=214 mem=235 latency=3
+t=510, issue store node 366 mem=121 latency=0
+t=510, issue load node 709 gpr=216 mem=236 latency=3
+t=511, issue sfu node 383 with op gelu src0=254 src1=-1 dst=255 latency=23 rounds=4 penalty=0 borrow=2
+t=511, issue load node 712 gpr=218 mem=237 latency=3
+t=512, issue load node 715 gpr=220 mem=238 latency=3
+t=513, issue load node 718 gpr=222 mem=239 latency=3
+t=514, issue store node 369 mem=122 latency=0
+t=515, issue sfu node 386 with op gelu src0=0 src1=-1 dst=1 latency=23 rounds=4 penalty=0 borrow=2
+t=518, issue store node 372 mem=123 latency=0
+t=519, issue sfu node 389 with op gelu src0=2 src1=-1 dst=3 latency=23 rounds=4 penalty=0 borrow=2
+t=522, issue store node 375 mem=124 latency=0
+t=523, issue sfu node 392 with op gelu src0=4 src1=-1 dst=5 latency=23 rounds=4 penalty=0 borrow=2
+t=526, issue store node 378 mem=125 latency=0
+t=527, issue sfu node 395 with op gelu src0=6 src1=-1 dst=7 latency=23 rounds=4 penalty=0 borrow=2
+t=530, issue store node 381 mem=126 latency=0
+t=531, issue sfu node 398 with op gelu src0=8 src1=-1 dst=9 latency=23 rounds=4 penalty=0 borrow=2
+t=534, issue store node 384 mem=127 latency=0
+t=535, issue sfu node 401 with op gelu src0=10 src1=-1 dst=11 latency=23 rounds=4 penalty=0 borrow=2
+t=538, issue store node 387 mem=128 latency=0
+t=539, issue sfu node 404 with op gelu src0=12 src1=-1 dst=13 latency=23 rounds=4 penalty=0 borrow=2
+t=542, issue store node 390 mem=129 latency=0
+t=543, issue sfu node 407 with op gelu src0=14 src1=-1 dst=15 latency=23 rounds=4 penalty=0 borrow=2
+t=546, issue store node 393 mem=130 latency=0
+t=547, issue sfu node 410 with op gelu src0=16 src1=-1 dst=17 latency=23 rounds=4 penalty=0 borrow=2
+t=550, issue store node 396 mem=131 latency=0
+t=550, issue load node 721 gpr=224 mem=240 latency=3
+t=551, issue sfu node 413 with op gelu src0=18 src1=-1 dst=19 latency=23 rounds=4 penalty=0 borrow=2
+t=551, issue load node 724 gpr=226 mem=241 latency=3
+t=552, issue load node 727 gpr=228 mem=242 latency=3
+t=553, issue load node 730 gpr=230 mem=243 latency=3
+t=554, issue store node 399 mem=132 latency=0
+t=554, issue load node 733 gpr=232 mem=244 latency=3
+t=555, issue sfu node 416 with op gelu src0=20 src1=-1 dst=21 latency=23 rounds=4 penalty=0 borrow=2
+t=555, issue load node 736 gpr=234 mem=245 latency=3
+t=556, issue load node 739 gpr=236 mem=246 latency=3
+t=557, issue load node 742 gpr=238 mem=247 latency=3
+t=558, issue store node 402 mem=133 latency=0
+t=558, issue load node 745 gpr=240 mem=248 latency=3
+t=559, issue sfu node 419 with op gelu src0=22 src1=-1 dst=23 latency=23 rounds=4 penalty=0 borrow=2
+t=559, issue load node 748 gpr=242 mem=249 latency=3
+t=560, issue load node 751 gpr=244 mem=250 latency=3
+t=561, issue load node 754 gpr=246 mem=251 latency=3
+t=562, issue store node 405 mem=134 latency=0
+t=563, issue sfu node 422 with op gelu src0=24 src1=-1 dst=25 latency=23 rounds=4 penalty=0 borrow=2
+t=566, issue store node 408 mem=135 latency=0
+t=567, issue sfu node 425 with op gelu src0=26 src1=-1 dst=27 latency=23 rounds=4 penalty=0 borrow=2
+t=570, issue store node 411 mem=136 latency=0
+t=571, issue sfu node 428 with op gelu src0=28 src1=-1 dst=29 latency=23 rounds=4 penalty=0 borrow=2
+t=574, issue store node 414 mem=137 latency=0
+t=575, issue sfu node 431 with op gelu src0=30 src1=-1 dst=31 latency=23 rounds=4 penalty=0 borrow=2
+t=578, issue store node 417 mem=138 latency=0
+t=579, issue sfu node 434 with op gelu src0=32 src1=-1 dst=33 latency=23 rounds=4 penalty=0 borrow=2
+t=582, issue store node 420 mem=139 latency=0
+t=583, issue sfu node 437 with op gelu src0=34 src1=-1 dst=35 latency=23 rounds=4 penalty=0 borrow=2
+t=586, issue store node 423 mem=140 latency=0
+t=587, issue sfu node 440 with op gelu src0=36 src1=-1 dst=37 latency=23 rounds=4 penalty=0 borrow=2
+t=590, issue store node 426 mem=141 latency=0
+t=591, issue sfu node 443 with op gelu src0=38 src1=-1 dst=39 latency=23 rounds=4 penalty=0 borrow=2
+t=594, issue store node 429 mem=142 latency=0
+t=595, issue sfu node 446 with op gelu src0=40 src1=-1 dst=41 latency=23 rounds=4 penalty=0 borrow=2
+t=598, issue store node 432 mem=143 latency=0
+t=598, issue load node 757 gpr=248 mem=252 latency=3
+t=599, issue sfu node 449 with op gelu src0=42 src1=-1 dst=43 latency=23 rounds=4 penalty=0 borrow=2
+t=599, issue load node 760 gpr=250 mem=253 latency=3
+t=600, issue load node 763 gpr=252 mem=254 latency=3
+t=601, issue load node 766 gpr=254 mem=255 latency=3
+t=602, issue store node 435 mem=144 latency=0
+t=602, issue load node 769 gpr=0 mem=256 latency=3
+t=603, issue sfu node 452 with op gelu src0=44 src1=-1 dst=45 latency=23 rounds=4 penalty=0 borrow=2
+t=603, issue load node 772 gpr=2 mem=257 latency=3
+t=604, issue load node 775 gpr=4 mem=258 latency=3
+t=605, issue load node 778 gpr=6 mem=259 latency=3
+t=606, issue store node 438 mem=145 latency=0
+t=606, issue load node 781 gpr=8 mem=260 latency=3
+t=607, issue sfu node 455 with op gelu src0=46 src1=-1 dst=47 latency=23 rounds=4 penalty=0 borrow=2
+t=607, issue load node 784 gpr=10 mem=261 latency=3
+t=608, issue load node 787 gpr=12 mem=262 latency=3
+t=609, issue load node 790 gpr=14 mem=263 latency=3
+t=610, issue store node 441 mem=146 latency=0
+t=611, issue sfu node 458 with op gelu src0=48 src1=-1 dst=49 latency=23 rounds=4 penalty=0 borrow=2
+t=614, issue store node 444 mem=147 latency=0
+t=615, issue sfu node 461 with op gelu src0=50 src1=-1 dst=51 latency=23 rounds=4 penalty=0 borrow=2
+t=618, issue store node 447 mem=148 latency=0
+t=619, issue sfu node 464 with op gelu src0=52 src1=-1 dst=53 latency=23 rounds=4 penalty=0 borrow=2
+t=622, issue store node 450 mem=149 latency=0
+t=623, issue sfu node 467 with op gelu src0=54 src1=-1 dst=55 latency=23 rounds=4 penalty=0 borrow=2
+t=626, issue store node 453 mem=150 latency=0
+t=627, issue sfu node 470 with op gelu src0=56 src1=-1 dst=57 latency=23 rounds=4 penalty=0 borrow=2
+t=630, issue store node 456 mem=151 latency=0
+t=631, issue sfu node 473 with op gelu src0=58 src1=-1 dst=59 latency=23 rounds=4 penalty=0 borrow=2
+t=634, issue store node 459 mem=152 latency=0
+t=635, issue sfu node 476 with op gelu src0=60 src1=-1 dst=61 latency=23 rounds=4 penalty=0 borrow=2
+t=638, issue store node 462 mem=153 latency=0
+t=639, issue sfu node 479 with op gelu src0=62 src1=-1 dst=63 latency=23 rounds=4 penalty=0 borrow=2
+t=642, issue store node 465 mem=154 latency=0
+t=643, issue sfu node 482 with op gelu src0=64 src1=-1 dst=65 latency=23 rounds=4 penalty=0 borrow=2
+t=646, issue store node 468 mem=155 latency=0
+t=646, issue load node 793 gpr=16 mem=264 latency=3
+t=647, issue sfu node 485 with op gelu src0=66 src1=-1 dst=67 latency=23 rounds=4 penalty=0 borrow=2
+t=647, issue load node 796 gpr=18 mem=265 latency=3
+t=648, issue load node 799 gpr=20 mem=266 latency=3
+t=649, issue load node 802 gpr=22 mem=267 latency=3
+t=650, issue store node 471 mem=156 latency=0
+t=650, issue load node 805 gpr=24 mem=268 latency=3
+t=651, issue sfu node 488 with op gelu src0=68 src1=-1 dst=69 latency=23 rounds=4 penalty=0 borrow=2
+t=651, issue load node 808 gpr=26 mem=269 latency=3
+t=652, issue load node 811 gpr=28 mem=270 latency=3
+t=653, issue load node 814 gpr=30 mem=271 latency=3
+t=654, issue store node 474 mem=157 latency=0
+t=654, issue load node 817 gpr=32 mem=272 latency=3
+t=655, issue sfu node 491 with op gelu src0=70 src1=-1 dst=71 latency=23 rounds=4 penalty=0 borrow=2
+t=655, issue load node 820 gpr=34 mem=273 latency=3
+t=656, issue load node 823 gpr=36 mem=274 latency=3
+t=657, issue load node 826 gpr=38 mem=275 latency=3
+t=658, issue store node 477 mem=158 latency=0
+t=659, issue sfu node 494 with op gelu src0=72 src1=-1 dst=73 latency=23 rounds=4 penalty=0 borrow=2
+t=662, issue store node 480 mem=159 latency=0
+t=663, issue sfu node 497 with op gelu src0=74 src1=-1 dst=75 latency=23 rounds=4 penalty=0 borrow=2
+t=666, issue store node 483 mem=160 latency=0
+t=667, issue sfu node 500 with op gelu src0=76 src1=-1 dst=77 latency=23 rounds=4 penalty=0 borrow=2
+t=670, issue store node 486 mem=161 latency=0
+t=671, issue sfu node 503 with op gelu src0=78 src1=-1 dst=79 latency=23 rounds=4 penalty=0 borrow=2
+t=674, issue store node 489 mem=162 latency=0
+t=675, issue sfu node 506 with op gelu src0=80 src1=-1 dst=81 latency=23 rounds=4 penalty=0 borrow=2
+t=678, issue store node 492 mem=163 latency=0
+t=679, issue sfu node 509 with op gelu src0=82 src1=-1 dst=83 latency=23 rounds=4 penalty=0 borrow=2
+t=682, issue store node 495 mem=164 latency=0
+t=683, issue sfu node 512 with op gelu src0=84 src1=-1 dst=85 latency=23 rounds=4 penalty=0 borrow=2
+t=686, issue store node 498 mem=165 latency=0
+t=687, issue sfu node 515 with op gelu src0=86 src1=-1 dst=87 latency=23 rounds=4 penalty=0 borrow=2
+t=690, issue store node 501 mem=166 latency=0
+t=691, issue sfu node 518 with op gelu src0=88 src1=-1 dst=89 latency=23 rounds=4 penalty=0 borrow=2
+t=694, issue store node 504 mem=167 latency=0
+t=694, issue load node 829 gpr=40 mem=276 latency=3
+t=695, issue sfu node 521 with op gelu src0=90 src1=-1 dst=91 latency=23 rounds=4 penalty=0 borrow=2
+t=695, issue load node 832 gpr=42 mem=277 latency=3
+t=696, issue load node 835 gpr=44 mem=278 latency=3
+t=697, issue load node 838 gpr=46 mem=279 latency=3
+t=698, issue store node 507 mem=168 latency=0
+t=698, issue load node 841 gpr=48 mem=280 latency=3
+t=699, issue sfu node 524 with op gelu src0=92 src1=-1 dst=93 latency=23 rounds=4 penalty=0 borrow=2
+t=699, issue load node 844 gpr=50 mem=281 latency=3
+t=700, issue load node 847 gpr=52 mem=282 latency=3
+t=701, issue load node 850 gpr=54 mem=283 latency=3
+t=702, issue store node 510 mem=169 latency=0
+t=702, issue load node 853 gpr=56 mem=284 latency=3
+t=703, issue sfu node 527 with op gelu src0=94 src1=-1 dst=95 latency=23 rounds=4 penalty=0 borrow=2
+t=703, issue load node 856 gpr=58 mem=285 latency=3
+t=704, issue load node 859 gpr=60 mem=286 latency=3
+t=705, issue load node 862 gpr=62 mem=287 latency=3
+t=706, issue store node 513 mem=170 latency=0
+t=707, issue sfu node 530 with op gelu src0=96 src1=-1 dst=97 latency=23 rounds=4 penalty=0 borrow=2
+t=710, issue store node 516 mem=171 latency=0
+t=711, issue sfu node 533 with op gelu src0=98 src1=-1 dst=99 latency=23 rounds=4 penalty=0 borrow=2
+t=714, issue store node 519 mem=172 latency=0
+t=715, issue sfu node 536 with op gelu src0=100 src1=-1 dst=101 latency=23 rounds=4 penalty=0 borrow=2
+t=718, issue store node 522 mem=173 latency=0
+t=719, issue sfu node 539 with op gelu src0=102 src1=-1 dst=103 latency=23 rounds=4 penalty=0 borrow=2
+t=722, issue store node 525 mem=174 latency=0
+t=723, issue sfu node 542 with op gelu src0=104 src1=-1 dst=105 latency=23 rounds=4 penalty=0 borrow=2
+t=726, issue store node 528 mem=175 latency=0
+t=727, issue sfu node 545 with op gelu src0=106 src1=-1 dst=107 latency=23 rounds=4 penalty=0 borrow=2
+t=730, issue store node 531 mem=176 latency=0
+t=731, issue sfu node 548 with op gelu src0=108 src1=-1 dst=109 latency=23 rounds=4 penalty=0 borrow=2
+t=734, issue store node 534 mem=177 latency=0
+t=735, issue sfu node 551 with op gelu src0=110 src1=-1 dst=111 latency=23 rounds=4 penalty=0 borrow=2
+t=738, issue store node 537 mem=178 latency=0
+t=739, issue sfu node 554 with op gelu src0=112 src1=-1 dst=113 latency=23 rounds=4 penalty=0 borrow=2
+t=742, issue store node 540 mem=179 latency=0
+t=742, issue load node 865 gpr=64 mem=288 latency=3
+t=743, issue sfu node 557 with op gelu src0=114 src1=-1 dst=115 latency=23 rounds=4 penalty=0 borrow=2
+t=743, issue load node 868 gpr=66 mem=289 latency=3
+t=744, issue load node 871 gpr=68 mem=290 latency=3
+t=745, issue load node 874 gpr=70 mem=291 latency=3
+t=746, issue store node 543 mem=180 latency=0
+t=746, issue load node 877 gpr=72 mem=292 latency=3
+t=747, issue sfu node 560 with op gelu src0=116 src1=-1 dst=117 latency=23 rounds=4 penalty=0 borrow=2
+t=747, issue load node 880 gpr=74 mem=293 latency=3
+t=748, issue load node 883 gpr=76 mem=294 latency=3
+t=749, issue load node 886 gpr=78 mem=295 latency=3
+t=750, issue store node 546 mem=181 latency=0
+t=750, issue load node 889 gpr=80 mem=296 latency=3
+t=751, issue sfu node 563 with op gelu src0=118 src1=-1 dst=119 latency=23 rounds=4 penalty=0 borrow=2
+t=751, issue load node 892 gpr=82 mem=297 latency=3
+t=752, issue load node 895 gpr=84 mem=298 latency=3
+t=753, issue load node 898 gpr=86 mem=299 latency=3
+t=754, issue store node 549 mem=182 latency=0
+t=755, issue sfu node 566 with op gelu src0=120 src1=-1 dst=121 latency=23 rounds=4 penalty=0 borrow=2
+t=758, issue store node 552 mem=183 latency=0
+t=759, issue sfu node 569 with op gelu src0=122 src1=-1 dst=123 latency=23 rounds=4 penalty=0 borrow=2
+t=762, issue store node 555 mem=184 latency=0
+t=763, issue sfu node 572 with op gelu src0=124 src1=-1 dst=125 latency=23 rounds=4 penalty=0 borrow=2
+t=766, issue store node 558 mem=185 latency=0
+t=767, issue sfu node 575 with op gelu src0=126 src1=-1 dst=127 latency=23 rounds=4 penalty=0 borrow=2
+t=770, issue store node 561 mem=186 latency=0
+t=771, issue sfu node 578 with op gelu src0=128 src1=-1 dst=129 latency=23 rounds=4 penalty=0 borrow=2
+t=774, issue store node 564 mem=187 latency=0
+t=775, issue sfu node 581 with op gelu src0=130 src1=-1 dst=131 latency=23 rounds=4 penalty=0 borrow=2
+t=778, issue store node 567 mem=188 latency=0
+t=779, issue sfu node 584 with op gelu src0=132 src1=-1 dst=133 latency=23 rounds=4 penalty=0 borrow=2
+t=782, issue store node 570 mem=189 latency=0
+t=783, issue sfu node 587 with op gelu src0=134 src1=-1 dst=135 latency=23 rounds=4 penalty=0 borrow=2
+t=786, issue store node 573 mem=190 latency=0
+t=787, issue sfu node 590 with op gelu src0=136 src1=-1 dst=137 latency=23 rounds=4 penalty=0 borrow=2
+t=790, issue store node 576 mem=191 latency=0
+t=790, issue load node 901 gpr=88 mem=300 latency=3
+t=791, issue sfu node 593 with op gelu src0=138 src1=-1 dst=139 latency=23 rounds=4 penalty=0 borrow=2
+t=791, issue load node 904 gpr=90 mem=301 latency=3
+t=792, issue load node 907 gpr=92 mem=302 latency=3
+t=793, issue load node 910 gpr=94 mem=303 latency=3
+t=794, issue store node 579 mem=192 latency=0
+t=794, issue load node 913 gpr=96 mem=304 latency=3
+t=795, issue sfu node 596 with op gelu src0=140 src1=-1 dst=141 latency=23 rounds=4 penalty=0 borrow=2
+t=795, issue load node 916 gpr=98 mem=305 latency=3
+t=796, issue load node 919 gpr=100 mem=306 latency=3
+t=797, issue load node 922 gpr=102 mem=307 latency=3
+t=798, issue store node 582 mem=193 latency=0
+t=798, issue load node 925 gpr=104 mem=308 latency=3
+t=799, issue sfu node 599 with op gelu src0=142 src1=-1 dst=143 latency=23 rounds=4 penalty=0 borrow=2
+t=799, issue load node 928 gpr=106 mem=309 latency=3
+t=800, issue load node 931 gpr=108 mem=310 latency=3
+t=801, issue load node 934 gpr=110 mem=311 latency=3
+t=802, issue store node 585 mem=194 latency=0
+t=803, issue sfu node 602 with op gelu src0=144 src1=-1 dst=145 latency=23 rounds=4 penalty=0 borrow=2
+t=806, issue store node 588 mem=195 latency=0
+t=807, issue sfu node 605 with op gelu src0=146 src1=-1 dst=147 latency=23 rounds=4 penalty=0 borrow=2
+t=810, issue store node 591 mem=196 latency=0
+t=811, issue sfu node 608 with op gelu src0=148 src1=-1 dst=149 latency=23 rounds=4 penalty=0 borrow=2
+t=814, issue store node 594 mem=197 latency=0
+t=815, issue sfu node 611 with op gelu src0=150 src1=-1 dst=151 latency=23 rounds=4 penalty=0 borrow=2
+t=818, issue store node 597 mem=198 latency=0
+t=819, issue sfu node 614 with op gelu src0=152 src1=-1 dst=153 latency=23 rounds=4 penalty=0 borrow=2
+t=822, issue store node 600 mem=199 latency=0
+t=823, issue sfu node 617 with op gelu src0=154 src1=-1 dst=155 latency=23 rounds=4 penalty=0 borrow=2
+t=826, issue store node 603 mem=200 latency=0
+t=827, issue sfu node 620 with op gelu src0=156 src1=-1 dst=157 latency=23 rounds=4 penalty=0 borrow=2
+t=830, issue store node 606 mem=201 latency=0
+t=831, issue sfu node 623 with op gelu src0=158 src1=-1 dst=159 latency=23 rounds=4 penalty=0 borrow=2
+t=834, issue store node 609 mem=202 latency=0
+t=835, issue sfu node 626 with op gelu src0=160 src1=-1 dst=161 latency=23 rounds=4 penalty=0 borrow=2
+t=838, issue store node 612 mem=203 latency=0
+t=838, issue load node 937 gpr=112 mem=312 latency=3
+t=839, issue sfu node 629 with op gelu src0=162 src1=-1 dst=163 latency=23 rounds=4 penalty=0 borrow=2
+t=839, issue load node 940 gpr=114 mem=313 latency=3
+t=840, issue load node 943 gpr=116 mem=314 latency=3
+t=841, issue load node 946 gpr=118 mem=315 latency=3
+t=842, issue store node 615 mem=204 latency=0
+t=842, issue load node 949 gpr=120 mem=316 latency=3
+t=843, issue sfu node 632 with op gelu src0=164 src1=-1 dst=165 latency=23 rounds=4 penalty=0 borrow=2
+t=843, issue load node 952 gpr=122 mem=317 latency=3
+t=844, issue load node 955 gpr=124 mem=318 latency=3
+t=845, issue load node 958 gpr=126 mem=319 latency=3
+t=846, issue store node 618 mem=205 latency=0
+t=846, issue load node 961 gpr=128 mem=320 latency=3
+t=847, issue sfu node 635 with op gelu src0=166 src1=-1 dst=167 latency=23 rounds=4 penalty=0 borrow=2
+t=847, issue load node 964 gpr=130 mem=321 latency=3
+t=848, issue load node 967 gpr=132 mem=322 latency=3
+t=849, issue load node 970 gpr=134 mem=323 latency=3
+t=850, issue store node 621 mem=206 latency=0
+t=851, issue sfu node 638 with op gelu src0=168 src1=-1 dst=169 latency=23 rounds=4 penalty=0 borrow=2
+t=854, issue store node 624 mem=207 latency=0
+t=855, issue sfu node 641 with op gelu src0=170 src1=-1 dst=171 latency=23 rounds=4 penalty=0 borrow=2
+t=858, issue store node 627 mem=208 latency=0
+t=859, issue sfu node 644 with op gelu src0=172 src1=-1 dst=173 latency=23 rounds=4 penalty=0 borrow=2
+t=862, issue store node 630 mem=209 latency=0
+t=863, issue sfu node 647 with op gelu src0=174 src1=-1 dst=175 latency=23 rounds=4 penalty=0 borrow=2
+t=866, issue store node 633 mem=210 latency=0
+t=867, issue sfu node 650 with op gelu src0=176 src1=-1 dst=177 latency=23 rounds=4 penalty=0 borrow=2
+t=870, issue store node 636 mem=211 latency=0
+t=871, issue sfu node 653 with op gelu src0=178 src1=-1 dst=179 latency=23 rounds=4 penalty=0 borrow=2
+t=874, issue store node 639 mem=212 latency=0
+t=875, issue sfu node 656 with op gelu src0=180 src1=-1 dst=181 latency=23 rounds=4 penalty=0 borrow=2
+t=878, issue store node 642 mem=213 latency=0
+t=879, issue sfu node 659 with op gelu src0=182 src1=-1 dst=183 latency=23 rounds=4 penalty=0 borrow=2
+t=882, issue store node 645 mem=214 latency=0
+t=883, issue sfu node 662 with op gelu src0=184 src1=-1 dst=185 latency=23 rounds=4 penalty=0 borrow=2
+t=886, issue store node 648 mem=215 latency=0
+t=886, issue load node 973 gpr=136 mem=324 latency=3
+t=887, issue sfu node 665 with op gelu src0=186 src1=-1 dst=187 latency=23 rounds=4 penalty=0 borrow=2
+t=887, issue load node 976 gpr=138 mem=325 latency=3
+t=888, issue load node 979 gpr=140 mem=326 latency=3
+t=889, issue load node 982 gpr=142 mem=327 latency=3
+t=890, issue store node 651 mem=216 latency=0
+t=890, issue load node 985 gpr=144 mem=328 latency=3
+t=891, issue sfu node 668 with op gelu src0=188 src1=-1 dst=189 latency=23 rounds=4 penalty=0 borrow=2
+t=891, issue load node 988 gpr=146 mem=329 latency=3
+t=892, issue load node 991 gpr=148 mem=330 latency=3
+t=893, issue load node 994 gpr=150 mem=331 latency=3
+t=894, issue store node 654 mem=217 latency=0
+t=894, issue load node 997 gpr=152 mem=332 latency=3
+t=895, issue sfu node 671 with op gelu src0=190 src1=-1 dst=191 latency=23 rounds=4 penalty=0 borrow=2
+t=895, issue load node 1000 gpr=154 mem=333 latency=3
+t=896, issue load node 1003 gpr=156 mem=334 latency=3
+t=897, issue load node 1006 gpr=158 mem=335 latency=3
+t=898, issue store node 657 mem=218 latency=0
+t=899, issue sfu node 674 with op gelu src0=192 src1=-1 dst=193 latency=23 rounds=4 penalty=0 borrow=2
+t=902, issue store node 660 mem=219 latency=0
+t=903, issue sfu node 677 with op gelu src0=194 src1=-1 dst=195 latency=23 rounds=4 penalty=0 borrow=2
+t=906, issue store node 663 mem=220 latency=0
+t=907, issue sfu node 680 with op gelu src0=196 src1=-1 dst=197 latency=23 rounds=4 penalty=0 borrow=2
+t=910, issue store node 666 mem=221 latency=0
+t=911, issue sfu node 683 with op gelu src0=198 src1=-1 dst=199 latency=23 rounds=4 penalty=0 borrow=2
+t=914, issue store node 669 mem=222 latency=0
+t=915, issue sfu node 686 with op gelu src0=200 src1=-1 dst=201 latency=23 rounds=4 penalty=0 borrow=2
+t=918, issue store node 672 mem=223 latency=0
+t=919, issue sfu node 689 with op gelu src0=202 src1=-1 dst=203 latency=23 rounds=4 penalty=0 borrow=2
+t=922, issue store node 675 mem=224 latency=0
+t=923, issue sfu node 692 with op gelu src0=204 src1=-1 dst=205 latency=23 rounds=4 penalty=0 borrow=2
+t=926, issue store node 678 mem=225 latency=0
+t=927, issue sfu node 695 with op gelu src0=206 src1=-1 dst=207 latency=23 rounds=4 penalty=0 borrow=2
+t=930, issue store node 681 mem=226 latency=0
+t=931, issue sfu node 698 with op gelu src0=208 src1=-1 dst=209 latency=23 rounds=4 penalty=0 borrow=2
+t=934, issue store node 684 mem=227 latency=0
+t=934, issue load node 1009 gpr=160 mem=336 latency=3
+t=935, issue sfu node 701 with op gelu src0=210 src1=-1 dst=211 latency=23 rounds=4 penalty=0 borrow=2
+t=935, issue load node 1012 gpr=162 mem=337 latency=3
+t=936, issue load node 1015 gpr=164 mem=338 latency=3
+t=937, issue load node 1018 gpr=166 mem=339 latency=3
+t=938, issue store node 687 mem=228 latency=0
+t=938, issue load node 1021 gpr=168 mem=340 latency=3
+t=939, issue sfu node 704 with op gelu src0=212 src1=-1 dst=213 latency=23 rounds=4 penalty=0 borrow=2
+t=939, issue load node 1024 gpr=170 mem=341 latency=3
+t=940, issue load node 1027 gpr=172 mem=342 latency=3
+t=941, issue load node 1030 gpr=174 mem=343 latency=3
+t=942, issue store node 690 mem=229 latency=0
+t=942, issue load node 1033 gpr=176 mem=344 latency=3
+t=943, issue sfu node 707 with op gelu src0=214 src1=-1 dst=215 latency=23 rounds=4 penalty=0 borrow=2
+t=943, issue load node 1036 gpr=178 mem=345 latency=3
+t=944, issue load node 1039 gpr=180 mem=346 latency=3
+t=945, issue load node 1042 gpr=182 mem=347 latency=3
+t=946, issue store node 693 mem=230 latency=0
+t=947, issue sfu node 710 with op gelu src0=216 src1=-1 dst=217 latency=23 rounds=4 penalty=0 borrow=2
+t=950, issue store node 696 mem=231 latency=0
+t=951, issue sfu node 713 with op gelu src0=218 src1=-1 dst=219 latency=23 rounds=4 penalty=0 borrow=2
+t=954, issue store node 699 mem=232 latency=0
+t=955, issue sfu node 716 with op gelu src0=220 src1=-1 dst=221 latency=23 rounds=4 penalty=0 borrow=2
+t=958, issue store node 702 mem=233 latency=0
+t=959, issue sfu node 719 with op gelu src0=222 src1=-1 dst=223 latency=23 rounds=4 penalty=0 borrow=2
+t=962, issue store node 705 mem=234 latency=0
+t=963, issue sfu node 722 with op gelu src0=224 src1=-1 dst=225 latency=23 rounds=4 penalty=0 borrow=2
+t=966, issue store node 708 mem=235 latency=0
+t=967, issue sfu node 725 with op gelu src0=226 src1=-1 dst=227 latency=23 rounds=4 penalty=0 borrow=2
+t=970, issue store node 711 mem=236 latency=0
+t=971, issue sfu node 728 with op gelu src0=228 src1=-1 dst=229 latency=23 rounds=4 penalty=0 borrow=2
+t=974, issue store node 714 mem=237 latency=0
+t=975, issue sfu node 731 with op gelu src0=230 src1=-1 dst=231 latency=23 rounds=4 penalty=0 borrow=2
+t=978, issue store node 717 mem=238 latency=0
+t=979, issue sfu node 734 with op gelu src0=232 src1=-1 dst=233 latency=23 rounds=4 penalty=0 borrow=2
+t=982, issue store node 720 mem=239 latency=0
+t=982, issue load node 1045 gpr=184 mem=348 latency=3
+t=983, issue sfu node 737 with op gelu src0=234 src1=-1 dst=235 latency=23 rounds=4 penalty=0 borrow=2
+t=983, issue load node 1048 gpr=186 mem=349 latency=3
+t=984, issue load node 1051 gpr=188 mem=350 latency=3
+t=985, issue load node 1054 gpr=190 mem=351 latency=3
+t=986, issue store node 723 mem=240 latency=0
+t=986, issue load node 1057 gpr=192 mem=352 latency=3
+t=987, issue sfu node 740 with op gelu src0=236 src1=-1 dst=237 latency=23 rounds=4 penalty=0 borrow=2
+t=987, issue load node 1060 gpr=194 mem=353 latency=3
+t=988, issue load node 1063 gpr=196 mem=354 latency=3
+t=989, issue load node 1066 gpr=198 mem=355 latency=3
+t=990, issue store node 726 mem=241 latency=0
+t=990, issue load node 1069 gpr=200 mem=356 latency=3
+t=991, issue sfu node 743 with op gelu src0=238 src1=-1 dst=239 latency=23 rounds=4 penalty=0 borrow=2
+t=991, issue load node 1072 gpr=202 mem=357 latency=3
+t=992, issue load node 1075 gpr=204 mem=358 latency=3
+t=993, issue load node 1078 gpr=206 mem=359 latency=3
+t=994, issue store node 729 mem=242 latency=0
+t=995, issue sfu node 746 with op gelu src0=240 src1=-1 dst=241 latency=23 rounds=4 penalty=0 borrow=2
+t=998, issue store node 732 mem=243 latency=0
+t=999, issue sfu node 749 with op gelu src0=242 src1=-1 dst=243 latency=23 rounds=4 penalty=0 borrow=2
+t=1002, issue store node 735 mem=244 latency=0
+t=1003, issue sfu node 752 with op gelu src0=244 src1=-1 dst=245 latency=23 rounds=4 penalty=0 borrow=2
+t=1006, issue store node 738 mem=245 latency=0
+t=1007, issue sfu node 755 with op gelu src0=246 src1=-1 dst=247 latency=23 rounds=4 penalty=0 borrow=2
+t=1010, issue store node 741 mem=246 latency=0
+t=1011, issue sfu node 758 with op gelu src0=248 src1=-1 dst=249 latency=23 rounds=4 penalty=0 borrow=2
+t=1014, issue store node 744 mem=247 latency=0
+t=1015, issue sfu node 761 with op gelu src0=250 src1=-1 dst=251 latency=23 rounds=4 penalty=0 borrow=2
+t=1018, issue store node 747 mem=248 latency=0
+t=1019, issue sfu node 764 with op gelu src0=252 src1=-1 dst=253 latency=23 rounds=4 penalty=0 borrow=2
+t=1022, issue store node 750 mem=249 latency=0
+t=1023, issue sfu node 767 with op gelu src0=254 src1=-1 dst=255 latency=23 rounds=4 penalty=0 borrow=2
+t=1026, issue store node 753 mem=250 latency=0
+t=1027, issue sfu node 770 with op gelu src0=0 src1=-1 dst=1 latency=23 rounds=4 penalty=0 borrow=2
+t=1030, issue store node 756 mem=251 latency=0
+t=1030, issue load node 1081 gpr=208 mem=360 latency=3
+t=1031, issue sfu node 773 with op gelu src0=2 src1=-1 dst=3 latency=23 rounds=4 penalty=0 borrow=2
+t=1031, issue load node 1084 gpr=210 mem=361 latency=3
+t=1032, issue load node 1087 gpr=212 mem=362 latency=3
+t=1033, issue load node 1090 gpr=214 mem=363 latency=3
+t=1034, issue store node 759 mem=252 latency=0
+t=1034, issue load node 1093 gpr=216 mem=364 latency=3
+t=1035, issue sfu node 776 with op gelu src0=4 src1=-1 dst=5 latency=23 rounds=4 penalty=0 borrow=2
+t=1035, issue load node 1096 gpr=218 mem=365 latency=3
+t=1036, issue load node 1099 gpr=220 mem=366 latency=3
+t=1037, issue load node 1102 gpr=222 mem=367 latency=3
+t=1038, issue store node 762 mem=253 latency=0
+t=1038, issue load node 1105 gpr=224 mem=368 latency=3
+t=1039, issue sfu node 779 with op gelu src0=6 src1=-1 dst=7 latency=23 rounds=4 penalty=0 borrow=2
+t=1039, issue load node 1108 gpr=226 mem=369 latency=3
+t=1040, issue load node 1111 gpr=228 mem=370 latency=3
+t=1041, issue load node 1114 gpr=230 mem=371 latency=3
+t=1042, issue store node 765 mem=254 latency=0
+t=1043, issue sfu node 782 with op gelu src0=8 src1=-1 dst=9 latency=23 rounds=4 penalty=0 borrow=2
+t=1046, issue store node 768 mem=255 latency=0
+t=1047, issue sfu node 785 with op gelu src0=10 src1=-1 dst=11 latency=23 rounds=4 penalty=0 borrow=2
+t=1050, issue store node 771 mem=256 latency=0
+t=1051, issue sfu node 788 with op gelu src0=12 src1=-1 dst=13 latency=23 rounds=4 penalty=0 borrow=2
+t=1054, issue store node 774 mem=257 latency=0
+t=1055, issue sfu node 791 with op gelu src0=14 src1=-1 dst=15 latency=23 rounds=4 penalty=0 borrow=2
+t=1058, issue store node 777 mem=258 latency=0
+t=1059, issue sfu node 794 with op gelu src0=16 src1=-1 dst=17 latency=23 rounds=4 penalty=0 borrow=2
+t=1062, issue store node 780 mem=259 latency=0
+t=1063, issue sfu node 797 with op gelu src0=18 src1=-1 dst=19 latency=23 rounds=4 penalty=0 borrow=2
+t=1066, issue store node 783 mem=260 latency=0
+t=1067, issue sfu node 800 with op gelu src0=20 src1=-1 dst=21 latency=23 rounds=4 penalty=0 borrow=2
+t=1070, issue store node 786 mem=261 latency=0
+t=1071, issue sfu node 803 with op gelu src0=22 src1=-1 dst=23 latency=23 rounds=4 penalty=0 borrow=2
+t=1074, issue store node 789 mem=262 latency=0
+t=1075, issue sfu node 806 with op gelu src0=24 src1=-1 dst=25 latency=23 rounds=4 penalty=0 borrow=2
+t=1078, issue store node 792 mem=263 latency=0
+t=1078, issue load node 1117 gpr=232 mem=372 latency=3
+t=1079, issue sfu node 809 with op gelu src0=26 src1=-1 dst=27 latency=23 rounds=4 penalty=0 borrow=2
+t=1079, issue load node 1120 gpr=234 mem=373 latency=3
+t=1080, issue load node 1123 gpr=236 mem=374 latency=3
+t=1081, issue load node 1126 gpr=238 mem=375 latency=3
+t=1082, issue store node 795 mem=264 latency=0
+t=1082, issue load node 1129 gpr=240 mem=376 latency=3
+t=1083, issue sfu node 812 with op gelu src0=28 src1=-1 dst=29 latency=23 rounds=4 penalty=0 borrow=2
+t=1083, issue load node 1132 gpr=242 mem=377 latency=3
+t=1084, issue load node 1135 gpr=244 mem=378 latency=3
+t=1085, issue load node 1138 gpr=246 mem=379 latency=3
+t=1086, issue store node 798 mem=265 latency=0
+t=1086, issue load node 1141 gpr=248 mem=380 latency=3
+t=1087, issue sfu node 815 with op gelu src0=30 src1=-1 dst=31 latency=23 rounds=4 penalty=0 borrow=2
+t=1087, issue load node 1144 gpr=250 mem=381 latency=3
+t=1088, issue load node 1147 gpr=252 mem=382 latency=3
+t=1089, issue load node 1150 gpr=254 mem=383 latency=3
+t=1090, issue store node 801 mem=266 latency=0
+t=1091, issue sfu node 818 with op gelu src0=32 src1=-1 dst=33 latency=23 rounds=4 penalty=0 borrow=2
+t=1094, issue store node 804 mem=267 latency=0
+t=1095, issue sfu node 821 with op gelu src0=34 src1=-1 dst=35 latency=23 rounds=4 penalty=0 borrow=2
+t=1098, issue store node 807 mem=268 latency=0
+t=1099, issue sfu node 824 with op gelu src0=36 src1=-1 dst=37 latency=23 rounds=4 penalty=0 borrow=2
+t=1102, issue store node 810 mem=269 latency=0
+t=1103, issue sfu node 827 with op gelu src0=38 src1=-1 dst=39 latency=23 rounds=4 penalty=0 borrow=2
+t=1106, issue store node 813 mem=270 latency=0
+t=1107, issue sfu node 830 with op gelu src0=40 src1=-1 dst=41 latency=23 rounds=4 penalty=0 borrow=2
+t=1110, issue store node 816 mem=271 latency=0
+t=1111, issue sfu node 833 with op gelu src0=42 src1=-1 dst=43 latency=23 rounds=4 penalty=0 borrow=2
+t=1114, issue store node 819 mem=272 latency=0
+t=1115, issue sfu node 836 with op gelu src0=44 src1=-1 dst=45 latency=23 rounds=4 penalty=0 borrow=2
+t=1118, issue store node 822 mem=273 latency=0
+t=1119, issue sfu node 839 with op gelu src0=46 src1=-1 dst=47 latency=23 rounds=4 penalty=0 borrow=2
+t=1122, issue store node 825 mem=274 latency=0
+t=1123, issue sfu node 842 with op gelu src0=48 src1=-1 dst=49 latency=23 rounds=4 penalty=0 borrow=2
+t=1126, issue store node 828 mem=275 latency=0
+t=1127, issue sfu node 845 with op gelu src0=50 src1=-1 dst=51 latency=23 rounds=4 penalty=0 borrow=2
+t=1130, issue store node 831 mem=276 latency=0
+t=1131, issue sfu node 848 with op gelu src0=52 src1=-1 dst=53 latency=23 rounds=4 penalty=0 borrow=2
+t=1134, issue store node 834 mem=277 latency=0
+t=1135, issue sfu node 851 with op gelu src0=54 src1=-1 dst=55 latency=23 rounds=4 penalty=0 borrow=2
+t=1138, issue store node 837 mem=278 latency=0
+t=1139, issue sfu node 854 with op gelu src0=56 src1=-1 dst=57 latency=23 rounds=4 penalty=0 borrow=2
+t=1142, issue store node 840 mem=279 latency=0
+t=1143, issue sfu node 857 with op gelu src0=58 src1=-1 dst=59 latency=23 rounds=4 penalty=0 borrow=2
+t=1146, issue store node 843 mem=280 latency=0
+t=1147, issue sfu node 860 with op gelu src0=60 src1=-1 dst=61 latency=23 rounds=4 penalty=0 borrow=2
+t=1150, issue store node 846 mem=281 latency=0
+t=1151, issue sfu node 863 with op gelu src0=62 src1=-1 dst=63 latency=23 rounds=4 penalty=0 borrow=2
+t=1154, issue store node 849 mem=282 latency=0
+t=1155, issue sfu node 866 with op gelu src0=64 src1=-1 dst=65 latency=23 rounds=4 penalty=0 borrow=2
+t=1158, issue store node 852 mem=283 latency=0
+t=1159, issue sfu node 869 with op gelu src0=66 src1=-1 dst=67 latency=23 rounds=4 penalty=0 borrow=2
+t=1162, issue store node 855 mem=284 latency=0
+t=1163, issue sfu node 872 with op gelu src0=68 src1=-1 dst=69 latency=23 rounds=4 penalty=0 borrow=2
+t=1166, issue store node 858 mem=285 latency=0
+t=1167, issue sfu node 875 with op gelu src0=70 src1=-1 dst=71 latency=23 rounds=4 penalty=0 borrow=2
+t=1170, issue store node 861 mem=286 latency=0
+t=1171, issue sfu node 878 with op gelu src0=72 src1=-1 dst=73 latency=23 rounds=4 penalty=0 borrow=2
+t=1174, issue store node 864 mem=287 latency=0
+t=1175, issue sfu node 881 with op gelu src0=74 src1=-1 dst=75 latency=23 rounds=4 penalty=0 borrow=2
+t=1178, issue store node 867 mem=288 latency=0
+t=1179, issue sfu node 884 with op gelu src0=76 src1=-1 dst=77 latency=23 rounds=4 penalty=0 borrow=2
+t=1182, issue store node 870 mem=289 latency=0
+t=1183, issue sfu node 887 with op gelu src0=78 src1=-1 dst=79 latency=23 rounds=4 penalty=0 borrow=2
+t=1186, issue store node 873 mem=290 latency=0
+t=1187, issue sfu node 890 with op gelu src0=80 src1=-1 dst=81 latency=23 rounds=4 penalty=0 borrow=2
+t=1190, issue store node 876 mem=291 latency=0
+t=1191, issue sfu node 893 with op gelu src0=82 src1=-1 dst=83 latency=23 rounds=4 penalty=0 borrow=2
+t=1194, issue store node 879 mem=292 latency=0
+t=1195, issue sfu node 896 with op gelu src0=84 src1=-1 dst=85 latency=23 rounds=4 penalty=0 borrow=2
+t=1198, issue store node 882 mem=293 latency=0
+t=1199, issue sfu node 899 with op gelu src0=86 src1=-1 dst=87 latency=23 rounds=4 penalty=0 borrow=2
+t=1202, issue store node 885 mem=294 latency=0
+t=1203, issue sfu node 902 with op gelu src0=88 src1=-1 dst=89 latency=23 rounds=4 penalty=0 borrow=2
+t=1206, issue store node 888 mem=295 latency=0
+t=1207, issue sfu node 905 with op gelu src0=90 src1=-1 dst=91 latency=23 rounds=4 penalty=0 borrow=2
+t=1210, issue store node 891 mem=296 latency=0
+t=1211, issue sfu node 908 with op gelu src0=92 src1=-1 dst=93 latency=23 rounds=4 penalty=0 borrow=2
+t=1214, issue store node 894 mem=297 latency=0
+t=1215, issue sfu node 911 with op gelu src0=94 src1=-1 dst=95 latency=23 rounds=4 penalty=0 borrow=2
+t=1218, issue store node 897 mem=298 latency=0
+t=1219, issue sfu node 914 with op gelu src0=96 src1=-1 dst=97 latency=23 rounds=4 penalty=0 borrow=2
+t=1222, issue store node 900 mem=299 latency=0
+t=1223, issue sfu node 917 with op gelu src0=98 src1=-1 dst=99 latency=23 rounds=4 penalty=0 borrow=2
+t=1226, issue store node 903 mem=300 latency=0
+t=1227, issue sfu node 920 with op gelu src0=100 src1=-1 dst=101 latency=23 rounds=4 penalty=0 borrow=2
+t=1230, issue store node 906 mem=301 latency=0
+t=1231, issue sfu node 923 with op gelu src0=102 src1=-1 dst=103 latency=23 rounds=4 penalty=0 borrow=2
+t=1234, issue store node 909 mem=302 latency=0
+t=1235, issue sfu node 926 with op gelu src0=104 src1=-1 dst=105 latency=23 rounds=4 penalty=0 borrow=2
+t=1238, issue store node 912 mem=303 latency=0
+t=1239, issue sfu node 929 with op gelu src0=106 src1=-1 dst=107 latency=23 rounds=4 penalty=0 borrow=2
+t=1242, issue store node 915 mem=304 latency=0
+t=1243, issue sfu node 932 with op gelu src0=108 src1=-1 dst=109 latency=23 rounds=4 penalty=0 borrow=2
+t=1246, issue store node 918 mem=305 latency=0
+t=1247, issue sfu node 935 with op gelu src0=110 src1=-1 dst=111 latency=23 rounds=4 penalty=0 borrow=2
+t=1250, issue store node 921 mem=306 latency=0
+t=1251, issue sfu node 938 with op gelu src0=112 src1=-1 dst=113 latency=23 rounds=4 penalty=0 borrow=2
+t=1254, issue store node 924 mem=307 latency=0
+t=1255, issue sfu node 941 with op gelu src0=114 src1=-1 dst=115 latency=23 rounds=4 penalty=0 borrow=2
+t=1258, issue store node 927 mem=308 latency=0
+t=1259, issue sfu node 944 with op gelu src0=116 src1=-1 dst=117 latency=23 rounds=4 penalty=0 borrow=2
+t=1262, issue store node 930 mem=309 latency=0
+t=1263, issue sfu node 947 with op gelu src0=118 src1=-1 dst=119 latency=23 rounds=4 penalty=0 borrow=2
+t=1266, issue store node 933 mem=310 latency=0
+t=1267, issue sfu node 950 with op gelu src0=120 src1=-1 dst=121 latency=23 rounds=4 penalty=0 borrow=2
+t=1270, issue store node 936 mem=311 latency=0
+t=1271, issue sfu node 953 with op gelu src0=122 src1=-1 dst=123 latency=23 rounds=4 penalty=0 borrow=2
+t=1274, issue store node 939 mem=312 latency=0
+t=1275, issue sfu node 956 with op gelu src0=124 src1=-1 dst=125 latency=23 rounds=4 penalty=0 borrow=2
+t=1278, issue store node 942 mem=313 latency=0
+t=1279, issue sfu node 959 with op gelu src0=126 src1=-1 dst=127 latency=23 rounds=4 penalty=0 borrow=2
+t=1282, issue store node 945 mem=314 latency=0
+t=1283, issue sfu node 962 with op gelu src0=128 src1=-1 dst=129 latency=23 rounds=4 penalty=0 borrow=2
+t=1286, issue store node 948 mem=315 latency=0
+t=1287, issue sfu node 965 with op gelu src0=130 src1=-1 dst=131 latency=23 rounds=4 penalty=0 borrow=2
+t=1290, issue store node 951 mem=316 latency=0
+t=1291, issue sfu node 968 with op gelu src0=132 src1=-1 dst=133 latency=23 rounds=4 penalty=0 borrow=2
+t=1294, issue store node 954 mem=317 latency=0
+t=1295, issue sfu node 971 with op gelu src0=134 src1=-1 dst=135 latency=23 rounds=4 penalty=0 borrow=2
+t=1298, issue store node 957 mem=318 latency=0
+t=1299, issue sfu node 974 with op gelu src0=136 src1=-1 dst=137 latency=23 rounds=4 penalty=0 borrow=2
+t=1302, issue store node 960 mem=319 latency=0
+t=1303, issue sfu node 977 with op gelu src0=138 src1=-1 dst=139 latency=23 rounds=4 penalty=0 borrow=2
+t=1306, issue store node 963 mem=320 latency=0
+t=1307, issue sfu node 980 with op gelu src0=140 src1=-1 dst=141 latency=23 rounds=4 penalty=0 borrow=2
+t=1310, issue store node 966 mem=321 latency=0
+t=1311, issue sfu node 983 with op gelu src0=142 src1=-1 dst=143 latency=23 rounds=4 penalty=0 borrow=2
+t=1314, issue store node 969 mem=322 latency=0
+t=1315, issue sfu node 986 with op gelu src0=144 src1=-1 dst=145 latency=23 rounds=4 penalty=0 borrow=2
+t=1318, issue store node 972 mem=323 latency=0
+t=1319, issue sfu node 989 with op gelu src0=146 src1=-1 dst=147 latency=23 rounds=4 penalty=0 borrow=2
+t=1322, issue store node 975 mem=324 latency=0
+t=1323, issue sfu node 992 with op gelu src0=148 src1=-1 dst=149 latency=23 rounds=4 penalty=0 borrow=2
+t=1326, issue store node 978 mem=325 latency=0
+t=1327, issue sfu node 995 with op gelu src0=150 src1=-1 dst=151 latency=23 rounds=4 penalty=0 borrow=2
+t=1330, issue store node 981 mem=326 latency=0
+t=1331, issue sfu node 998 with op gelu src0=152 src1=-1 dst=153 latency=23 rounds=4 penalty=0 borrow=2
+t=1334, issue store node 984 mem=327 latency=0
+t=1335, issue sfu node 1001 with op gelu src0=154 src1=-1 dst=155 latency=23 rounds=4 penalty=0 borrow=2
+t=1338, issue store node 987 mem=328 latency=0
+t=1339, issue sfu node 1004 with op gelu src0=156 src1=-1 dst=157 latency=23 rounds=4 penalty=0 borrow=2
+t=1342, issue store node 990 mem=329 latency=0
+t=1343, issue sfu node 1007 with op gelu src0=158 src1=-1 dst=159 latency=23 rounds=4 penalty=0 borrow=2
+t=1346, issue store node 993 mem=330 latency=0
+t=1347, issue sfu node 1010 with op gelu src0=160 src1=-1 dst=161 latency=23 rounds=4 penalty=0 borrow=2
+t=1350, issue store node 996 mem=331 latency=0
+t=1351, issue sfu node 1013 with op gelu src0=162 src1=-1 dst=163 latency=23 rounds=4 penalty=0 borrow=2
+t=1354, issue store node 999 mem=332 latency=0
+t=1355, issue sfu node 1016 with op gelu src0=164 src1=-1 dst=165 latency=23 rounds=4 penalty=0 borrow=2
+t=1358, issue store node 1002 mem=333 latency=0
+t=1359, issue sfu node 1019 with op gelu src0=166 src1=-1 dst=167 latency=23 rounds=4 penalty=0 borrow=2
+t=1362, issue store node 1005 mem=334 latency=0
+t=1363, issue sfu node 1022 with op gelu src0=168 src1=-1 dst=169 latency=23 rounds=4 penalty=0 borrow=2
+t=1366, issue store node 1008 mem=335 latency=0
+t=1367, issue sfu node 1025 with op gelu src0=170 src1=-1 dst=171 latency=23 rounds=4 penalty=0 borrow=2
+t=1370, issue store node 1011 mem=336 latency=0
+t=1371, issue sfu node 1028 with op gelu src0=172 src1=-1 dst=173 latency=23 rounds=4 penalty=0 borrow=2
+t=1374, issue store node 1014 mem=337 latency=0
+t=1375, issue sfu node 1031 with op gelu src0=174 src1=-1 dst=175 latency=23 rounds=4 penalty=0 borrow=2
+t=1378, issue store node 1017 mem=338 latency=0
+t=1379, issue sfu node 1034 with op gelu src0=176 src1=-1 dst=177 latency=23 rounds=4 penalty=0 borrow=2
+t=1382, issue store node 1020 mem=339 latency=0
+t=1383, issue sfu node 1037 with op gelu src0=178 src1=-1 dst=179 latency=23 rounds=4 penalty=0 borrow=2
+t=1386, issue store node 1023 mem=340 latency=0
+t=1387, issue sfu node 1040 with op gelu src0=180 src1=-1 dst=181 latency=23 rounds=4 penalty=0 borrow=2
+t=1390, issue store node 1026 mem=341 latency=0
+t=1391, issue sfu node 1043 with op gelu src0=182 src1=-1 dst=183 latency=23 rounds=4 penalty=0 borrow=2
+t=1394, issue store node 1029 mem=342 latency=0
+t=1395, issue sfu node 1046 with op gelu src0=184 src1=-1 dst=185 latency=23 rounds=4 penalty=0 borrow=2
+t=1398, issue store node 1032 mem=343 latency=0
+t=1399, issue sfu node 1049 with op gelu src0=186 src1=-1 dst=187 latency=23 rounds=4 penalty=0 borrow=2
+t=1402, issue store node 1035 mem=344 latency=0
+t=1403, issue sfu node 1052 with op gelu src0=188 src1=-1 dst=189 latency=23 rounds=4 penalty=0 borrow=2
+t=1406, issue store node 1038 mem=345 latency=0
+t=1407, issue sfu node 1055 with op gelu src0=190 src1=-1 dst=191 latency=23 rounds=4 penalty=0 borrow=2
+t=1410, issue store node 1041 mem=346 latency=0
+t=1411, issue sfu node 1058 with op gelu src0=192 src1=-1 dst=193 latency=23 rounds=4 penalty=0 borrow=2
+t=1414, issue store node 1044 mem=347 latency=0
+t=1415, issue sfu node 1061 with op gelu src0=194 src1=-1 dst=195 latency=23 rounds=4 penalty=0 borrow=2
+t=1418, issue store node 1047 mem=348 latency=0
+t=1419, issue sfu node 1064 with op gelu src0=196 src1=-1 dst=197 latency=23 rounds=4 penalty=0 borrow=2
+t=1422, issue store node 1050 mem=349 latency=0
+t=1423, issue sfu node 1067 with op gelu src0=198 src1=-1 dst=199 latency=23 rounds=4 penalty=0 borrow=2
+t=1426, issue store node 1053 mem=350 latency=0
+t=1427, issue sfu node 1070 with op gelu src0=200 src1=-1 dst=201 latency=23 rounds=4 penalty=0 borrow=2
+t=1430, issue store node 1056 mem=351 latency=0
+t=1431, issue sfu node 1073 with op gelu src0=202 src1=-1 dst=203 latency=23 rounds=4 penalty=0 borrow=2
+t=1434, issue store node 1059 mem=352 latency=0
+t=1435, issue sfu node 1076 with op gelu src0=204 src1=-1 dst=205 latency=23 rounds=4 penalty=0 borrow=2
+t=1438, issue store node 1062 mem=353 latency=0
+t=1439, issue sfu node 1079 with op gelu src0=206 src1=-1 dst=207 latency=23 rounds=4 penalty=0 borrow=2
+t=1442, issue store node 1065 mem=354 latency=0
+t=1443, issue sfu node 1082 with op gelu src0=208 src1=-1 dst=209 latency=23 rounds=4 penalty=0 borrow=2
+t=1446, issue store node 1068 mem=355 latency=0
+t=1447, issue sfu node 1085 with op gelu src0=210 src1=-1 dst=211 latency=23 rounds=4 penalty=0 borrow=2
+t=1450, issue store node 1071 mem=356 latency=0
+t=1451, issue sfu node 1088 with op gelu src0=212 src1=-1 dst=213 latency=23 rounds=4 penalty=0 borrow=2
+t=1454, issue store node 1074 mem=357 latency=0
+t=1455, issue sfu node 1091 with op gelu src0=214 src1=-1 dst=215 latency=23 rounds=4 penalty=0 borrow=2
+t=1458, issue store node 1077 mem=358 latency=0
+t=1459, issue sfu node 1094 with op gelu src0=216 src1=-1 dst=217 latency=23 rounds=4 penalty=0 borrow=2
+t=1462, issue store node 1080 mem=359 latency=0
+t=1463, issue sfu node 1097 with op gelu src0=218 src1=-1 dst=219 latency=23 rounds=4 penalty=0 borrow=2
+t=1466, issue store node 1083 mem=360 latency=0
+t=1467, issue sfu node 1100 with op gelu src0=220 src1=-1 dst=221 latency=23 rounds=4 penalty=0 borrow=2
+t=1470, issue store node 1086 mem=361 latency=0
+t=1471, issue sfu node 1103 with op gelu src0=222 src1=-1 dst=223 latency=23 rounds=4 penalty=0 borrow=2
+t=1474, issue store node 1089 mem=362 latency=0
+t=1475, issue sfu node 1106 with op gelu src0=224 src1=-1 dst=225 latency=23 rounds=4 penalty=0 borrow=2
+t=1478, issue store node 1092 mem=363 latency=0
+t=1479, issue sfu node 1109 with op gelu src0=226 src1=-1 dst=227 latency=23 rounds=4 penalty=0 borrow=2
+t=1482, issue store node 1095 mem=364 latency=0
+t=1483, issue sfu node 1112 with op gelu src0=228 src1=-1 dst=229 latency=23 rounds=4 penalty=0 borrow=2
+t=1486, issue store node 1098 mem=365 latency=0
+t=1487, issue sfu node 1115 with op gelu src0=230 src1=-1 dst=231 latency=23 rounds=4 penalty=0 borrow=2
+t=1490, issue store node 1101 mem=366 latency=0
+t=1491, issue sfu node 1118 with op gelu src0=232 src1=-1 dst=233 latency=23 rounds=4 penalty=0 borrow=2
+t=1494, issue store node 1104 mem=367 latency=0
+t=1495, issue sfu node 1121 with op gelu src0=234 src1=-1 dst=235 latency=23 rounds=4 penalty=0 borrow=2
+t=1498, issue store node 1107 mem=368 latency=0
+t=1499, issue sfu node 1124 with op gelu src0=236 src1=-1 dst=237 latency=23 rounds=4 penalty=0 borrow=2
+t=1502, issue store node 1110 mem=369 latency=0
+t=1503, issue sfu node 1127 with op gelu src0=238 src1=-1 dst=239 latency=23 rounds=4 penalty=0 borrow=2
+t=1506, issue store node 1113 mem=370 latency=0
+t=1507, issue sfu node 1130 with op gelu src0=240 src1=-1 dst=241 latency=23 rounds=4 penalty=0 borrow=2
+t=1510, issue store node 1116 mem=371 latency=0
+t=1511, issue sfu node 1133 with op gelu src0=242 src1=-1 dst=243 latency=23 rounds=4 penalty=0 borrow=2
+t=1514, issue store node 1119 mem=372 latency=0
+t=1515, issue sfu node 1136 with op gelu src0=244 src1=-1 dst=245 latency=23 rounds=4 penalty=0 borrow=2
+t=1518, issue store node 1122 mem=373 latency=0
+t=1519, issue sfu node 1139 with op gelu src0=246 src1=-1 dst=247 latency=23 rounds=4 penalty=0 borrow=2
+t=1522, issue store node 1125 mem=374 latency=0
+t=1523, issue sfu node 1142 with op gelu src0=248 src1=-1 dst=249 latency=23 rounds=4 penalty=0 borrow=2
+t=1526, issue store node 1128 mem=375 latency=0
+t=1527, issue sfu node 1145 with op gelu src0=250 src1=-1 dst=251 latency=23 rounds=4 penalty=0 borrow=2
+t=1530, issue store node 1131 mem=376 latency=0
+t=1531, issue sfu node 1148 with op gelu src0=252 src1=-1 dst=253 latency=23 rounds=4 penalty=0 borrow=2
+t=1534, issue store node 1134 mem=377 latency=0
+t=1535, issue sfu node 1151 with op gelu src0=254 src1=-1 dst=255 latency=23 rounds=4 penalty=0 borrow=2
+t=1538, issue store node 1137 mem=378 latency=0
+t=1542, issue store node 1140 mem=379 latency=0
+t=1546, issue store node 1143 mem=380 latency=0
+t=1550, issue store node 1146 mem=381 latency=0
+t=1554, issue store node 1149 mem=382 latency=0
+t=1558, issue store node 1152 mem=383 latency=0
+调度完成，周期数 = 1560
+统计已完成，结果已输出到 /Users/maghu/Desktop/work at school/compress/compress-vliw/analysis_output_6x2/gelu_x32_y3072_mode2performance.txt
+Saved VE usage to: /Users/maghu/Desktop/work at school/compress/compress-vliw/analysis_output_6x2/gelu_x32_y3072_mode2/ve_usage.csv
+Saved SFU usage to: /Users/maghu/Desktop/work at school/compress/compress-vliw/analysis_output_6x2/gelu_x32_y3072_mode2/sfu_usage.csv

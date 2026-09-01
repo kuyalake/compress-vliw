@@ -1,0 +1,996 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FRV-SFU-VLIW 指令压缩研究 Handoff（2026-09-01）</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --paper: #ffffff;
+      --ink: #18212f;
+      --muted: #5d6979;
+      --line: #d8dee8;
+      --accent: #2056a8;
+      --accent-soft: #eaf1fc;
+      --good: #17663a;
+      --good-bg: #e8f5ed;
+      --warn: #865800;
+      --warn-bg: #fff5d9;
+      --bad: #9b2c2c;
+      --bad-bg: #fdecec;
+      --code: #eef1f5;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      padding: 0.12rem 0.34rem;
+      border-radius: 4px;
+      background: var(--code);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.92em;
+    }
+    pre {
+      overflow-x: auto;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--code);
+      line-height: 1.5;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) minmax(0, 1080px);
+      gap: 24px;
+      max-width: 1420px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    nav {
+      position: sticky;
+      top: 20px;
+      align-self: start;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper);
+    }
+    nav strong { display: block; margin-bottom: 8px; }
+    nav ol { margin: 0; padding-left: 22px; }
+    nav li { margin: 5px 0; }
+    main {
+      min-width: 0;
+      padding: 32px 42px 56px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper);
+    }
+    h1 { margin: 0 0 8px; font-size: 2rem; line-height: 1.25; }
+    h2 {
+      margin: 42px 0 14px;
+      padding-bottom: 7px;
+      border-bottom: 2px solid var(--line);
+      font-size: 1.45rem;
+    }
+    h3 { margin: 26px 0 8px; font-size: 1.12rem; }
+    h4 { margin: 18px 0 6px; }
+    p { margin: 8px 0 12px; }
+    ul, ol { margin-top: 7px; }
+    .subtitle { color: var(--muted); font-size: 1.03rem; }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 10px;
+      margin: 22px 0;
+    }
+    .meta > div {
+      padding: 11px 13px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+    }
+    .meta small { display: block; color: var(--muted); }
+    .meta strong { display: block; margin-top: 2px; }
+    .callout {
+      margin: 16px 0;
+      padding: 14px 16px;
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+    }
+    .callout.good { border-color: var(--good); background: var(--good-bg); }
+    .callout.warn { border-color: var(--warn); background: var(--warn-bg); }
+    .callout.bad { border-color: var(--bad); background: var(--bad-bg); }
+    .callout > strong { display: block; margin-bottom: 4px; }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .card {
+      padding: 15px 17px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .card h3, .card h4 { margin-top: 0; }
+    .table-wrap { overflow-x: auto; margin: 12px 0 18px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.91rem;
+      white-space: nowrap;
+    }
+    th, td {
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      text-align: right;
+      vertical-align: top;
+    }
+    th {
+      background: #edf1f6;
+      font-weight: 650;
+    }
+    th:first-child, td:first-child { text-align: left; }
+    .wrap td, .wrap th { white-space: normal; text-align: left; }
+    .num { text-align: right !important; font-variant-numeric: tabular-nums; }
+    .tag {
+      display: inline-block;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 650;
+    }
+    .tag.good { color: var(--good); background: var(--good-bg); }
+    .tag.warn { color: var(--warn); background: var(--warn-bg); }
+    .tag.bad { color: var(--bad); background: var(--bad-bg); }
+    .tag.info { color: var(--accent); background: var(--accent-soft); }
+    .small { color: var(--muted); font-size: 0.9rem; }
+    .decision {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .decision:last-child { border-bottom: 0; }
+    .formula {
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--code);
+      font: 0.94rem/1.6 "SFMono-Regular", Consolas, monospace;
+    }
+    details {
+      margin: 10px 0;
+      padding: 10px 13px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+    }
+    summary { cursor: pointer; font-weight: 650; }
+    .checklist { list-style: none; padding-left: 0; }
+    .checklist li::before { content: "□"; margin-right: 8px; color: var(--accent); }
+    @media (max-width: 900px) {
+      .layout { display: block; padding: 10px; }
+      nav { position: static; margin-bottom: 12px; max-height: none; }
+      main { padding: 24px 18px 40px; }
+      .meta, .grid-2 { grid-template-columns: 1fr; }
+    }
+    @media print {
+      body { background: white; }
+      .layout { display: block; max-width: none; padding: 0; }
+      nav { display: none; }
+      main { border: 0; padding: 0; }
+      a { color: inherit; }
+      details { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <nav aria-label="目录">
+    <strong>文档目录</strong>
+    <ol>
+      <li><a href="#executive">执行摘要</a></li>
+      <li><a href="#platform">平台与问题定义</a></li>
+      <li><a href="#requirements">不可妥协的要求</a></li>
+      <li><a href="#prior-art">已有工作与创新边界</a></li>
+      <li><a href="#decisions">当前关键决策</a></li>
+      <li><a href="#method">Trace 实验方法</a></li>
+      <li><a href="#trace-results">Trace 全部结果</a></li>
+      <li><a href="#compression">压缩实验与口径</a></li>
+      <li><a href="#breakthroughs">可能突破方向</a></li>
+      <li><a href="#invalid">明确不成立的方向</a></li>
+      <li><a href="#limitations">局限与未完成项</a></li>
+      <li><a href="#files">文件与复现入口</a></li>
+      <li><a href="#roadmap">接手后的 30 天计划</a></li>
+      <li><a href="#glossary">术语表</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header>
+      <h1>FRV-SFU-VLIW 指令压缩研究 Handoff</h1>
+      <p class="subtitle">面向不熟悉项目的接手者：问题、证据、创新边界、实验数据和下一步工作的一站式说明</p>
+      <div class="meta">
+        <div><small>编写日期</small><strong>2026-09-01</strong></div>
+        <div><small>当前阶段</small><strong>可行性预研 / Trace 审计</strong></div>
+        <div><small>项目状态</small><strong>黄色：方向可行，创新尚未锁定</strong></div>
+        <div><small>实验规模</small><strong>6 workloads × 2 个 X = 12 traces</strong></div>
+      </div>
+      <div class="callout warn">
+        <strong>阅读本文件时最重要的口径</strong>
+        本项目同时讨论“外部压缩文件大小”“加载后的逻辑有效位数”和“实际片上 SRAM 宏面积”。
+        三者不是同一个指标。当前 Trace 实验能严格给出前两类逻辑位数，但尚不能替代 SRAM compiler
+        与 RTL 综合结果。
+      </div>
+    </header>
+
+    <section id="executive">
+      <h2>1. 执行摘要</h2>
+      <p>
+        目标平台是已有论文提出的 <strong>FRV-SFU-VLIW</strong> 非线性函数加速器。编译器把
+        Softmax、LayerNorm、GELU 等函数表示为 DAG，静态调度器在不同 FUV mode 下生成确定性的、
+        逐周期执行的 184-bit VLIW 指令流。宽指令包含五个执行槽和一个 4-bit 控制槽。
+        由于不同功能单元活动密度差异很大，大量位用于 NOP，形成明确的压缩动机。
+      </p>
+      <p>
+        研究目标不是普通“代码文件压缩”，而是让<strong>压缩指令直接驻留在片上指令存储中</strong>，
+        前端每周期恢复出与原调度行为一致的完整 VLIW，不允许因为解压产生停顿。方案还必须在四个月、
+        单人可完成的范围内，压缩率优于 Li et al. 2020 的纵向压缩基线，并且解压硬件足够简单。
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>目前已经被数据支持的事实</h3>
+          <ul>
+            <li>位宽加权槽位利用率只有 <strong>9.3%–30.7%</strong>。</li>
+            <li>不同槽的事件数高度不均衡，存在明显的异构压缩机会。</li>
+            <li>字段相邻周期重复率为 <strong>49.4%–69.6%</strong>。</li>
+            <li>字段 Shannon 熵下界为原始字段位数的 <strong>37.8%–60.9%</strong>。</li>
+            <li>12 条字段 codec + 原始 timing delta 软件往返均逐 bit 恢复原始 Trace。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>目前最重要的否定性结论</h3>
+          <ul>
+            <li>不存在覆盖所有 workload 的“通用稳定周期核”。</li>
+            <li>仿射地址/寄存器再生不能作为通用主创新。</li>
+            <li>gap 字典相对简单 6-bit ifnull 仅多约 <strong>5.2%</strong> 逻辑收益。</li>
+            <li>独立槽流、NOP 删除、Mask、字典和差分本身均有直接先行工作。</li>
+            <li>当前 11.6% 字段混合结果是软件上界，不是已实现硬件结果。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout good">
+        <strong>当前最合理的主线</strong>
+        以简单的 <code>6-bit ifnull + 六槽紧凑 payload</code> 作为低风险前端，在其上研究
+        <strong>受硬件预算约束的异构槽内字段编码</strong>以及<strong>确定带宽、零停顿供给</strong>。
+        创新不能宣称来自 RAW/CONST/DICT/DELTA 任一原语，而应来自固定预算下的编码选择、
+        物理存储组织、一拍并行恢复和压缩率—带宽—FIFO—面积联合 Pareto。
+      </div>
+    </section>
+
+    <section id="platform">
+      <h2>2. 平台与问题定义</h2>
+      <h3>2.1 原平台</h3>
+      <p>
+        原论文 <a href="../paper/Revised_Paper_TVLSI_00472_2026.R%20(1).pdf">
+        A Fully Reconfigurable and Programmable VLIW Architecture for Nonlinear Function Acceleration</a>
+        提出 FRV-SFU-VLIW：RFU 向量数据通路与轻量 SFU 通过 Function Unit Virtualization（FUV）
+        在多种 mode 间重配置；Static Multi-Mode Scheduler 对函数 DAG 做周期精确调度并生成 VLIW。
+        当前压缩研究必须保持原调度和数据通路语义，不能通过修改运算顺序“制造”压缩率。
+      </p>
+      <p>
+        原平台采用 TSMC 28 nm、目标 1 GHz，论文报告核心面积 4.019 mm²、功耗 3.61 W；
+        其中 VGPR 为 2.031 mm²（50.5%），Decoder/Crossbar/Others 为 0.166 mm²、0.156 W。
+        论文没有单列 IMEM 容量、面积或功耗，因此压缩研究不能从原 Table V 直接推导存储收益。
+      </p>
+
+      <h3>2.2 184-bit 指令格式真值</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>语义槽</th><th>位宽</th><th>字段</th><th>NOP 判定</th></tr></thead>
+          <tbody>
+            <tr><td>LOAD</td><td>42</td><td>mem_fmt(2), mem_addr(28), gpr_fmt(2), gpr_addr(8), optype(2)</td><td>整个槽编码为 0</td></tr>
+            <tr><td>STORE</td><td>42</td><td>mem_fmt(2), mem_addr(28), gpr_fmt(2), gpr_addr(8), optype(2)</td><td>整个槽编码为 0</td></tr>
+            <tr><td>VECTOR</td><td>34</td><td>half(2), imm(1), connect(2), dst/src1/src0(各8), mask(1), optype(4)</td><td>整个槽编码为 0</td></tr>
+            <tr><td>SCALAR</td><td>31</td><td>imm(1), connect(1), dst/src1/src0(各8), mask(1), optype(4)</td><td>整个槽编码为 0</td></tr>
+            <tr><td>SFU</td><td>31</td><td>borrow(2), dst(8), src(8), is_vector(1), rounds(8), optype(4)</td><td>整个槽编码为 0</td></tr>
+            <tr><td>CONTROL</td><td>4</td><td>reserved(3), eop(1)</td><td>四位均为 0</td></tr>
+            <tr><th>合计</th><th>184</th><th colspan="2">五个执行槽 + 一个控制槽；本文统一称“六槽”</th></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>2.3 压缩前端要解决什么</h3>
+      <pre>编译器 / 调度器
+      │
+      ▼
+原始逐周期 184-bit Trace
+      │  离线压缩
+      ▼
+压缩驻留的指令存储
+      │  每周期取数、恢复，不得下溢
+      ▼
+完整 184-bit VLIW ──► 原 Decoder / Crossbar / 执行单元</pre>
+      <p>
+        压缩器位于调度之后；解压前端位于现有 Decoder 之前。只要逐周期输出保持行为一致，
+        后续可探索不要求逐 bit 相同、但能降低翻转的等价编码；当前阶段的逐 bit 往返验证覆盖
+        字段 codec 和原始 timing delta，尚未覆盖最终 gap 字典文件容器。
+      </p>
+    </section>
+
+    <section id="requirements">
+      <h2>3. 不可妥协的研究要求</h2>
+      <div class="table-wrap">
+        <table class="wrap">
+          <thead><tr><th>编号</th><th>要求</th><th>为什么必要</th><th>当前状态</th></tr></thead>
+          <tbody>
+            <tr><td>R1</td><td>逐周期行为与原 Trace 一致</td><td>不能改变已发表性能数据；解压不能插入气泡</td><td><span class="tag warn">字段 codec + raw timing delta 12/12；最终容器待验证</span></td></tr>
+            <tr><td>R2</td><td>压缩率明显优于 Li 2020 纵向压缩</td><td>Mask/NOP 删除已是成熟基线</td><td><span class="tag warn">逻辑上有潜力，物理公平性待做</span></td></tr>
+            <tr><td>R3</td><td>低硬件开销、设计友好</td><td>目标为单人四个月；不能让解压器抵消 IMEM 节省</td><td><span class="tag warn">尚无 RTL/综合</span></td></tr>
+            <tr><td>R4</td><td>压缩驻留</td><td>不能靠等容量全宽 cache 保存展开代码</td><td><span class="tag info">架构约束已明确</span></td></tr>
+            <tr><td>R5</td><td>零停顿确定供给</td><td>平均带宽低不代表突发窗口不会下溢</td><td><span class="tag warn">已有 Trace 下界，尚无端口级验证</span></td></tr>
+            <tr><td>R6</td><td>总存储口径完整</td><td>必须计入字典、索引、descriptor、checkpoint、对齐与 SRAM 取整</td><td><span class="tag warn">逻辑元数据已计，SRAM 取整未计</span></td></tr>
+            <tr><td>R7</td><td>公平基线</td><td>至少含全宽、Mask、Stop-bit/变长 Bundle、模板、Li 分 bank 纵向方案</td><td><span class="tag warn">全宽/Mask/Li 已有，其他待补</span></td></tr>
+            <tr><td>R8</td><td>范围可控</td><td>避免通用 cache、动态分支、复杂通用熵解码器</td><td><span class="tag good">当前范围符合四个月目标</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout bad">
+        <strong>禁止的比较方式</strong>
+        不得把 Li 的“补齐后外部总存储”与本文方案的“仅有效 payload 位数”直接比较；
+        也不得把软件理论位数直接等价成 SRAM 面积。所有方案必须在同一存储层级和同一物理约束下对比。
+      </div>
+    </section>
+
+    <section id="prior-art">
+      <h2>4. 已有工作与创新边界</h2>
+      <p>
+        下表只保留与当前方案最直接相关的工作。完整文献位于 <a href="../paper/">paper/</a>，
+        中文梳理位于 <a href="../paper/VLIW指令压缩相关文献阅读.docx">VLIW指令压缩相关文献阅读.docx</a>。
+      </p>
+      <div class="table-wrap">
+        <table class="wrap">
+          <thead><tr><th>工作</th><th>核心机制</th><th>已覆盖的思想</th><th>对本项目的意义</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Li, Hou, Zhu, IEEE Access 2020<br><a href="../paper/An_Efficient_and_Fast_VLIW_Compression_Scheme_for_Stream_Processor.pdf">PDF</a></td>
+              <td>按逻辑字段纵向删除 NOP；ifnull 记录每周期有效性；分 bank IMEM 与 FPCR/BAR 一拍重组。</td>
+              <td>纵向槽流、有效位表、独立 bank 地址、一拍恢复。</td>
+              <td><strong>最直接基线。</strong>独立槽流、去 NOP、ifnull 和分 bank 本身都不能称创新。</td>
+            </tr>
+            <tr>
+              <td>Brandon et al., ReConFig 2015<br><a href="../paper/A_sparse_VLIW_instruction_encoding_scheme_compatible_with_generic_binaries.pdf">PDF</a></td>
+              <td>Stop-bit 稀疏 VLIW 编码；支持不同 issue width 的通用 binary；给出硬件实现。</td>
+              <td>尾部 NOP 隐式化、变长 bundle、Stop-bit。</td>
+              <td>Stop-bit/可变 bundle 必须作为基线，不能作为主贡献。</td>
+            </tr>
+            <tr>
+              <td>Conte et al., MICRO-29 1996（TINKER）<br><a href="../paper/Instruction_fetch_mechanisms_for_VLIW_architectures_with_compressed_encodings.pdf">PDF</a></td>
+              <td>固定 64-bit Op 组成变长 MultiOp，以 header/tail 定界；比较 uncompressed、banked、rigid/flexible silo cache 与 expander。</td>
+              <td>NOP-free 变长编码、动态 NextPC、前端拼接和按 FU 分区存放。</td>
+              <td>“删 NOP + 变长取指 + 前端分发”早已系统研究；本项目优势只能来自无分支静态流的更窄约束。</td>
+            </tr>
+            <tr>
+              <td>Kultala et al., JSPS 2016<br><a href="../paper/Improving%20Code%20Density%20with%20Variable%20Length%20Encoding%20Aware%20Instruction%20Scheduling.pdf">PDF</a></td>
+              <td>有限 instruction template，并让调度器/后处理利用隐式 NOP 模板。</td>
+              <td>模板选择与压缩感知调度。</td>
+              <td>有限模板和为了模板重排调度都已有工作；本项目当前不宜靠改调度建立新颖性。</td>
+            </tr>
+            <tr>
+              <td>Chiu &amp; Yang, CAE 2010<br><a href="../paper/A%20Novel%20instruction%20stream%20buffer%20for%20VLIW%20architectures.pdf">PDF</a></td>
+              <td>用 instruction stream buffer 处理变长压缩指令跨 cache line 的 split fetch。</td>
+              <td>变长取指的缓冲、重复块驻留、连续发射。</td>
+              <td>说明高压缩率不自动保证供给；必须分析窗口带宽和缓冲。</td>
+            </tr>
+            <tr>
+              <td>Lee et al., ACM TACO 2018<br><a href="../paper/Improving%20Energy%20Efficiency%20of%20Coarse-Grain%20Reconfigurable%20Arrays%20Through%20Modulo%20Schedule%20Compression%3ADecompression.pdf">PDF</a></td>
+              <td>对 CGRA modulo-scheduled loop 做时空压缩；无额外延迟解压；代码尺寸平均降低超过 63%。</td>
+              <td>周期/模调度上下文压缩、硬件软件协同、解码能耗优化。</td>
+              <td>“周期核压缩”有非常接近的先行工作；只能做 workload-specific 可选模式。</td>
+            </tr>
+            <tr>
+              <td>Multanen et al., DAES 2024<br><a href="../paper/Energy-Efficient%20Instruction%20Compression%20with%20Programmable%20Dictionaries.pdf">PDF</a></td>
+              <td>编译期指导、运行时可编程的细粒度多字典；RAW/COMPRESSED 混排并以固定 packet 供给，关注 L0 指令层级与能耗。</td>
+              <td>可编程字段字典、编译期选择、固定 packet、字典大小/压缩率/能耗联合评估。</td>
+              <td>DICT 原语本身不新；必须强调异构槽、固定预算、零停顿和物理 Pareto。</td>
+            </tr>
+            <tr>
+              <td>传统 Huffman / 算术 / LZW / V2F</td>
+              <td>利用统计冗余获得更高静态压缩率，常面向主存到 cache 的压缩传输。</td>
+              <td>字典、熵编码、变长到定长编码。</td>
+              <td>顺序/变长解码和缓存层级与本平台不匹配；可作熵下界或离线参考，不宜直接采用。</td>
+            </tr>
+            <tr>
+              <td>Mask+payload / DVLIW-like 独立槽流类工作</td>
+              <td>槽 mask 指示后续有效 operation；或让垂直功能流独立推进并携带 Pause/时间信息。</td>
+              <td>按槽事件流、时间间隔、Mask 稀疏编码。</td>
+              <td>事件流或 gap 不能单独支撑新颖性；当前实验也显示 gap 收益有限。注意 Brandon 2015 主体是 stop-bit，不是 mask-word。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>4.1 Li 2020 的三个存储口径</h3>
+      <div class="decision"><strong>外部压缩文件</strong><span>各列有效数不同，保存前把短列补齐到最高列；另存 ifnull 和 profile。本项目当前主比较公式采用这一口径。</span></div>
+      <div class="decision"><strong>片上逻辑有效量</strong><span>论文说明加载到独立 bank 后可删除填充 NOP，因此逻辑有效量接近各列非 NOP 位数之和加 FIR。</span></div>
+      <div class="decision"><strong>物理 SRAM</strong><span>真实面积受 bank 深宽、最小宏、端口和容量取整影响。Li 报告综合时将 IMEM 容量设为原来的 50%，并报告 IMEM 面积降低 44.26%；不能直接用 29.85% 逻辑 CR 推导面积。</span></div>
+      <div class="formula">当前 Li 外部总存储模型：
+S_Li = 184 × Hmax + 6 × T + 64
+
+T     = 原始 VLIW 周期数
+Hmax  = 六个 slot 中最高的有效事件数
+6 × T = ifnull 数组
+64    = 当前模型中的 profile 预算（需按最终格式复核）</div>
+    </section>
+
+    <section id="decisions">
+      <h2>5. 当前关键决策与原因</h2>
+      <div class="decision"><span class="tag good">保留</span><span><strong>6-bit ifnull。</strong>它直接描述每周期哪些槽有效，一拍重组简单，平均逻辑比例 23.10%。</span></div>
+      <div class="decision"><span class="tag warn">降级</span><span><strong>固定 gap / gap 字典。</strong>仅作为消融实验；字典相对 ifnull 平均只多约 5.2% 逻辑收益。</span></div>
+      <div class="decision"><span class="tag bad">否决</span><span><strong>通用稳定周期核。</strong>Softmax 与 LayerNorm 的严格结构核覆盖低于 4%，不满足通用方案条件。</span></div>
+      <div class="decision"><span class="tag info">可选</span><span><strong>周期 fast path。</strong>可用于 GELU 等规则 workload 的上界或附加模式，但不能代表全部函数。</span></div>
+      <div class="decision"><span class="tag good">继续</span><span><strong>槽内字段压缩。</strong>字段熵与重复率支持继续研究，但必须把当前逐字段最优模型收紧为固定 token 和有限硬件。</span></div>
+      <div class="decision"><span class="tag good">优先</span><span><strong>物理公平建模。</strong>下一步先定义 SRAM 组织与固定格式，再讨论最终压缩率和面积收益。</span></div>
+    </section>
+
+    <section id="method">
+      <h2>6. Trace 实验方法</h2>
+      <h3>6.1 工作负载、shape 与 mode</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Case</th><th>X</th><th>Y</th><th>测试 mode → 周期数</th><th>选定 mode</th><th>选定周期 T</th><th>原始位数</th></tr></thead>
+          <tbody>
+            <tr><td>Softmax X32</td><td>32</td><td>512</td><td>0→609, 1→518, 2→515</td><td>2</td><td>515</td><td>94,760</td></tr>
+            <tr><td>Softmax X64</td><td>64</td><td>512</td><td>0→1121, 1→1014, 2→969</td><td>2</td><td>969</td><td>178,296</td></tr>
+            <tr><td>LayerNorm X32</td><td>32</td><td>768</td><td>0→771</td><td>0</td><td>771</td><td>141,864</td></tr>
+            <tr><td>LayerNorm X64</td><td>64</td><td>768</td><td>0→1450</td><td>0</td><td>1,450</td><td>266,800</td></tr>
+            <tr><td>GELU X32</td><td>32</td><td>3072</td><td>2→1560</td><td>2</td><td>1,560</td><td>287,040</td></tr>
+            <tr><td>GELU X64</td><td>64</td><td>3072</td><td>2→3096</td><td>2</td><td>3,096</td><td>569,664</td></tr>
+            <tr><td>LogSoftmax X32</td><td>32</td><td>2048</td><td>0→2189, 1→1865, 2→1865</td><td>1</td><td>1,865</td><td>343,160</td></tr>
+            <tr><td>LogSoftmax X64</td><td>64</td><td>2048</td><td>0→4237, 1→3649, 2→3652</td><td>1</td><td>3,649</td><td>671,416</td></tr>
+            <tr><td>Softplus X32</td><td>32</td><td>1024</td><td>0→2085, 1→1573, 2→1342</td><td>2</td><td>1,342</td><td>246,928</td></tr>
+            <tr><td>Softplus X64</td><td>64</td><td>1024</td><td>0→4143, 1→3119, 2→2684</td><td>2</td><td>2,684</td><td>493,856</td></tr>
+            <tr><td>LogSumExp X32</td><td>32</td><td>1024</td><td>0→1140, 1→884, 2→868</td><td>2</td><td>868</td><td>159,712</td></tr>
+            <tr><td>LogSumExp X64</td><td>64</td><td>1024</td><td>0→2164, 1→1652, 2→1644</td><td>2</td><td>1,644</td><td>302,496</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small">
+        GELU 固定 mode 2，LayerNorm 固定 mode 0；其余候选 mode 取调度周期最短者。
+        LogSoftmax X32 的 mode 1 与 mode 2 同为 1865 周期，当前实现按首次最小值选择 mode 1。
+        共同调度参数为 NUM_VE=256、VGPR_CAP=256、SGPR_CAP=256、MASK_FIFO=8，
+        RQo 相关选项为 32/16/16。当前选择目标是周期最短，不是压缩后位数最小。
+      </p>
+
+      <h3>6.2 已实现的 Trace 指标</h3>
+      <div class="table-wrap">
+        <table class="wrap">
+          <thead><tr><th>指标</th><th>定义</th><th>用途与限制</th></tr></thead>
+          <tbody>
+            <tr><td>六位 mask 分布</td><td>bit 顺序 LOAD/STORE/VECTOR/SCALAR/SFU/CONTROL；统计所有 mask 的频数、概率与熵。</td><td>判断模板是否有意义；不能直接等同最终模板压缩率。</td></tr>
+            <tr><td>位宽加权槽利用率</td><td>所有周期有效 slot 位宽之和 ÷ <code>184×T</code>。</td><td>比“平均活跃槽数”更公平，因为槽位宽不同。</td></tr>
+            <tr><td>字段分布</td><td>每个 active slot 内，每个字段统计唯一值数、Shannon 熵、众数比例。</td><td>熵只是无元数据、无随机访问约束的理论下界。</td></tr>
+            <tr><td>相邻重复率</td><td>分别统计事件到事件，以及两个相邻周期均 active 时字段是否相等。</td><td>支持 CONST/DICT/DELTA 候选判断，不证明硬件收益。</td></tr>
+            <tr><td>严格结构周期核</td><td>忽略地址/寄存器字段，对周期 1–1024 搜索；候选段必须逐周期结构相等且连续重复至少三轮。</td><td>报告 period、起止、覆盖率和自相关匹配率；不是调度器显式 II 标注。</td></tr>
+            <tr><td>周期对齐仿射拟合</td><td>在严格结构核内，按 phase 收集跨迭代字段，以模字段位宽的 <code>base+k×stride</code> 拟合。</td><td>100% 仅表示核内序列；不覆盖核外残差。</td></tr>
+            <tr><td>滑动窗口带宽</td><td>每周期需求为所有有效原始 payload 位宽之和；窗口为 1/2/4/8/16/32/64/128 周期。</td><td>用于估计突发读取；尚未加入 SRAM 读宽、对齐和延迟。</td></tr>
+            <tr><td>固定带宽预填充</td><td><code>max_t(cumulative_demand(t) - B×(t+1))</code>。</td><td>是避免 deadline 下溢的逻辑下界，不等于最终 FIFO 容量。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="trace-results">
+      <h2>7. Trace 实验结果</h2>
+      <h3>7.1 槽事件数、稀疏性与字段统计</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Case</th><th>事件数 L/S/V/Sc/SFU</th><th>加权利用率</th><th>无功能槽周期</th><th>mask种类</th><th>mask熵</th><th>字段熵/RAW</th><th>相邻周期字段重复</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Softmax X32</td><td>64/64/256/64/96</td><td>20.1%</td><td>37.7%</td><td>21</td><td>3.07</td><td>51.2%</td><td>63.2%</td></tr>
+            <tr><td>Softmax X64</td><td>128/128/512/128/192</td><td>21.4%</td><td>37.4%</td><td>27</td><td>3.14</td><td>53.3%</td><td>62.9%</td></tr>
+            <tr><td>LayerNorm X32</td><td>102/96/672/256/64</td><td>29.0%</td><td>7.1%</td><td>22</td><td>2.90</td><td>59.8%</td><td>57.3%</td></tr>
+            <tr><td>LayerNorm X64</td><td>198/192/1344/512/128</td><td>30.7%</td><td>4.7%</td><td>23</td><td>2.81</td><td>60.9%</td><td>53.9%</td></tr>
+            <tr><td>GELU X32</td><td>384/384/0/0/384</td><td>15.4%</td><td>38.1%</td><td>7</td><td>2.30</td><td>39.3%</td><td>60.0%</td></tr>
+            <tr><td>GELU X64</td><td>768/768/0/0/768</td><td>15.5%</td><td>37.8%</td><td>7</td><td>2.31</td><td>41.0%</td><td>60.0%</td></tr>
+            <tr><td>LogSoftmax X32</td><td>256/256/1024/448/288</td><td>23.1%</td><td>26.4%</td><td>27</td><td>3.35</td><td>57.0%</td><td>49.8%</td></tr>
+            <tr><td>LogSoftmax X64</td><td>512/512/2048/896/576</td><td>23.6%</td><td>24.9%</td><td>27</td><td>3.39</td><td>58.6%</td><td>49.4%</td></tr>
+            <tr><td>Softplus X32</td><td>128/128/128/0/256</td><td>9.3%</td><td>57.6%</td><td>10</td><td>2.02</td><td>37.8%</td><td>69.4%</td></tr>
+            <tr><td>Softplus X64</td><td>256/256/256/0/512</td><td>9.3%</td><td>57.7%</td><td>10</td><td>2.01</td><td>38.9%</td><td>69.6%</td></tr>
+            <tr><td>LogSumExp X32</td><td>128/32/384/224/160</td><td>19.8%</td><td>35.3%</td><td>23</td><td>3.18</td><td>53.5%</td><td>62.5%</td></tr>
+            <tr><td>LogSumExp X64</td><td>256/64/768/448/320</td><td>20.9%</td><td>30.2%</td><td>23</td><td>3.22</td><td>55.3%</td><td>62.3%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        <strong>解释：</strong>最明显且跨 workload 稳定的特征不是周期，而是槽位密度和字段统计的异构性。
+        例如 LayerNorm 的 VECTOR 列远高于 SFU，而 GELU 完全没有 VECTOR/SCALAR 事件。
+        这支持“按槽/字段选择编码”，但也意味着一个统一字段格式很可能浪费硬件。
+      </p>
+
+      <h3>7.2 每条 Trace 的三个最高频 mask</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Case</th><th>第1</th><th>第2</th><th>第3</th></tr></thead>
+          <tbody>
+            <tr><td>Softmax X32</td><td>000000 37.5%</td><td>001000 16.7%</td><td>101000 7.2%</td></tr>
+            <tr><td>Softmax X64</td><td>000000 37.3%</td><td>001000 18.5%</td><td>001010 8.5%</td></tr>
+            <tr><td>LayerNorm X32</td><td>001000 36.7%</td><td>001100 25.7%</td><td>000000 7.0%</td></tr>
+            <tr><td>LayerNorm X64</td><td>001000 38.1%</td><td>001100 26.8%</td><td>001010 5.9%</td></tr>
+            <tr><td>GELU X32</td><td>000000 38.0%</td><td>010000 18.8%</td><td>000010 18.5%</td></tr>
+            <tr><td>GELU X64</td><td>000000 37.8%</td><td>010000 18.8%</td><td>000010 18.6%</td></tr>
+            <tr><td>LogSoftmax X32</td><td>000000 26.4%</td><td>001000 22.8%</td><td>101000 7.4%</td></tr>
+            <tr><td>LogSoftmax X64</td><td>000000 24.9%</td><td>001000 23.1%</td><td>000100 8.1%</td></tr>
+            <tr><td>Softplus X32</td><td>000000 57.5%</td><td>000010 15.7%</td><td>001000 7.8%</td></tr>
+            <tr><td>Softplus X64</td><td>000000 57.7%</td><td>000010 15.8%</td><td>001000 8.3%</td></tr>
+            <tr><td>LogSumExp X32</td><td>000000 35.1%</td><td>001000 19.1%</td><td>000100 7.5%</td></tr>
+            <tr><td>LogSumExp X64</td><td>000000 30.1%</td><td>001000 22.3%</td><td>000100 8.5%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small">位序为 LOAD / STORE / VECTOR / SCALAR / SFU / CONTROL；例如 001000 表示仅 VECTOR 有效。</p>
+
+      <h3>7.3 严格周期核与核内仿射拟合</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Case</th><th>结构周期 P</th><th>核起止 [start,end)</th><th>核长度</th><th>重复轮数</th><th>核覆盖率</th><th>核内仿射匹配</th></tr></thead>
+          <tbody>
+            <tr><td>Softmax X32</td><td>4</td><td>[290,309)</td><td>19</td><td>4.75</td><td>3.7%</td><td>60.0%</td></tr>
+            <tr><td>Softmax X64</td><td>4</td><td>[598,617)</td><td>19</td><td>4.75</td><td>2.0%</td><td>60.0%</td></tr>
+            <tr><td>LayerNorm X32</td><td>1</td><td>[9,22)</td><td>13</td><td>13.0</td><td>1.7%</td><td>53.8%</td></tr>
+            <tr><td>LayerNorm X64</td><td>1</td><td>[9,22)</td><td>13</td><td>13.0</td><td>0.9%</td><td>53.8%</td></tr>
+            <tr><td>GELU X32</td><td>48</td><td>[144,1126)</td><td>982</td><td>20.46</td><td>62.9%</td><td>100%</td></tr>
+            <tr><td>GELU X64</td><td>48</td><td>[144,2662)</td><td>2,518</td><td>52.46</td><td>81.3%</td><td>100%</td></tr>
+            <tr><td>LogSoftmax X32</td><td>223</td><td>[393,1519)</td><td>1,126</td><td>5.05</td><td>60.4%</td><td>100%</td></tr>
+            <tr><td>LogSoftmax X64</td><td>223</td><td>[393,3303)</td><td>2,910</td><td>13.05</td><td>79.7%</td><td>100%</td></tr>
+            <tr><td>Softplus X32</td><td>209</td><td>[237,964)</td><td>727</td><td>3.48</td><td>54.2%</td><td>100%</td></tr>
+            <tr><td>Softplus X64</td><td>209</td><td>[237,2307)</td><td>2,070</td><td>9.90</td><td>77.1%</td><td>100%</td></tr>
+            <tr><td>LogSumExp X32</td><td>72</td><td>[122,506)</td><td>384</td><td>5.33</td><td>44.2%</td><td>100%</td></tr>
+            <tr><td>LogSumExp X64</td><td>72</td><td>[122,1282)</td><td>1,160</td><td>16.11</td><td>70.6%</td><td>100%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout warn">
+        <strong>不能误读“100% 仿射”</strong>
+        它只表示被检测为严格结构周期核的那一段中，按 phase 对齐的候选字段可由模仿射式准确解释。
+        Softmax/LayerNorm 的核覆盖太小；即使其他四类核内为 100%，核外仍需显式 residual。
+        因而它适合可选 fast path，不适合通用主编码。
+      </div>
+
+      <h3>7.4 Payload 突发带宽</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Case</th><th>全程平均 bit/cycle</th><th>最忙8周期均值</th><th>最忙32周期均值</th><th>单周期峰值</th><th>64 bit/cycle 最小预填充</th></tr></thead>
+          <tbody>
+            <tr><td>Softmax X32</td><td>37.0</td><td>99.2</td><td>95.4</td><td>138</td><td>1,567 bit</td></tr>
+            <tr><td>Softmax X64</td><td>39.3</td><td>125.8</td><td>95.4</td><td>180</td><td>1,567 bit</td></tr>
+            <tr><td>LayerNorm X32</td><td>53.3</td><td>107.2</td><td>90.5</td><td>180</td><td>701 bit</td></tr>
+            <tr><td>LayerNorm X64</td><td>56.5</td><td>107.2</td><td>90.5</td><td>180</td><td>701 bit</td></tr>
+            <tr><td>GELU X32</td><td>28.3</td><td>60.2</td><td>60.2</td><td>84</td><td>0</td></tr>
+            <tr><td>GELU X64</td><td>28.5</td><td>60.2</td><td>60.2</td><td>84</td><td>0</td></tr>
+            <tr><td>LogSoftmax X32</td><td>42.4</td><td>103.1</td><td>98.3</td><td>149</td><td>1,686 bit</td></tr>
+            <tr><td>LogSoftmax X64</td><td>43.4</td><td>103.1</td><td>98.3</td><td>149</td><td>1,686 bit</td></tr>
+            <tr><td>Softplus X32</td><td>17.2</td><td>49.8</td><td>49.8</td><td>84</td><td>0</td></tr>
+            <tr><td>Softplus X64</td><td>17.2</td><td>49.8</td><td>49.8</td><td>84</td><td>0</td></tr>
+            <tr><td>LogSumExp X32</td><td>36.5</td><td>103.1</td><td>97.3</td><td>149</td><td>1,720 bit</td></tr>
+            <tr><td>LogSumExp X64</td><td>38.5</td><td>103.1</td><td>97.3</td><td>149</td><td>1,720 bit</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        平均需求远低于 184 bit/cycle，但短窗口峰值达到 180 bit/cycle；因此只报平均带宽会掩盖下溢风险。
+        当前无读延迟逻辑模型中，96 bit/cycle 对 12 条 Trace 的最小初始预填充均为 0；
+        这不是最终 SRAM 端口结论。
+      </p>
+    </section>
+
+    <section id="compression">
+      <h2>8. 压缩实验与存储口径</h2>
+      <p>
+        以下各方案分开报告，避免把不同存储结构混为一表。“剩余比例”均为压缩后逻辑 bit ÷
+        原始 <code>184×T</code>，越小越好。12 个 case 的算术平均用于描述典型 case；
+        将所有 case 位数直接相加得到的加权总比例也单独报告。
+      </p>
+
+      <h3>8.1 方案 A：Li 式补齐纵向外部总存储</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Case</th><th>Hmax</th><th>补齐 payload</th><th>ifnull</th><th>profile</th><th>总位数</th><th>剩余比例</th></tr></thead>
+          <tbody>
+            <tr><td>Softmax X32</td><td>256</td><td>47,104</td><td>3,090</td><td>64</td><td>50,258</td><td>53.0%</td></tr>
+            <tr><td>Softmax X64</td><td>512</td><td>94,208</td><td>5,814</td><td>64</td><td>100,086</td><td>56.1%</td></tr>
+            <tr><td>LayerNorm X32</td><td>672</td><td>123,648</td><td>4,626</td><td>64</td><td>128,338</td><td>90.5%</td></tr>
+            <tr><td>LayerNorm X64</td><td>1,344</td><td>247,296</td><td>8,700</td><td>64</td><td>256,060</td><td>96.0%</td></tr>
+            <tr><td>GELU X32</td><td>384</td><td>70,656</td><td>9,360</td><td>64</td><td>80,080</td><td>27.9%</td></tr>
+            <tr><td>GELU X64</td><td>768</td><td>141,312</td><td>18,576</td><td>64</td><td>159,952</td><td>28.1%</td></tr>
+            <tr><td>LogSoftmax X32</td><td>1,024</td><td>188,416</td><td>11,190</td><td>64</td><td>199,670</td><td>58.2%</td></tr>
+            <tr><td>LogSoftmax X64</td><td>2,048</td><td>376,832</td><td>21,894</td><td>64</td><td>398,790</td><td>59.4%</td></tr>
+            <tr><td>Softplus X32</td><td>256</td><td>47,104</td><td>8,052</td><td>64</td><td>55,220</td><td>22.4%</td></tr>
+            <tr><td>Softplus X64</td><td>512</td><td>94,208</td><td>16,104</td><td>64</td><td>110,376</td><td>22.3%</td></tr>
+            <tr><td>LogSumExp X32</td><td>384</td><td>70,656</td><td>5,208</td><td>64</td><td>75,928</td><td>47.5%</td></tr>
+            <tr><td>LogSumExp X64</td><td>768</td><td>141,312</td><td>9,864</td><td>64</td><td>151,240</td><td>50.0%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>算术平均剩余：</strong>50.95%。<strong>总位数：</strong>1,765,998 / 3,755,992 = 47.02%。</p>
+
+      <h3>8.2 方案 B：简单 6-bit ifnull + 不补齐的有效 payload</h3>
+      <div class="formula">S_ifnull = 6 × T + Σ_slot (N_slot × W_slot)</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Case</th><th>总位数</th><th>剩余比例</th></tr></thead>
+          <tbody>
+            <tr><td>Softmax X32</td><td>22,134</td><td>23.36%</td></tr>
+            <tr><td>Softmax X64</td><td>43,898</td><td>24.62%</td></tr>
+            <tr><td>LayerNorm X32</td><td>45,714</td><td>32.22%</td></tr>
+            <tr><td>LayerNorm X64</td><td>90,620</td><td>33.97%</td></tr>
+            <tr><td>GELU X32</td><td>53,524</td><td>18.65%</td></tr>
+            <tr><td>GELU X64</td><td>106,900</td><td>18.77%</td></tr>
+            <tr><td>LogSoftmax X32</td><td>90,330</td><td>26.32%</td></tr>
+            <tr><td>LogSoftmax X64</td><td>180,170</td><td>26.83%</td></tr>
+            <tr><td>Softplus X32</td><td>31,096</td><td>12.59%</td></tr>
+            <tr><td>Softplus X64</td><td>62,188</td><td>12.59%</td></tr>
+            <tr><td>LogSumExp X32</td><td>36,892</td><td>23.10%</td></tr>
+            <tr><td>LogSumExp X64</td><td>73,228</td><td>24.21%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        <strong>算术平均剩余：</strong>23.10%。<strong>总位数：</strong>836,694 / 3,755,992 = 22.28%。
+        这是重要的低风险逻辑基线，但接近 Li 的片上逻辑组织，不能作为新颖性声明。
+      </p>
+
+      <h3>8.3 方案 C：固定宽 gap 事件流（已降级）</h3>
+      <p>每个 slot 只保存有效 payload，并以固定宽度保存相邻事件周期距离；需要每槽计数器和格式描述。</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Case</th><th>总位数</th><th>剩余比例</th></tr></thead>
+          <tbody>
+            <tr><td>Softmax X32</td><td>22,254</td><td>23.48%</td></tr>
+            <tr><td>Softmax X64</td><td>44,814</td><td>25.13%</td></tr>
+            <tr><td>LayerNorm X32</td><td>47,444</td><td>33.44%</td></tr>
+            <tr><td>LayerNorm X64</td><td>95,477</td><td>35.79%</td></tr>
+            <tr><td>GELU X32</td><td>49,999</td><td>17.42%</td></tr>
+            <tr><td>GELU X64</td><td>99,536</td><td>17.47%</td></tr>
+            <tr><td>LogSoftmax X32</td><td>93,807</td><td>27.34%</td></tr>
+            <tr><td>LogSoftmax X64</td><td>187,152</td><td>27.87%</td></tr>
+            <tr><td>Softplus X32</td><td>28,239</td><td>11.44%</td></tr>
+            <tr><td>Softplus X64</td><td>56,016</td><td>11.34%</td></tr>
+            <tr><td>LogSumExp X32</td><td>37,294</td><td>23.35%</td></tr>
+            <tr><td>LogSumExp X64</td><td>74,127</td><td>24.51%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>算术平均剩余：</strong>23.22%，比简单 ifnull 略差；不推荐作为主路径。</p>
+
+      <h3>8.4 方案 D：gap 字典事件流（已降级）</h3>
+      <p>
+        对每槽保存首事件周期、不同 gap 值构成的字典、每次选择 gap 的索引流以及原始 payload。
+        统计已包含 64-bit 全局头、6×64-bit 槽描述符、字典和索引，不是“免费字典”。
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Case</th><th>总位数</th><th>剩余比例</th><th>相对 Li 补齐减少</th></tr></thead>
+          <tbody>
+            <tr><td>Softmax X32</td><td>21,474</td><td>22.66%</td><td>57.3%</td></tr>
+            <tr><td>Softmax X64</td><td>43,455</td><td>24.37%</td><td>56.6%</td></tr>
+            <tr><td>LayerNorm X32</td><td>46,308</td><td>32.64%</td><td>63.9%</td></tr>
+            <tr><td>LayerNorm X64</td><td>92,287</td><td>34.59%</td><td>64.0%</td></tr>
+            <tr><td>GELU X32</td><td>45,446</td><td>15.83%</td><td>43.2%</td></tr>
+            <tr><td>GELU X64</td><td>90,378</td><td>15.87%</td><td>43.5%</td></tr>
+            <tr><td>LogSoftmax X32</td><td>87,459</td><td>25.49%</td><td>56.2%</td></tr>
+            <tr><td>LogSoftmax X64</td><td>174,153</td><td>25.94%</td><td>56.3%</td></tr>
+            <tr><td>Softplus X32</td><td>25,335</td><td>10.26%</td><td>54.1%</td></tr>
+            <tr><td>Softplus X64</td><td>50,044</td><td>10.13%</td><td>54.7%</td></tr>
+            <tr><td>LogSumExp X32</td><td>35,343</td><td>22.13%</td><td>53.5%</td></tr>
+            <tr><td>LogSumExp X64</td><td>69,686</td><td>23.04%</td><td>53.9%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        <strong>算术平均剩余：</strong>21.91%。它相对简单 ifnull 的平均额外改善约 5.2%，
+        但增加字典、索引查表和每槽时间状态；当前决定是只保留为消融。
+      </p>
+
+      <h3>8.5 方案 E：事件时间 + 每字段最优混合编码（软件上界）</h3>
+      <p>
+        每个字段独立在 RAW、普通字典、模差分字典中选最小位数，并为每个字段计 18-bit 模式元数据。
+        时间部分仍采用 gap 字典。该模型适合寻找潜力，不是可直接综合的最终格式。
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Case</th><th>总位数</th><th>剩余比例</th><th>相对 Li 补齐减少</th><th>字段+raw timing 往返</th></tr></thead>
+          <tbody>
+            <tr><td>Softmax X32</td><td>13,042</td><td>13.76%</td><td>74.0%</td><td>通过</td></tr>
+            <tr><td>Softmax X64</td><td>26,439</td><td>14.83%</td><td>73.6%</td><td>通过</td></tr>
+            <tr><td>LayerNorm X32</td><td>33,412</td><td>23.55%</td><td>74.0%</td><td>通过</td></tr>
+            <tr><td>LayerNorm X64</td><td>65,492</td><td>24.55%</td><td>74.4%</td><td>通过</td></tr>
+            <tr><td>GELU X32</td><td>2,047</td><td>0.71%</td><td>97.4%</td><td>通过</td></tr>
+            <tr><td>GELU X64</td><td>2,819</td><td>0.49%</td><td>98.2%</td><td>通过</td></tr>
+            <tr><td>LogSoftmax X32</td><td>53,422</td><td>15.57%</td><td>73.2%</td><td>通过</td></tr>
+            <tr><td>LogSoftmax X64</td><td>105,312</td><td>15.69%</td><td>73.6%</td><td>通过</td></tr>
+            <tr><td>Softplus X32</td><td>4,976</td><td>2.02%</td><td>91.0%</td><td>通过</td></tr>
+            <tr><td>Softplus X64</td><td>8,437</td><td>1.71%</td><td>92.4%</td><td>通过</td></tr>
+            <tr><td>LogSumExp X32</td><td>21,348</td><td>13.37%</td><td>71.9%</td><td>通过</td></tr>
+            <tr><td>LogSumExp X64</td><td>39,731</td><td>13.13%</td><td>73.7%</td><td>通过</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        <strong>算术平均剩余：</strong>11.61%。<strong>总位数：</strong>376,477 / 3,755,992 = 10.02%。
+        GELU/Softplus 的极低比例主要来自高度规则的常量/差分序列，接近专用循环/地址发生器上界；
+        不能用它们代表通用硬件收益。
+      </p>
+      <div class="callout warn">
+        <strong>往返验证边界</strong>
+        表中的“通过”验证字段 RAW/DICT/DELTA-DICT 恢复，并使用未压缩的原始 timing delta 重建周期。
+        gap 字典目前只有位成本统计，尚未实现最终 wire-format 的序列化和反序列化；
+        因而不能声称“最终 hybrid-gap 文件格式已经端到端验证”。
+      </div>
+    </section>
+
+    <section id="breakthroughs">
+      <h2>9. 可能成立的突破方向</h2>
+      <div class="callout good">
+        <strong>首选候选：Hardware-Budgeted Heterogeneous Slot-Field Codec</strong>
+        保留 ifnull 的直接周期语义；对各 slot 内部仅开放少数固定硬件模式，由编译器在面积、
+        token 宽度、字典项数、加法器数和 bank 数预算下选择。必须以可综合格式和物理 SRAM 为评价对象。
+      </div>
+      <div class="table-wrap">
+        <table class="wrap">
+          <thead><tr><th>候选方向</th><th>具体内容</th><th>可能的新颖性</th><th>必须证明</th><th>风险</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>A. 受预算约束的异构字段编码</td>
+              <td>每槽限定少数模式，例如 RAW/CONST/小 DICT/有限 DELTA；编译器求最小物理容量而非逐字段理论位数。</td>
+              <td>异构 slot + 固定一拍恢复 + 物理预算联合选择，而不是字典原语。</td>
+              <td>相对 Li 片上物理基线仍显著节省；MUX/LUT/累加器不压主频。</td>
+              <td>DAES 2024 很接近；若只剩“可编程字典”则创新不足。</td>
+            </tr>
+            <tr>
+              <td>B. 不等高、不等宽 bank 的物理布局</td>
+              <td>利用各槽位宽和事件数不同，按实际 SRAM 宏组合布局；避免最高列主导全部宽度。</td>
+              <td>针对 42/42/34/31/31/4 异构槽的宏级 packing 与并行读取。</td>
+              <td>同工艺、同端口下的宏面积/能耗；不能只报逻辑 bit。</td>
+              <td>Li 已有分 bank；差异必须落到可量化物理组织。</td>
+            </tr>
+            <tr>
+              <td>C. 确定带宽供给与最小缓冲</td>
+              <td>在固定 SRAM 读宽下，离线布局 payload，计算预填充/FIFO，形式化保证每周期 deadline。</td>
+              <td>把压缩率、带宽、FIFO 和零停顿作为联合优化问题。</td>
+              <td>所有 Trace 无下溢；端口、读取延迟、对齐全部计入。</td>
+              <td>如果直接多 bank 并行读取已经足够，额外 FIFO 贡献可能偏弱。</td>
+            </tr>
+            <tr>
+              <td>D. Mask/字段编码联合优化</td>
+              <td>Mask 仅 7–27 种且熵约 2.0–3.4 bit/cycle，可用受限模板；与字段 payload 布局联合而非独立最小化。</td>
+              <td>面向实际异构位宽和物理 token 的联合目标。</td>
+              <td>模板相对 6-bit mask 的净收益覆盖模板表和 decode MUX。</td>
+              <td>模板已有大量先行工作，宜作为配套而非主创新。</td>
+            </tr>
+            <tr>
+              <td>E. Workload-specific 周期 fast path</td>
+              <td>只对通过门槛的 GELU/LogSoftmax/Softplus/LogSumExp 核启用；其他区域回落字段编码。</td>
+              <td>作为多模式 codec 的一个可选模式，而非通用周期理论。</td>
+              <td>核识别、残差边界和切换元数据；综合收益仍为正。</td>
+              <td>TACO 2018 先行工作强，主张必须保守。</td>
+            </tr>
+            <tr>
+              <td>F. 等价编码降低翻转</td>
+              <td>在行为等价而非逐 bit 相同的前提下，优化解压输出或控制分发切换。</td>
+              <td>可把收益扩展到动态功耗。</td>
+              <td>形式化行为等价、门控安全和功耗实测。</td>
+              <td>当前没有数据；应放在压缩 RTL 稳定之后。</td>
+            </tr>
+            <tr>
+              <td>G. Mask 驱动的解码与分发门控</td>
+              <td>利用 ifnull 阻止 NOP 槽驱动字段恢复、crossbar 和功能单元控制端口。</td>
+              <td>不是新的压缩原语，但可把收益从静态容量扩展到动态切换功耗。</td>
+              <td>门控不改变有效周期行为；报告取指、解码、分发和全核功耗分解。</td>
+              <td>单独论文分量较弱，应作为主 codec 的配套贡献。</td>
+            </tr>
+            <tr>
+              <td>H. 压缩感知的 R/tile 协同选择</td>
+              <td>把压缩后物理 IMEM 容量加入原论文的 tile 因子选择，重画存储—性能折中曲线。</td>
+              <td>系统层证明压缩允许选择性能更优、原本受 IMEM 限制的配置。</td>
+              <td>R=2/4/8/16/32 全扫描，并保持原调度周期语义。</td>
+              <td>属于系统评估贡献，不能替代核心编码机制。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="invalid">
+      <h2>10. 明确不成立或不能单独成立的突破方向</h2>
+      <div class="table-wrap">
+        <table class="wrap">
+          <thead><tr><th>方向</th><th>结论</th><th>证据/原因</th><th>仍可如何使用</th></tr></thead>
+          <tbody>
+            <tr><td>通用稳定周期核</td><td><span class="tag bad">不成立</span></td><td>Softmax 核覆盖 2.0%–3.7%，LayerNorm 0.9%–1.7%。</td><td>规则 workload 的可选 fast path 或理论上界。</td></tr>
+            <tr><td>寄存器/地址全局仿射再生</td><td><span class="tag bad">不成立</span></td><td>100% 只在部分 workload 的严格周期核内部成立；核外和 Softmax/LayerNorm 不能覆盖。</td><td>周期模式内部的子编码。</td></tr>
+            <tr><td>gap 字典作为主创新</td><td><span class="tag bad">不成立</span></td><td>相对简单 ifnull 平均只多约 5.2%，还需字典、索引、计数器；Pause/事件流已有工作。</td><td>消融或极规则 slot 的可选模式。</td></tr>
+            <tr><td>固定宽 gap 取代 ifnull</td><td><span class="tag bad">不推荐</span></td><td>12 组算术平均 23.22%，略差于 ifnull 的 23.10%。</td><td>硬件对照。</td></tr>
+            <tr><td>独立槽流 / 去 NOP / 6-bit mask</td><td><span class="tag bad">不新</span></td><td>Li、Stop-bit、Mask+payload、DVLIW 等已经覆盖。</td><td>必要基线和解压前端。</td></tr>
+            <tr><td>字段字典本身</td><td><span class="tag bad">不新</span></td><td>传统字典与 DAES 2024 可编程细粒度字典已有直接覆盖。</td><td>受限 codec 中的一种原语。</td></tr>
+            <tr><td>模板 ID 本身</td><td><span class="tag bad">不新</span></td><td>IA-64/TTA/VLIW 模板及压缩感知调度已有成熟工作。</td><td>Mask 的配套优化，必须报告净收益。</td></tr>
+            <tr><td>23×8-bit “Li 基线”</td><td><span class="tag bad">口径错误</span></td><td>本平台应先按六个语义槽比较；23 字节拆分可作次级字段实验，不能替代 Li 纵向主基线。</td><td>字段粒度敏感性分析。</td></tr>
+            <tr><td>只比较有效位数，不计补齐/元数据</td><td><span class="tag bad">不公平</span></td><td>会把逻辑数据量、文件格式和物理容量混在一起。</td><td>仅作为不可实现的理论下界。</td></tr>
+            <tr><td>直接采用 Huffman/算术等复杂变长解码</td><td><span class="tag bad">不适合主路径</span></td><td>顺序解码、边界和吞吐不符合固定一拍供给要求。</td><td>熵下界或离线存储参考。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="limitations">
+      <h2>11. 当前局限、风险与未完成项</h2>
+      <div class="table-wrap">
+        <table class="wrap">
+          <thead><tr><th>问题</th><th>当前状态</th><th>为什么影响结论</th><th>解决办法</th></tr></thead>
+          <tbody>
+            <tr><td>字段混合格式过于自由</td><td>每字段独立选最优，模式元数据固定估计 18 bit。</td><td>可能需要太多并行 LUT、MUX、加法器和窄流。</td><td>限定每槽 token 格式、共享表和硬件模式总数。</td></tr>
+            <tr><td>SRAM 宏未建模</td><td>统计为逻辑 bit。</td><td>小字典、窄 bank 和不规则深度可能造成严重取整浪费。</td><td>获取 28nm memory compiler 可用宏；对每方案做 bank packing。</td></tr>
+            <tr><td>带宽模型无端口时序</td><td>按 bit deadline 计算，无读延迟/对齐。</td><td>96 bit/cycle“零预填充”可能无法由实际宏实现。</td><td>加入读字宽、端口数、1–2 周期延迟和 burst 粒度。</td></tr>
+            <tr><td>周期搜索是后处理启发式</td><td>最大 period 1024，精确重复至少三轮。</td><td>未与调度器内部 loop/iteration ID 对齐。</td><td>让调度器导出 iteration/phase 标签，交叉验证 period。</td></tr>
+            <tr><td>仿射拟合不是形式化最优搜索</td><td>由高频相邻差分生成候选 stride。</td><td>可能漏掉带少量异常的更优规则。</td><td>实现确定的最小残差求解，并显式编码异常。</td></tr>
+            <tr><td>Shape 覆盖有限</td><td>每函数一个 Y，X=32/64。</td><td>不能证明对常用隐藏维度、tile 因子稳定。</td><td>固定合理 X，扫描 Y 与论文中的 R/tile 因子。</td></tr>
+            <tr><td>取指切换/能耗尚未统计</td><td>当前只有字段值、重复率与 payload bit deadline。</td><td>不能证明 mask 门控或压缩读取带来净动态能耗下降。</td><td>从 RTL 导出 SAIF/VCD，分解 SRAM 读、恢复逻辑、crossbar 和控制端口功耗。</td></tr>
+            <tr><td>基线不完整</td><td>已有全宽、Mask/Li、事件和理论混合。</td><td>审稿人会要求 Stop-bit、有限模板、Li 片上物理基线。</td><td>统一格式实现所有基线并计物理开销。</td></tr>
+            <tr><td>尚无 RTL</td><td>只有 Python 编码/解码。</td><td>无法证明面积、功耗、1 GHz 与真实一拍吞吐。</td><td>先做最小 ifnull + 受限字段 codec RTL，再决定论文主张。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Kill Criteria</h3>
+      <ul>
+        <li>受限编码加入对齐和 SRAM 宏取整后，相对 Li 片上物理基线没有明显容量优势。</li>
+        <li>解压逻辑面积或功耗超过节省的 IMEM，或主频低于原设计目标。</li>
+        <li>固定读带宽和合理 FIFO 下无法证明全周期无下溢。</li>
+        <li>最终贡献退化为“使用字典/Mask/分 bank”，无法与 2020/2024 先行工作区分。</li>
+        <li>扩充 Y/R 后收益只存在于 GELU/Softplus 等高度规则个例。</li>
+      </ul>
+    </section>
+
+    <section id="files">
+      <h2>12. 文件位置与复现入口</h2>
+      <h3>12.1 必读文件</h3>
+      <div class="table-wrap">
+        <table class="wrap">
+          <thead><tr><th>资源</th><th>位置</th><th>用途</th></tr></thead>
+          <tbody>
+            <tr><td>本 handoff</td><td><a href="vliw_instruction_compression_handoff_2026-09-01.html"><code>plan/vliw_instruction_compression_handoff_2026-09-01.html</code></a></td><td>当前统一入口。</td></tr>
+            <tr><td>深度研究计划</td><td><a href="vliw_instruction_compression_paper4_deepdive_2026-08-26.html"><code>plan/vliw_instruction_compression_paper4_deepdive_2026-08-26.html</code></a></td><td>原周期核方向、文献矩阵、Go/No-Go 条件。</td></tr>
+            <tr><td>通用稀疏 VLIW 计划</td><td><a href="general_sparse_vliw_instruction_compression_research_2026-08-26.html"><code>plan/general_sparse_vliw_instruction_compression_research_2026-08-26.html</code></a></td><td>压缩驻留、确定供给、基线与四个月范围。</td></tr>
+            <tr><td>调度器</td><td><a href="../schedule_v17.py"><code>schedule_v17.py</code></a></td><td>生成真实 VLIW Trace；ISA 编码真值来源。</td></tr>
+            <tr><td>分析器</td><td><a href="../analyze_compression.py"><code>analyze_compression.py</code></a></td><td>运行配置、Trace 指标、压缩模型和往返验证。</td></tr>
+            <tr><td>总 JSON</td><td><a href="../analysis_output_6x2/compression_analysis.json"><code>analysis_output_6x2/compression_analysis.json</code></a></td><td>所有 case 的完整嵌套结果。</td></tr>
+            <tr><td>主摘要 CSV</td><td><a href="../analysis_output_6x2/summary_matrix.csv"><code>analysis_output_6x2/summary_matrix.csv</code></a></td><td>12 个 case 的一行式核心指标。</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>12.2 Trace 实验输出</h3>
+      <p>当前输出目录共 528 个文件：根目录 24 个汇总/最佳 Trace 文件，28 个 mode 子目录各含 18 个调度器输出。</p>
+      <ul>
+        <li><a href="../analysis_output_6x2/mask_distribution.csv"><code>mask_distribution.csv</code></a>：每个 case 的全部六位 mask 频数和概率。</li>
+        <li><a href="../analysis_output_6x2/field_statistics.csv"><code>field_statistics.csv</code></a>：每个 slot/field 的宽度、事件数、唯一值、熵、众数和重复率。</li>
+        <li><a href="../analysis_output_6x2/period_analysis.csv"><code>period_analysis.csv</code></a>：full-word 与忽略变量字段后的严格周期结果。</li>
+        <li><a href="../analysis_output_6x2/period_aligned_affine_series.csv"><code>period_aligned_affine_series.csv</code></a>：每个 period phase、slot、field 的 base/stride/残差。</li>
+        <li><a href="../analysis_output_6x2/payload_bandwidth_windows.csv"><code>payload_bandwidth_windows.csv</code></a>：所有滑动窗口峰值。</li>
+        <li><a href="../analysis_output_6x2/payload_bandwidth_prefill.csv"><code>payload_bandwidth_prefill.csv</code></a>：32/64/96/128/160/184 bit/cycle 下的最小逻辑预填充。</li>
+        <li><code>*_best_trace.csv</code>：12 条选定 mode 的完整逐周期 Trace，含各槽十六进制值和完整 184-bit word。</li>
+        <li><code>*_mode*/</code>：调度器对各候选 mode 输出的 DAG、mapping、slot 和资源利用率文件。</li>
+      </ul>
+
+      <h3>12.3 存储模型输出</h3>
+      <ul>
+        <li><a href="../analysis_output_6x2/original_storage.csv"><code>original_storage.csv</code></a>：原始总位数。</li>
+        <li><a href="../analysis_output_6x2/li_vertical_padded_storage.csv"><code>li_vertical_padded_storage.csv</code></a>：Li 补齐 payload、ifnull、profile 分项。</li>
+        <li><a href="../analysis_output_6x2/slot_event_gap_dictionary_storage.csv"><code>slot_event_gap_dictionary_storage.csv</code></a>：gap 头、首周期、字典、索引、payload 分项。</li>
+        <li><a href="../analysis_output_6x2/field_hybrid_storage.csv"><code>field_hybrid_storage.csv</code></a>：字段描述、RAW、初值、字典表、索引流分项。</li>
+      </ul>
+
+      <h3>12.4 复现命令</h3>
+      <pre>cd "/Users/maghu/Desktop/work at school/compress"
+PYTHONPATH="compress-vliw/.python-deps" \
+python3 "compress-vliw/analyze_compression.py" \
+  --output "compress-vliw/analysis_output_6x2"</pre>
+      <p class="small">
+        当前 pandas 安装在 <code>compress-vliw/.python-deps</code>，因此需要设置 PYTHONPATH。
+        脚本会重新运行调度器，耗时约 27 秒，并覆盖输出目录中的汇总文件。
+      </p>
+    </section>
+
+    <section id="roadmap">
+      <h2>13. 接手后的 30 天计划</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>第 1 周：锁定公平基线</h3>
+          <ul class="checklist">
+            <li>把 Li 外部、Li 片上逻辑和 Li 物理宏口径分开实现。</li>
+            <li>实现 Stop-bit/变长 bundle 与有限模板基线。</li>
+            <li>确认现有 RTL 中 IMEM、PC、读端口和装载流程。</li>
+            <li>获取可用 28nm SRAM 宏深宽、端口和面积数据。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>第 2 周：收紧候选编码</h3>
+          <ul class="checklist">
+            <li>删除主路径 gap 字典，保留 6-bit ifnull。</li>
+            <li>定义每槽固定 token；限制字典总项数和 delta 单元数。</li>
+            <li>把 byte/word 对齐与宏取整加入编译期成本函数。</li>
+            <li>重新报告逻辑 bit、物理容量和解码资源三组结果。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>第 3 周：供给与 RTL 最小闭环</h3>
+          <ul class="checklist">
+            <li>实现 ifnull 读取、每槽顺序索引和受限字段恢复。</li>
+            <li>按实际 SRAM 延迟重算窗口带宽与 FIFO。</li>
+            <li>逐周期比较 RTL 输出与原 Trace。</li>
+            <li>检查关键路径并确定是否需要前端流水级。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>第 4 周：决定 Go / No-Go</h3>
+          <ul class="checklist">
+            <li>扫描常用 Y 和原论文 R/tile 因子，不盲目继续增加 X。</li>
+            <li>综合面积、功耗和最高频率。</li>
+            <li>完成 Event-only、模板、字典、delta 消融。</li>
+            <li>若物理收益不足或创新撞车，缩小/更换论文主张。</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>待用户/原作者补充的信息</h3>
+      <ul>
+        <li>当前 owner、导师和 RTL/综合环境联系人；本地材料没有给出 handoff 关系。</li>
+        <li>第三篇真实 IMEM RTL、容量、bank 组织、PC/FPCR/BAR 逻辑和装载接口。</li>
+        <li>TSMC 28nm memory compiler 或可比 SRAM 宏数据。</li>
+        <li>论文目标 venue、最晚投稿日期和可用综合/功耗工具许可。</li>
+        <li>行为等价是否允许输出保留位、未使用字段或 NOP 编码发生变化。</li>
+      </ul>
+    </section>
+
+    <section id="glossary">
+      <h2>14. 术语表</h2>
+      <div class="table-wrap">
+        <table class="wrap">
+          <thead><tr><th>术语</th><th>本项目中的含义</th></tr></thead>
+          <tbody>
+            <tr><td>VLIW</td><td>一个周期同时控制多个功能单元的宽指令。本平台固定为 184 bit。</td></tr>
+            <tr><td>slot</td><td>VLIW 中对应某类功能单元的字段；五个执行槽加一个控制槽。</td></tr>
+            <tr><td>NOP</td><td>该槽当周期无操作；当前编码为槽值全 0。</td></tr>
+            <tr><td>ifnull / mask</td><td>每周期六位有效表；1 表示该槽需要从紧凑流取出下一条有效 payload。</td></tr>
+            <tr><td>payload</td><td>去掉 NOP 后真正需要保存的有效槽指令内容。</td></tr>
+            <tr><td>gap</td><td>同一 slot 两次有效事件之间的周期距离；gap=4 表示中间有三个空周期。</td></tr>
+            <tr><td>descriptor</td><td>解释压缩流所需的长度、模式、表大小、位宽或地址等元数据。</td></tr>
+            <tr><td>CR / 剩余比例</td><td>压缩后位数除以原始位数；越低越好。本文同时使用“减少百分比”，必须看清口径。</td></tr>
+            <tr><td>结构周期</td><td>忽略寄存器和地址变量字段后，槽操作结构的重复周期。</td></tr>
+            <tr><td>仿射再生</td><td>用 <code>(base + k×stride) mod 2^width</code> 恢复跨迭代字段。</td></tr>
+            <tr><td>compressed-resident</td><td>压缩形式直接驻留于实际指令存储，而非先整体展开到等容量 cache。</td></tr>
+            <tr><td>零停顿供给</td><td>解压/读取前端在每个 deadline 周期均能给出所需完整 VLIW，不产生气泡。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>接手者的第一原则</strong>
+        先问“这个数字属于外部文件、逻辑有效位，还是物理 SRAM？”再比较压缩率；
+        先问“这个机制已有谁做过？”再命名创新；先完成固定格式和 RTL，再把软件上界写入论文结论。
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

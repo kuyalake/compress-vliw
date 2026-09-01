@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第四篇选题深化：FRV-SFU-VLIW 指令流的周期等价压缩</title>
+<style>
+:root{--ink:#182230;--muted:#667085;--line:#d8e0ea;--bg:#f4f7fb;--paper:#fff;--blue:#175cd3;--navy:#102a56;--cyan:#087a8c;--green:#067647;--amber:#a15c00;--red:#b42318;--violet:#6938ef;--soft:#eef4ff}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--bg);font:16px/1.72 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif}a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}.wrap{max-width:1180px;margin:auto;padding:0 22px 70px}
+.hero{margin:28px 0 16px;padding:44px;border-radius:24px;color:#fff;background:linear-gradient(135deg,#101828 0%,#193c75 55%,#087a8c 100%);box-shadow:0 18px 45px rgba(16,42,86,.18)}.eyebrow{font-size:13px;letter-spacing:.13em;text-transform:uppercase;opacity:.78}.hero h1{font-size:34px;line-height:1.28;margin:10px 0}.hero p{max-width:960px;color:#e9f1ff;font-size:17px}.meta{display:flex;gap:9px;flex-wrap:wrap;margin-top:22px}.pill{padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.13);font-size:13px}
+nav{position:sticky;top:0;z-index:20;display:flex;gap:8px;overflow:auto;padding:10px 0;margin-bottom:15px;background:rgba(244,247,251,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}nav a,nav button{white-space:nowrap;border:1px solid var(--line);border-radius:9px;background:white;color:var(--ink);padding:7px 11px;font:inherit;font-size:13px;cursor:pointer}
+section{scroll-margin-top:70px;background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:30px;margin:18px 0;box-shadow:0 5px 18px rgba(16,24,40,.035)}h2{font-size:25px;line-height:1.35;margin:0 0 18px}h3{font-size:20px;margin:27px 0 10px}h4{font-size:16px;margin:20px 0 7px}.lead{font-size:18px;color:#344054}.small{font-size:13px;color:var(--muted)}
+.callout{border-left:5px solid var(--blue);background:var(--soft);border-radius:10px;padding:16px 18px;margin:16px 0}.callout.green{border-color:var(--green);background:#ecfdf3}.callout.amber{border-color:var(--amber);background:#fff8e7}.callout.red{border-color:var(--red);background:#fff1f0}.callout.violet{border-color:var(--violet);background:#f5f3ff}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.card{border:1px solid var(--line);border-radius:14px;padding:18px;background:#fff}.card h3,.card h4{margin-top:0}.num{float:right;color:#98a2b3;font-size:29px;font-weight:800}
+.tag{display:inline-block;margin:2px;padding:3px 8px;border-radius:999px;background:#eef2f6;color:#344054;font-size:12px}.tag.best{background:#dcfae6;color:#087443}.tag.risk{background:#fff0c2;color:#7a2e0e}.tag.stop{background:#fee4e2;color:#912018}.tag.full{background:#d1e9ff;color:#0b4a8f}.tag.abs{background:#f2f4f7;color:#475467}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}th,td{text-align:left;vertical-align:top;border:1px solid var(--line);padding:9px 10px}th{background:#f7f9fc}
+.formula{overflow:auto;text-align:center;font-family:Georgia,"Times New Roman",serif;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:16px;margin:12px 0}
+.code{white-space:pre;overflow:auto;background:#111827;color:#d1fae5;border-radius:12px;padding:17px;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.flow{display:flex;align-items:stretch;justify-content:center;gap:9px;flex-wrap:wrap;margin:20px 0}.box{min-width:135px;text-align:center;border:1px solid #b9c7dc;border-radius:12px;background:#f8fbff;padding:13px;font-size:14px}.arrow{align-self:center;color:#7a8aa2;font-size:22px}
+.timeline{border-left:3px solid #b8c8ea;margin-left:8px;padding-left:20px}.timeline p{margin:10px 0}.src li{margin:8px 0}.footer{text-align:center;color:var(--muted);font-size:13px;margin-top:25px}ul,ol{padding-left:23px}li{margin:5px 0}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin:10px 0}
+@media(max-width:800px){.hero{padding:28px}.hero h1{font-size:26px}.grid,.grid.three{grid-template-columns:1fr}.wrap{padding:0 12px 50px}section{padding:22px}table{display:block;overflow:auto}}
+@media print{body{background:#fff}.wrap{max-width:none;padding:0}.hero{box-shadow:none}.hero,th,.callout{-webkit-print-color-adjust:exact;print-color-adjust:exact}nav{display:none}section{box-shadow:none;break-inside:avoid;margin:10px 0}.card{break-inside:avoid}a{color:var(--ink)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">Fourth-paper deep dive · evidence-based revision</div>
+  <h1>第四篇选题深化<br>FRV-SFU-VLIW 指令流的周期等价压缩</h1>
+  <p>本轮完成了交接文件要求的三件事：逐页精读三篇 PDF（尤其第三篇的指令组织与控制机制）、对 VLIW 指令压缩做分类文献调研并逐条标注全文可得性、在此基础上重新推导创新切入点。<strong>结论有一处重要修正：真正的创新点不在"稀疏槽位掩码压缩"（该方向 1996 年即已成熟），而在于第三篇指令流被展平后暴露出的<u>严格周期性</u>——这是此前所有讨论都没有识别出来的。</strong></p>
+  <div class="meta"><span class="pill">日期：2026-08-26</span><span class="pill">三篇 PDF 全文已读</span><span class="pill">平台：FRV-SFU-VLIW（TVLSI 00472/2026）</span><span class="pill">单人 3～4 个月</span><span class="pill">周期语义严格不变</span><span class="pill">6 个候选方向已评分</span></div>
+</header>
+
+<nav>
+  <a href="#chg">本轮修正</a><a href="#method">方法与可得性</a><a href="#p3">第三篇精读</a><a href="#gap">论文未给出的量</a><a href="#quant">稀疏度量化推导</a><a href="#lit">文献调研</a><a href="#matrix">适用性矩阵</a><a href="#schemes">方向推荐</a><a href="#neighbors">与近邻机制的区别</a><a href="#model">评估模型</a><a href="#plan">工作计划</a><a href="#kill">风险与淘汰条件</a><a href="#ask">待确认问题</a><a href="#src">来源</a>
+  <button onclick="window.print()">打印 / 导出 PDF</button>
+</nav>
+
+<!-- ============ 1 ============ -->
+<section id="chg">
+<h2>一、本轮相对交接文件的三处实质修正</h2>
+
+<div class="callout red">
+<strong>修正 1：交接文件 §6 的"周期描述符—有效负载双流 / RAW-SPARSE-TEMPLATE 多模式"不能作为论文创新点。</strong>
+经全文核实，Conte 等人 1996 年 MICRO 的 TINKER 压缩编码已经是"删 NOP + header/tail 位界定 MultiOp 边界 + 变长取指 + 缓冲平滑"，ρ-VEX 的 sparse encoding（ReConFig 2015）就是"mask word 指示后续 bundle 中哪些操作存在"。这两者合起来已经覆盖了 Descriptor+Payload 与 SPARSE 模式的全部要点。TTA 的 template-based compression（SAMOS 2014 / IJPP 2018）覆盖了 TEMPLATE 模式。<strong>把它们重新包装会被审稿人直接命中。</strong>
+</div>
+
+<div class="callout green">
+<strong>修正 2：第三篇指令流的主导冗余不是"空槽"，而是"周期性重复"。</strong>
+第三篇的调度器（Algorithm 1）把整个工作负载<u>展平</u>成一条逐周期的直线指令流，没有任何分支/循环指令，以 EOP 结束。但工作负载本身是"同一个小 DAG（Softmax 8 个算子、LayerNorm 17 个算子）在成百上千个向量分段上重复"。于是展平后的指令流在稳态下是<strong>严格周期</strong>的：同样的槽位模式每隔一个固定的启动间隔 <em>II</em> 重复一次，<u>只有寄存器索引在按固定步长平移</u>。用论文自己的数据可以验证（见 §五）：GELU(512×3072) 的 24603 周期 ≈ 6144 个分段 × 4，误差 0.1%。这意味着可压缩上界远高于掩码方案能达到的水平。
+</div>
+
+<div class="callout amber">
+<strong>修正 3：第三篇没有报告 VLIW 位宽、槽位字段、NOP 编码，也没有报告指令存储的面积/功耗。</strong>
+Table V 的模块面积分解里<u>根本没有指令存储这一项</u>（只有 VECTOR / SFU / SCALAR / VGPR / SGPR / Decoder-Crossbar-Others）。所以第四篇必须先自己把"基线指令存储代价"建立起来。好消息是：三篇论文第一作者都是本人，RTL 与调度器源码在手，<strong>这不是研究风险，只是一项必须先做的取数工作</strong>——不要靠推算写进论文。
+</div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="method">
+<h2>二、本轮做法与文献可得性说明</h2>
+<p>交接文件 §7.3 要求全文可得性必须透明。本报告使用三级标注，<strong>没有任何一条把推测写成论文事实</strong>：</p>
+<div class="legend">
+  <span class="tag full">全文已读</span> 已下载 PDF 并本地文本化，结论逐条来自正文
+  <span class="tag abs">仅摘要/检索摘录</span> 只读到摘要或检索引擎摘录，正文未获取
+  <span class="tag risk">仅题录</span> 只确认了标题/作者/出处，内容未核实
+</div>
+<h3>本轮实际操作</h3>
+<ul>
+<li>三篇 PDF 用 <code>pdftotext -layout</code> 按<strong>单页单栏</strong>切分（<code>-x/-y/-W/-H</code> 裁剪左右栏）后逐页阅读，避免双栏串行导致的语义错乱——第三篇整篇 14 页均已处理。</li>
+<li>外部文献：先检索定位，再对开放获取的 PDF 直接下载并本地文本化，<u>不采信检索引擎的自动摘要</u>（本轮已发现一次自动摘要给出与正文不符的泛化描述）。</li>
+<li>被 403 / 登录墙拦截的（Springer DAES 2024、TU Delft repository、trepo.tuni.fi）如实标注为"仅摘要"。</li>
+</ul>
+<div class="callout">
+<strong>下一轮必须补的全文（现在拿不到，且直接决定创新点是否成立）：</strong>
+<ol>
+<li>Improving Energy Efficiency of CGRAs Through Modulo Schedule Compression/Decompression, ACM TACO 2018 —— <strong>这是与修正 2 最接近的先行工作</strong>；</li>
+<li>Energy-Efficient Instruction Compression with Programmable Dictionaries, DAES 2024（Springer 登录墙）；</li>
+<li>A Sparse VLIW Instruction Encoding Scheme Compatible with Generic Binaries, ReConFig 2015（IEEE 墙）。</li>
+</ol>
+建议用学校 IEEE/ACM/Springer 订阅下载，这三篇是查新报告的必读项。
+</div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="p3">
+<h2>三、第三篇精读：ISA 与控制机制结构化产物</h2>
+<p class="small">来源：Revised_Paper_TVLSI_00472_2026.pdf，"A Fully Reconfigurable and Programmable VLIW Architecture for Nonlinear Function Acceleration"，Ke Hu 等，14 页。以下每条均给出页码/图表号。<span class="tag full">全文已读</span></p>
+
+<h3>3.1 槽位组织（p.4 左栏，§III-A）</h3>
+<p>原文："The VLIW instruction word is organized into <strong>five functional slots and one control slot</strong>: LOAD, STORE, SCALAR, VECTOR, SFU, and CONTROL."</p>
+<table>
+<tr><th>槽位</th><th>驱动对象</th><th>论文明确说明的职责</th><th>论文未说明</th></tr>
+<tr><td>LOAD</td><td>Ping-Pong Buffer → VGPR</td><td>双向数据搬运的载入方向；边界处可插入格式转换</td><td>字段布局、地址位宽、寻址模式</td></tr>
+<tr><td>STORE</td><td>VGPR → Ping-Pong Buffer</td><td>同上（写出方向）；末尾算子固定为 3 周期 STORE（p.7 左栏）</td><td>同上</td></tr>
+<tr><td>SCALAR</td><td>BFU（标量算术）</td><td>控制 Scalar module</td><td>opcode 宽度、SGPR 端口数</td></tr>
+<tr><td>VECTOR</td><td>RFU 阵列 + 归约数据通路</td><td>驱动 N=256 的 RFU 阵列与专用层次归约通路</td><td>mask 字段宽度、归约模式编码</td></tr>
+<tr><td>SFU</td><td>S-SFU + L-SFU 阵列</td><td>协调特殊函数执行；含 <strong>Optype 字段，实现为 3 bit，支持 7 种特殊函数</strong>（p.4 右栏，"we allocate a 3-bit Optype"）</td><td>SFU 槽其余字段</td></tr>
+<tr><td>CONTROL</td><td>整机控制</td><td>存在，但正文<u>唯一可确认的内容</u>是 EOP（End-of-Program）标记</td><td>FUV 模式切换、reconfig 是否走该槽</td></tr>
+</table>
+<p><strong>唯一在论文中被明确给出位宽的指令字段是 SFU 的 3-bit Optype。</strong>其余全部未给出。</p>
+
+<h3>3.2 取指与执行时序（p.3 右栏 §III-A，p.7 左栏 §IV-C）</h3>
+<div class="flow">
+<div class="box">Tile 输入<br>全部进入<br>Ping-Pong Buffer</div><div class="arrow">→</div>
+<div class="box"><strong>每周期取 1 条<br>VLIW 指令字</strong></div><div class="arrow">→</div>
+<div class="box">Decoder 解析</div><div class="arrow">→</div>
+<div class="box">共享 Crossbar<br>分发控制字段</div><div class="arrow">→</div>
+<div class="box">Scalar / Vector / SFU</div><div class="arrow">→</div>
+<div class="box">解码到 EOP<br>程序结束</div>
+</div>
+<p>关键性质，全部对压缩方案设计有直接影响：</p>
+<table>
+<tr><th>性质</th><th>论文依据</th><th>对压缩方案的含义</th></tr>
+<tr><td><strong>无分支、无跳转、无循环</strong>：全篇 ISA 描述中不存在任何分支/跳转/循环指令，只有 EOP</td><td>p.3 右栏"fetches one VLIW instruction word per cycle until an End-of-Program (EOP) instruction is decoded"；p.7 Algorithm 1 line 30 只 Insert EOP</td><td><strong>不需要 LAT 地址翻译表、不需要分支目标对齐、不需要 checkpoint 表。</strong>经典方案里最贵的那部分硬件在这里全是纯浪费——这是第三篇的结构性优势</td></tr>
+<tr><td><strong>零停顿、编译期完全确定</strong></td><td>p.7 左栏"the hardware executes one generated VLIW word per cycle without stalling; thus, each scheduled issue cycle exactly matches the hardware execution"</td><td>周期语义是硬约束：压缩后必须逐周期严格还原，任何一次供给不上都会破坏论文已发表的时序模型</td></tr>
+<tr><td><strong>HBM 阻塞不影响当前指令流</strong></td><td>p.3 右栏"an HBM stall delays only the next tile launch without interrupting or rescheduling the current static instruction stream"</td><td>指令供给与外部带宽解耦，压缩机制只需面对片上指令存储带宽</td></tr>
+<tr><td><strong>指令流跨 tile 复用</strong></td><td>p.7 右栏"reuse the statically generated instruction stream across regular tiles"</td><td>已经存在一层"外层重复 R 次"的结构，说明硬件已具备把 PC 拉回起点的能力——方案 S3 的最小硬件前提已经具备</td></tr>
+</table>
+
+<h3>3.3 编译流程（p.5–7，§IV）</h3>
+<div class="flow">
+<div class="box">1. DAG 构建<br><span class="small">算子分解 + 分段</span></div><div class="arrow">→</div>
+<div class="box">2. FUV 模式分析<br><span class="small">Mode 0/1/2</span></div><div class="arrow">→</div>
+<div class="box">3. Static Multi-Mode<br>Scheduling<br><span class="small">逐周期 list scheduling</span></div><div class="arrow">→</div>
+<div class="box"><strong>展平的<br>逐周期指令流</strong></div>
+</div>
+<p>Algorithm 1（p.7 右栏）逐周期构造 <code>Instr<sub>t</sub></code>：先 <code>Initialize Instr_t with NOP</code>，再把 ReadyList 中能发射的节点填入，<strong>"unused slots are filled with NOP"</strong>（p.7 左栏原文）。这就是空槽的来源，且是显式 NOP，不是隐式省略。</p>
+
+<h3>3.4 算子延迟表（Table III, p.9）</h3>
+<table>
+<tr><th>操作</th><th>周期</th><th>操作</th><th>周期</th></tr>
+<tr><td>Element-wise (ADD, MUL)</td><td>3</td><td>EXP</td><td>17</td></tr>
+<tr><td>REDUCE_MAX</td><td>4</td><td>SQRT / INV</td><td>12</td></tr>
+<tr><td>REDUCE_ADD</td><td>8</td><td>LN</td><td>15</td></tr>
+<tr><td colspan="2">GELU / SIGMOID / TANH</td><td colspan="2">12</td></tr>
+</table>
+<p class="small">长延迟（EXP 17、LN 15）与小 DAG（8～17 个算子）的组合，正是空槽率高的直接原因；同时也是稳态下必须靠多个向量实例交叠才能填满流水的原因，而"多实例交叠"恰恰产生周期性。</p>
+
+<h3>3.5 工作负载 DAG 规模（Fig.3 / Fig.4, p.6）</h3>
+<ul>
+<li><strong>Softmax</strong>（Fig.3，未分段长度 N 的向量）：节点 0 为 NOP 根，实际算子 8 个 —— LOAD → REDUCE_MAX → SUB → EXP →(REDUCE_ADD → INV)→ MUL → STORE。</li>
+<li><strong>LayerNorm</strong>（Fig.4）：21 个节点中 4 个是 NOP/常量根，实际算子 17 个。</li>
+<li><strong>LogSumExp</strong>（p.6 正文）：复用 REDUCE_MAX/SUB/EXP/REDUCE_ADD/LN/ADD，仅需重建 DAG 并重新编译，无需改 ISA。</li>
+</ul>
+
+<h3>3.6 硬件配置与面积（§VI-B, Table V, p.9–10）</h3>
+<ul>
+<li>TSMC 28 nm，1 GHz，总面积 <strong>4.019 mm²</strong>，功耗 3.61 W。</li>
+<li>RFU 阵列 N = 256；L-SFU 64 个；VGPR 每行 256×16 bit，SGPR 每项 16 bit；<strong>两者深度均为 256</strong>，4 个交织双端口 SRAM bank。</li>
+<li>Table V：VECTOR 1.331 mm² (33.1%)、SFU 0.475 (11.8%)、SCALAR 0.004 (0.1%)、<strong>VGPR(SRAM) 2.031 (50.5%)</strong>、SGPR(SRAM) 0.012 (0.3%)、<strong>Decoder/Crossbar/Others 0.166 (4.2%)</strong>。</li>
+</ul>
+<div class="callout amber"><strong>注意：VGPR = 256 行 × 256 lane × 16 bit ≈ 1.05 Mbit，占 2.031 mm²。这给出一个可用于估算的 28nm SRAM 密度锚点（约 1.9 mm²/Mbit，双端口多 bank）。</strong>第四篇要用它来把"指令存储代价"量化到与 Table V 同一坐标系里。</div>
+
+<h3>3.7 论文自己已经承认的指令存储问题（§IV-D + Table I, p.7–8）</h3>
+<p>这是第四篇最好的立论依据，因为它是第三篇<u>自己写的</u>：</p>
+<div class="callout violet">"Scheduling a large workload as a single instance would <strong>increase the instruction and buffer footprints, particularly with the wide VLIW format</strong>."（p.7 右栏 §IV-D）<br>"…designers can substantially reduce buffer and <strong>instruction memory</strong> with only a slight increase in latency."（p.8 左栏）</div>
+<table>
+<tr><th>Softmax (512×512) 分块因子 R</th><th>Buffer (KB)</th><th>指令条数</th><th>总周期</th></tr>
+<tr><td>2</td><td>512</td><td>3662</td><td>10378</td></tr>
+<tr><td>4</td><td>256</td><td>1848</td><td>8984</td></tr>
+<tr><td><strong>8</strong></td><td><strong>128</strong></td><td><strong>972</strong></td><td><strong>8636</strong>（最优）</td></tr>
+<tr><td>16</td><td>64</td><td>518</td><td>8782</td></tr>
+<tr><td>32</td><td>32</td><td>288</td><td>10296</td></tr>
+</table>
+<p>Table I 说明了两件事：（a）指令条数是设计者<u>已经在主动权衡</u>的一阶代价；（b）目前唯一的手段是<strong>分块（tiling）</strong>，而分块是有代价的——R 从 8 增大到 32，指令条数虽从 972 降到 288，但总周期从 8636 涨到 10296（<strong>+19.2%</strong>），原因是论文自己说的"boundary under-utilization of VLIW slots"。</p>
+<div class="callout green"><strong>这就是第四篇的精确定位：把"指令存储 vs 性能"从一条被迫二选一的折中曲线上解放出来。</strong>压缩让设计者可以选 R=8 甚至 R=4 的性能点，同时拿到 R=32 甚至更好的存储占用。这个论证在第三篇的数据上是自洽的，不需要任何外部假设。</div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="gap">
+<h2>四、第三篇未给出、第四篇必须自己建立的量</h2>
+<p>交接文件 §3 列出了 12 项"必须从 PDF 精确提取"的内容。逐项核对结果如下——<strong>大部分论文根本没写</strong>：</p>
+<table>
+<tr><th>交接文件要求提取的内容</th><th>核对结果</th><th>获取途径</th></tr>
+<tr><td>VLIW 总位宽</td><td class="tag stop">论文未给出</td><td>本人 RTL（decoder 输入端口宽度）</td></tr>
+<tr><td>槽位数量和名称</td><td class="tag best">已获取</td><td>p.4 左栏：6 个（5 功能 + 1 控制）</td></tr>
+<tr><td>每个槽位的字段与位宽</td><td class="tag stop">仅 SFU Optype = 3 bit</td><td>本人 RTL / 编译器 emit 代码</td></tr>
+<tr><td>NOP / 空槽编码</td><td class="tag stop">论文未给出</td><td>本人 RTL；论文只说"unused slots are filled with NOP"</td></tr>
+<tr><td>操作数、立即数、寄存器地址字段</td><td class="tag risk">可从 VGPR/SGPR 深度=256 推出地址需 8 bit，但字段布局未给</td><td>本人 RTL</td></tr>
+<tr><td>PC、指令存储和取指组织</td><td class="tag stop">论文未给出；Fig.1 中无 IMEM 方框</td><td>本人 RTL</td></tr>
+<tr><td>每周期读取/发射机制</td><td class="tag best">已获取</td><td>p.3 右栏：每周期 1 条，零停顿，EOP 结束</td></tr>
+<tr><td>分支、循环、跳转、函数切换</td><td class="tag best">已确认<strong>不存在</strong></td><td>全篇未出现；仅 EOP + tile 级流复用</td></tr>
+<tr><td>不同操作延迟与周期语义</td><td class="tag best">已获取</td><td>Table III (p.9)</td></tr>
+<tr><td>已有编译/指令生成流程</td><td class="tag best">已获取</td><td>Algorithm 1 (p.7)，三阶段前端</td></tr>
+<tr><td>各函数指令长度与槽位使用情况</td><td class="tag risk">有指令<u>条数</u>（Table I）和周期数（Table IX），<strong>无槽位利用率</strong></td><td>需自行统计调度器输出</td></tr>
+<tr><td>指令存储是否报告面积/功耗</td><td class="tag stop"><strong>否。</strong>Table V 无该条目</td><td>需自行用 memory compiler 生成并综合</td></tr>
+</table>
+<div class="callout red">
+<strong>关键更正：交接文件 §3 提到"用户/导师观察到平均每拍只使用约 2～3 个槽位"——这个数字不在第三篇里，是口头观察。</strong>第四篇不能引用它，必须用调度器实测数据替换（见 §五的独立推导，结果与 2～3 并不一致）。这一点在开题时如果被问到"数据出处"会很被动，务必先补齐。
+</div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="quant">
+<h2>五、稀疏度与周期性：基于论文数据的独立推导</h2>
+<div class="callout amber"><strong>本节全部是推导，不是论文原文。</strong>推导只用 Table IX 的周期数、Fig.3/Fig.4 的 DAG 规模、N=256 的分段规则，以及 §IV-B 的 pass-count 公式。每一步假设都写明。结论必须用调度器实测复核后才能写进论文。</div>
+
+<h3>5.1 每周期发射数与槽位占用率</h3>
+<p>设工作负载 (X×Y)，分段数 <em>S</em> = X·⌈Y/256⌉；每分段实例的算子数取自 Fig.3/Fig.4；周期数取自 Table IX（FUV-enabled 列）。</p>
+<table>
+<tr><th>工作负载</th><th>分段数 S</th><th>每段算子数（估）</th><th>总发射数（估）</th><th>周期数<br><span class="small">Table IX</span></th><th>发射/周期</th><th>6 槽占用率</th></tr>
+<tr><td>Softmax (512×512)</td><td>512×2 = 1024</td><td>8 + 层次归约摊薄 ≈ 9.5</td><td>≈ 9 700</td><td>7 228</td><td>≈ 1.35</td><td><strong>≈ 22%</strong></td></tr>
+<tr><td>GELU (512×3072)</td><td>512×12 = 6144</td><td>3（LOAD/GELU/STORE）</td><td>≈ 18 400</td><td>24 603</td><td>≈ 0.75</td><td><strong>≈ 12%</strong></td></tr>
+<tr><td>LayerNorm (512×768)</td><td>512×3 = 1536</td><td>≈ 12（17 算子中部分为整行共享标量链）</td><td>≈ 18 900</td><td>11 048</td><td>≈ 1.71</td><td><strong>≈ 29%</strong></td></tr>
+</table>
+<p><strong>结论：加权平均每周期只有约 0.75～1.7 个槽位被占用，6 个槽位中 71%～88% 是 NOP。</strong>这比交接文件里的"2～3 个槽位"更稀疏。差异可能来自：口头观察针对的是某个特定小规模用例，或把多 pass 占用算成了多次发射。<span class="tag risk">必须以调度器实测为准</span></p>
+
+<h3>5.2 周期性：用论文数据交叉验证</h3>
+<p>§IV-B 给出 <em>P<sub>sfu</sub></em> = ⌈N/M⌉。GELU 恒选 Mode 2（M=64）→ <em>P<sub>sfu</sub></em> = 4。若稳态下每个分段实例的启动间隔 <em>II</em> = <em>P<sub>sfu</sub></em> = 4：</p>
+<div class="formula">6144 段 × 4 周期/段 = 24 576 周期　　vs　　Table IX 实测 <strong>24 603</strong> 周期　　（差 27 周期 = 0.11%，正是流水填充/排空）</div>
+<div class="callout green"><strong>这是第四篇最重要的一条证据。</strong>它证明：展平后的指令流在稳态下是一个长度为 <em>II</em> 的模式重复 S 次，尾部差值仅为 prologue/epilogue。同一算法对其余负载给出 <em>II</em> ≈ 7.06（Softmax）与 <em>II</em> ≈ 7.19（LayerNorm），同样接近整数且远小于 DAG 关键路径长度——说明多个向量实例确实在软流水式交叠，这正是 Algorithm 1 里 "oldest-vector-first priority"（p.6 右栏）产生的效果。</div>
+<p>换言之，第三篇的编译器<u>事实上做出了一个模调度</u>，但因为 ISA 没有循环指令，它被迫把这个模调度<strong>完全展开</strong>成几千到几万条直线指令存进片上存储。<strong>这才是指令存储浪费的真正来源，空槽只是次要因素。</strong></p>
+
+<h3>5.3 指令存储代价的量级估算</h3>
+<p class="small">假设（均需 RTL 复核）：VLIW 宽度按字段重建估算——LOAD/STORE 各约 28 bit（opcode 3 + buffer addr 12 + VGPR addr 8 + fmt 2 + en）、SCALAR 约 28（opcode 4 + 2×SGPR 8 + dst 8）、VECTOR 约 34（opcode 5 + 2×VGPR 8 + dst 8 + mask + reduce mode）、SFU 约 24（Optype 3 + src 8 + dst 8 + VFC sel）、CONTROL 约 8 →  <strong>合计约 150 bit（区间 140～180）</strong>。SRAM 密度取 1.0～2.0 mm²/Mbit（下界为单端口窄 SRAM，上界为 §3.6 由 VGPR 反推的双端口锚点）。</p>
+<table>
+<tr><th>Softmax (512×512) 情形</th><th>指令条数</th><th>指令存储位数</th><th>估算面积</th><th>占 4.019 mm² 核心比例</th></tr>
+<tr><td>不分块（单实例，≈ Table IX 周期数）</td><td>≈ 7 228</td><td>≈ 1.08 Mbit</td><td><strong>≈ 1.1 – 2.2 mm²</strong></td><td><strong>27% – 54%</strong></td></tr>
+<tr><td>R = 8（Table I 最优性能点）</td><td>972</td><td>≈ 0.146 Mbit</td><td>≈ 0.15 – 0.29 mm²</td><td>3.6% – 7.3%</td></tr>
+<tr><td>R = 32（Table I 最小存储点，性能 −19.2%）</td><td>288</td><td>≈ 0.043 Mbit</td><td>≈ 0.04 – 0.09 mm²</td><td>1.1% – 2.2%</td></tr>
+</table>
+<div class="callout"><strong>即使在最优性能点 R=8，指令存储也已经与整个 Decoder/Crossbar/Others（0.166 mm²）同量级，接近 SFU 模块（0.475 mm²）的三分之一至二分之一，并且是 SGPR（0.012 mm²）的十倍以上。</strong>而不分块时它会成为仅次于 VGPR 的第二大面积项。这个论证足以支撑一篇论文的 motivation，而且完全建立在第三篇自己报告的数字上。<span class="tag risk">位宽与 SRAM 密度必须用实际 RTL + memory compiler 替换</span></div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="lit">
+<h2>六、VLIW / 宽发射指令压缩文献调研</h2>
+<p>按交接文件 §10 建议的 9 类组织。字段依 §10 要求：年份、出处、全文状态、压缩冗余来源、粒度、存储位置、解码位置、是否压缩驻留、是否保证每周期一 bundle、随机访问处理、硬件结构、压缩率、局限、与第三篇的重叠。</p>
+
+<h3>类别 1 · NOP 消除、Stop-bit 与稀疏 Bundle</h3>
+<table>
+<tr><th>文献</th><th>全文状态</th><th>核心机制</th><th>压缩驻留？</th><th>每周期一 bundle？</th><th>随机访问</th><th>量化结果</th><th>与第三篇的关系</th></tr>
+<tr>
+<td><strong>Conte 等，Instruction Fetch Mechanisms for VLIW Architectures with Compressed Encodings</strong>，MICRO-29, 1996</td>
+<td><span class="tag full">全文已读</span></td>
+<td>TINKER 压缩编码：Op = 64 bit 定长，MultiOp = n×64 变长；用 <strong>header bit / tail bit</strong> 界定 MultiOp 边界（等价于 stop-bit）；Op 内含 FUT 字段，因此位置不再隐含功能单元，需要 <strong>expander</strong> 做 Op→FU 路由</td>
+<td><strong>部分</strong>：内存中压缩；cache 分 NOP cache（展开）与 NOPs-free cache（压缩）两类</td>
+<td>是（这正是全文主题）</td>
+<td>offset-reduced 地址解释 + 每 Op 带 tag/length/valid 位；<strong>分支预测失败罚 1 周期</strong>，expander 进入取指路径会增加分支延迟</td>
+<td>silo cache 性能最好；banked cache 比 uncompressed 好一个数量级；sub-block 设计对整数程序 +9%/+45%（16/32 KB）；<strong>cache 面积 +8%</strong></td>
+<td><span class="tag stop">高度重叠</span>已覆盖"删 NOP + 边界标记 + 变长取指 + 缓冲平滑"。<strong>第四篇不能把这套当创新。</strong>但其全部复杂性（silo/banked cache、tag 比较、分支罚）都源于"有分支 + 有 i-cache"，第三篇两者皆无</td>
+</tr>
+<tr>
+<td><strong>Brandon 等，A Sparse VLIW Instruction Encoding Scheme Compatible with Generic Binaries</strong>，ReConFig 2015（ρ-VEX）</td>
+<td><span class="tag abs">仅摘要/检索摘录</span></td>
+<td>用一个 <strong>mask word</strong> 编码后续 bundle 中哪些 operation 存在；目标是低 ILP 时 NOP 编码导致的代码膨胀，同时保持通用二进制兼容</td>
+<td>待核实</td>
+<td>待核实</td>
+<td>待核实</td>
+<td>未获取</td>
+<td><span class="tag stop">直接重叠</span>这就是交接文件 §6.1 的 Descriptor(mask)+Payload。<strong>必须补全文</strong></td>
+</tr>
+<tr>
+<td>Nop compression scheme for high speed DSPs based on VLIW architecture（IEEE, 2014）；多项 NOP 压缩专利（US6275921、US9286074、US7143268）</td>
+<td><span class="tag risk">仅题录</span></td>
+<td>纵向删 NOP、NOP 计数索引码、stop/parallel bit</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>检索摘录称纵向压缩可减代码约 70%（未核实）</td>
+<td>说明该思路已进入专利层面，进一步压缩了 mask 类方案的新颖性空间</td>
+</tr>
+</table>
+
+<h3>类别 2 · 模板 / 多格式 / 可变长 VLIW</h3>
+<table>
+<tr><th>文献</th><th>全文状态</th><th>核心机制</th><th>量化结果</th><th>与第三篇的关系</th></tr>
+<tr><td>Helkala, Viitanen, Kultala, Jääskeläinen, Takala 等，<strong>Variable Length Instruction Compression on Transport Triggered Architectures</strong>，SAMOS 2014 / IJPP 2018</td><td><span class="tag abs">仅摘要</span>（trepo.tuni.fi 全文被 Anubis 拦截）</td><td>基于<strong>指令模板</strong>的压缩 + 两种变长取指方案，针对 TTA 这种静态多发射、数据通路暴露的架构</td><td>摘要称平均程序尺寸最好可减 <strong>44%</strong></td><td><span class="tag stop">直接重叠</span>覆盖交接文件 §6.2 的 TEMPLATE 模式；且 TTA 与第三篇同属"静态调度、控制位暴露"一类，是最贴近的对照组</td></tr>
+<tr><td>Improving Code Density with Variable Length Encoding-Aware Instruction Scheduling，J. Signal Processing Systems（DOI 10.1007/s11265-015-1081-6）</td><td><span class="tag abs">仅摘要</span></td><td>让<strong>调度器感知变长编码</strong>，主动生成利于压缩的调度</td><td>未获取</td><td><span class="tag risk">需警惕</span>这是"编译调度与压缩协同"的先行工作；第四篇若走"改调度以利压缩"路线会撞车。<strong>建议第四篇明确不改调度</strong>（保持周期语义严格不变），从而与之正交</td></tr>
+<tr><td>Compilation Strategies for Reducing Code Size on a VLIW Processor with Variable Length Instructions，HiPEAC 2008；VL2IW；FBT (Filled Buffer Technique)</td><td><span class="tag risk">仅题录</span></td><td>编译期策略 + 变长指令格式协同减小代码尺寸</td><td>未获取</td><td>同上类别，属背景引用</td></tr>
+<tr><td>Intel Itanium / IA-64 template 位；TI C6x；HP/ST Lx-ST200</td><td><span class="tag abs">仅摘要</span></td><td>bundle 内 template 位指示 syllable 如何组合、以及并行边界</td><td>—</td><td>商用先例，作为"模板法早已工业化"的引用</td></tr>
+</table>
+
+<h3>类别 3 · Huffman / 算术 / V2F-Tunstall / LZW 统计压缩</h3>
+<table>
+<tr><th>文献</th><th>全文状态</th><th>核心机制</th><th>存储/解码位置</th><th>压缩率</th><th>与第三篇的关系</th></tr>
+<tr><td><strong>Xie, Wolf, Lekatsas，Code Compression for VLIW Processors Using Variable-to-fixed Coding</strong>，ISSS 2002（另有 MICRO 2001 与 TVLSI 2006 版本）</td><td><span class="tag full">全文已读</span></td><td>用 <strong>Tunstall 变长→定长（V2F）</strong> 编码替代 Huffman 的定长→变长。定长码字使"索引进压缩数据"变容易、解码器可并行、可字节对齐、可从任意块边界起解</td><td><strong>压缩码放在主存，解压器置于主存与 cache 之间（CodePack 式）；cache 中是解压后的代码</strong></td><td>memoryless V2F：IA-64 <strong>72.7%</strong>，TMS320C6x <strong>82.5%</strong>；加 Markov 模型后可达 <strong>56%</strong> / <strong>70%</strong>（数值越小越好）</td><td><span class="tag best">关键差异点</span>它<strong>不是压缩驻留</strong>——近端存储里是展开的代码，省的是主存与总线。第三篇没有 i-cache、没有主存指令通路，这条路径在第三篇上不存在，收益归零</td></tr>
+<tr><td>Lin, Xie, Wolf，LZW-Based Code Compression for VLIW Embedded Systems，DATE 2004</td><td><span class="tag abs">仅摘要</span>（PDF 链接已定位，未下载）</td><td>LZW 字典压缩，面向 VLIW 嵌入式</td><td>同上，主存侧压缩</td><td>未获取</td><td>同上</td></tr>
+<tr><td>Larin & Conte，Compiler-Driven Cached Code Compression Schemes for Embedded ILP Processors，MICRO-32, 1999</td><td><span class="tag abs">仅摘要</span>（IEEE 墙）</td><td>在系统开发期用软件抽出流水解码逻辑，对原程序 ISA 做 Huffman 压缩或 <strong>Tailored ISA</strong> 重编码；比较 Huffman / Tailored ISA / 压缩 cache</td><td>—</td><td>未获取</td><td>交接文件 §9 称其"指出 ROM 压缩率不等于每周期供给提升"——<strong>该论断本轮未能从全文核实，暂不得引用</strong></td></tr>
+<tr><td>Huffman-based code compression techniques for embedded processors, ACM TODAES 2010；CodePack (IBM)</td><td><span class="tag risk">仅题录</span></td><td>经典统计压缩基线</td><td>主存侧</td><td>—</td><td>背景引用</td></tr>
+</table>
+
+<h3>类别 4 · 指令/字段字典与 Tailored ISA</h3>
+<table>
+<tr><th>文献</th><th>全文状态</th><th>核心机制</th><th>与第三篇的关系</th></tr>
+<tr><td><strong>Multanen, de Bruin, Corporaal, Jääskeläinen，Energy-Efficient Instruction Compression with Programmable Dictionaries</strong>，Design Automation for Embedded Systems, 2024（DOI 10.1007/s10617-024-09290-2）</td><td><span class="tag abs">仅摘要</span>（Springer 登录墙）</td><td>可编程字典压缩；前作 ICCD 2020 用<strong>编译期 region-based 控制流分析</strong>决定运行时何时更新字典内容，在 RISC-V 上评估</td><td><span class="tag risk">最需要警惕的近期工作</span>目标同样是"指令流能耗"。差异在于它依赖运行时字典更新与控制流区域划分，而第三篇无控制流可分区。<strong>必须补全文后再定位</strong></td></tr>
+<tr><td>Adaptive and flexible dictionary code compression for embedded applications, CASES 2006；Dictionary-based program compression on customizable processor architectures；Bitmask-based code compression, ICCAD 2006 / TVLSI</td><td><span class="tag risk">仅题录</span></td><td>字典 + bitmask 补丁编码</td><td>字段级字典的直接先行工作；方案 S2 必须与之逐条对照</td></tr>
+</table>
+
+<h3>类别 5–6 · 压缩 Cache / 解压 Cache / Silo / Stream Buffer / 分 Bank</h3>
+<table>
+<tr><th>文献</th><th>全文状态</th><th>核心机制</th><th>与第三篇的关系</th></tr>
+<tr><td>Conte 等 MICRO-29 1996 的四种组织：uncompressed cache / banked cache / <strong>rigid silo cache</strong> / <strong>flexible silo cache</strong></td><td><span class="tag full">全文已读</span></td><td>silo cache 按功能单元（或 FU 组）分区，每个 silo 一项存一个 Op，带 tag + length 字段 + valid 位；各 silo 独立并行查 tag；miss 后经 2 级 expander 把 Op 路由到对应 silo；可 direct-mapped 或组相联（LRU）</td><td><span class="tag best">结构性差异</span>silo cache 的全部代价（tag 阵列、并行比较、partial-displacement 处理、LRU）都是为了应对<strong>带分支的 cache 局部性</strong>。第三篇是确定性直线流，<strong>用 FIFO 预取即可，完全不需要 cache 机制</strong>——这是第四篇能做"更便宜"的根本原因</td></tr>
+<tr><td>A Novel Instruction Stream Buffer for VLIW Architectures，Comput. Electr. Eng. 2009（DOI 10.1016/j.compeleceng.2009.08.006）</td><td><span class="tag risk">仅题录</span></td><td>VLIW 指令流缓冲</td><td>与"FIFO 平滑变长供给"直接相关，须补读以确认 FIFO 下界模型是否已有人给出</td></tr>
+<tr><td>A Section Cache System Designed for VLIW Architectures</td><td><span class="tag risk">仅题录</span></td><td>—</td><td>同上</td></tr>
+</table>
+
+<h3>类别 7–8 · 编译–压缩协同、差分/上下文、CGRA 相邻方法</h3>
+<table>
+<tr><th>文献</th><th>全文状态</th><th>核心机制</th><th>与第三篇的关系</th></tr>
+<tr><td><strong>Improving Energy Efficiency of Coarse-Grain Reconfigurable Arrays Through Modulo Schedule Compression/Decompression</strong>，ACM TACO 2018（DOI 10.1145/3162018）</td><td><span class="tag abs">仅摘要</span></td><td>软硬件协同压缩<strong>模调度循环</strong>的存储尺寸与译码能耗；引入 context-fetching primitives (CFP)，比较集中式与分布式 CFP 取指 CGRA</td><td><span class="tag stop"><strong>最接近方案 D1 的先行工作，是首要淘汰风险</strong></span>摘要称指令存储与取指占芯片能耗 25%–45%，压缩后代码尺寸减 &gt;63%、译码能耗减 70%。<strong>差异点（待全文验证）</strong>：CGRA 的模调度循环是<u>以循环形式给定</u>的，而第三篇是已展平的直线流，需要先<strong>反向识别周期结构</strong>；且 CGRA context 是 per-PE 配置字，不含通用寄存器堆地址，不需要 affine 操作数再生</td></tr>
+<tr><td>Energy Efficient Configuration Unification and Compression for CGRAs，Microprocessors and Microsystems 2018（DOI 10.1016/j.micpro.2018.06.010）</td><td><span class="tag abs">仅摘要</span></td><td>配置统一化 + 压缩，缩减 context memory 体积</td><td>检索摘录称最多可减 83% context memory 能耗（未核实）。属同族背景</td></tr>
+<tr><td>An Approach to Code Compression for CGRA；Configuration Context Reduction for CGRA；Power-efficient configuration cache structure for CGRA (JCSC 2013)</td><td><span class="tag risk">仅题录</span></td><td>CGRA 配置上下文压缩</td><td>背景引用</td></tr>
+<tr><td>A New Algorithm for Energy-Driven Data Compression in VLIW Embedded Processors（差分技术，Lx-ST200）</td><td><span class="tag risk">仅题录</span></td><td>相邻指令差分</td><td>对应交接文件 §6.2 的 DELTA 模式。<strong>建议维持交接文件的判断：不预先强加，先用 trace 验证字段重复率</strong></td></tr>
+</table>
+
+<h3>类别 9 · 商业架构实例</h3>
+<table>
+<tr><th>架构</th><th>全文状态</th><th>要点</th></tr>
+<tr><td><strong>AMD Versal AI Engine</strong></td><td><span class="tag abs">仅摘要/二手资料</span></td><td>每 tile 一个 SIMD VLIW 处理器，<strong>7-way VLIW</strong>（1 标量 + 2 move + 2×256-bit 向量 load + 1×256-bit store + 1 向量运算），<strong>每 tile 16 KB program memory</strong>。交接文件 §8 所称"128-bit VLIW、短格式、指令缓冲"本轮<u>未能从 AMD 官方文档核实</u>——检索到的 128-bit 指的是 AXI-Stream NoC 位宽，两者可能被混淆。<span class="tag risk">引用前必须查 AMD 官方 AIE ISA 文档原文</span></td></tr>
+<tr><td>Intel Gaudi TPC；TI C6x；Itanium；ρ-VEX；Cydrome Cydra 5；Multiflow TRACE</td><td><span class="tag risk">仅题录 / 二手</span></td><td>MICRO-29 全文提到 Multiflow 系列使用压缩编码，NOP 在从内存取入时被展开；Cydra 5 的 UniOp 需要 NOP 填充。可作为"压缩编码在工业 VLIW 上有先例"的史料引用</td></tr>
+</table>
+
+<h3>类别 10 · 模调度的硬件支持与循环缓冲（本轮新增，直接关系 D1 的新颖性）</h3>
+<table>
+<tr><th>文献 / 机制</th><th>全文状态</th><th>核心机制</th><th>与第三篇 / D1 的关系</th></tr>
+<tr><td><strong>零开销循环缓冲（ZOLB）</strong><br><span class="small">Effective Exploitation of a Zero Overhead Loop Buffer, ACM SIGPLAN Notices 1999</span></td><td><span class="tag abs">仅摘要</span></td><td>编译器管理的小缓冲，存一段指令并重复执行指定次数；相比循环展开可减少循环开销而不膨胀代码，面积与功耗都很小</td><td><span class="tag stop">D1 的最近邻之一</span>要求各迭代指令<u>逐位相同</u>，而第三篇稳态各迭代寄存器索引在平移，因此 ZOLB 直接放不进去。D1 可表述为"迭代不逐位相同时也能用的 ZOLB"</td></tr>
+<tr><td><strong>旋转寄存器堆</strong><br><span class="small">Cydrome Cydra 5（Rau 等）；IA-64 rotating GR/FR + LC/EC + 循环型分支</span></td><td><span class="tag abs">仅摘要 / 二手</span></td><td>编译器管理的硬件寄存器重命名，解决软流水跨迭代寄存器覆写；IA-64 的旋转区从 r32 起、以 8 为倍数、最多 96 个旋转寄存器</td><td><span class="tag stop">D1 的最近邻之二</span>要求 ISA 有循环型分支与 LC/EC、寄存器堆支持旋转、编译器发射循环——第三篇三个前提全不成立。区别在于旋转改变<u>执行语义</u>，D1 只改变<u>存放形式</u></td></tr>
+<tr><td><strong>模变量扩展</strong><br><span class="small">Modulo Variable Expansion；Lifetime-Sensitive Modulo Scheduling, PLDI 1993 等</span></td><td><span class="tag abs">仅摘要</span></td><td>无旋转寄存器时，把 kernel 展开若干次以错开重叠的寄存器生命周期</td><td>这正是第三篇指令流膨胀的成因之一。<strong>D1 是它的逆操作</strong>：把展开结果重新折叠，且不需要旋转寄存器硬件</td></tr>
+<tr><td>Iterative Modulo Scheduling（Rau, MICRO-27）；Code Generation Schema for Modulo Scheduled Loops</td><td><span class="tag abs">仅摘要</span></td><td>模调度算法与代码生成范式</td><td>用于论证"第三篇的 list scheduling + oldest-vector-first 事实上产生了模调度式稳态"这一判断，是 §5.2 的理论依据</td></tr>
+</table>
+
+<div class="callout green">
+<strong>调研的净结论：</strong>
+<ol>
+<li><strong>"稀疏槽位 / mask / 模板 / 字典 / 统计编码"这四类在 1996–2024 已被充分覆盖</strong>，单独拿任何一类做第四篇都会被打回。</li>
+<li><strong>几乎所有先行工作都假设"有分支 + 有 i-cache + 通用二进制兼容"</strong>，因此把大量硬件花在地址翻译、tag 比较、分支目标对齐上。第三篇这三个前提<u>全部不成立</u>，这是一个真实的、尚未被人利用的设计点。</li>
+<li><strong>D1 有三个近邻而非一个</strong>：CGRA 模调度压缩（TACO 2018）、零开销循环缓冲（ZOLB）、旋转寄存器堆（Cydra 5 / IA-64）。其中前者，但它的输入是显式循环、目标是 per-PE 配置字；第三篇的输入是已展平的直线流、目标是含寄存器堆地址的异构槽位。差异<u>看起来</u>成立，但<strong>必须拿到全文验证后才能定稿</strong>。</li>
+<li>本轮检索未发现 2023–2026 年有人把指令压缩用在<strong>非线性函数 / DNN 静态调度加速器</strong>上。这是正向信号，但"检索不到"不等于"不存在"，不能作为论文的新颖性论据，只能作为选题信心的参考。</li>
+</ol>
+</div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section id="matrix">
+<h2>七、已有方案对第三篇 ISA 的适用/不适用矩阵</h2>
+<p class="small">命名约定：<strong>D1～D6</strong> 是 §八 评分的六个候选<u>方向</u>；<strong>S1 / S2</strong> 是 D2 内部的两层编码（槽位掩码 / 模板+字段字典）；<strong>B0～B2</strong> 是评估中的对照<u>基线</u>。</p>
+<table>
+<tr><th>已有方案</th><th>在第三篇上是否可用</th><th>理由</th><th>可回收的部分</th></tr>
+<tr><td>Stop-bit / header-tail 边界标记（TINKER）</td><td class="tag risk">可用但收益有限</td><td>能删空槽，但对 §5.2 的周期性冗余完全无能为力；且 6 个槽位只需 6 bit mask，边界标记法反而更贵</td><td>用作<strong>基线 B1</strong>，论文必须与之定量比较</td></tr>
+<tr><td>mask + payload（ρ-VEX sparse encoding）</td><td class="tag risk">可用，作基线</td><td>同上。上界 = 加权槽位利用率的倒数，按 §5.1 约 3.5×～8×</td><td>用作<strong>基线 B2</strong>；也是 S1 的实现形式</td></tr>
+<tr><td>Huffman / 算术编码</td><td class="tag stop">不适用</td><td>变长码字 + 顺序解码，无法保证零停顿逐周期供给；第三篇的时序模型（p.7"without stalling"）不允许任何解码抖动</td><td>可用于<u>离线</u>估算指令流熵，作为压缩率理论下界的参照</td></tr>
+<tr><td>V2F / Tunstall（Xie 等）</td><td class="tag stop">收益归零</td><td>其价值在于降低<strong>主存↔cache</strong> 的带宽与总线功耗；第三篇的指令全部驻留片上，没有这条路径</td><td>"定长码字便于随机索引"的思想可用于 payload 分块对齐</td></tr>
+<tr><td>Silo cache / banked cache / 压缩 cache</td><td class="tag stop">不适用</td><td>整套机制服务于分支带来的空间局部性问题；第三篇是单一确定性直线流，tag/LRU/partial-displacement 全是纯开销</td><td>"按功能单元分区存放"的思路可用于 payload 分 bank（每槽一个 bank，见 S1）</td></tr>
+<tr><td>LAT 地址翻译表 / checkpoint 表</td><td class="tag stop">不需要</td><td>无分支目标。唯一的非顺序跳转是 tile 边界回到流起点，一个寄存器即可</td><td>交接文件 §6.4 的 checkpoint 表可以<strong>删掉</strong>，简化方案</td></tr>
+<tr><td>字典 / bitmask 补丁（CASES 2006, ICCAD 2006, DAES 2024）</td><td class="tag best">部分适用</td><td>第三篇字段高度受限（Optype 仅 3 bit/7 值；VGPR/SGPR 各 256 项），槽位组合种类必然很少</td><td>构成 <strong>D2</strong> 中 S2 层的核心；但需与 DAES 2024 逐条区分</td></tr>
+<tr><td>模调度压缩（CGRA, TACO 2018）</td><td class="tag best">思想适用，形式不同</td><td>第三篇的周期性是<u>隐含</u>的（编译器展平掉了），需要先恢复；且需处理寄存器地址的仿射再生</td><td>构成 <strong>D1</strong> 的核心；<span class="tag stop">首要查新对象</span></td></tr>
+<tr><td>调度感知的变长编码（JSPS 2015）</td><td class="tag stop">主动放弃</td><td>会改变调度 → 改变周期语义 → 第三篇已发表的所有 cycle/能效数据失效</td><td>反过来作为<strong>本文的区分声明</strong>："本文不改调度，压缩对性能严格中性"</td></tr>
+</table>
+</section>
+
+<!-- ============ 8 ============ -->
+<section id="schemes">
+<h2>八、方向推荐总览</h2>
+
+<div class="callout green">
+<strong>一句话推荐：</strong>以 <strong>D1（周期核再卷 + 仿射操作数再生）</strong> 为论文主体贡献，<strong>D3、D4 作为必做的配套贡献</strong>凑齐分量，<strong>D2 作为基线兼失败回退</strong>，<strong>D6 作为评估中的对照上界</strong>而非本文方案，<strong>D5 明确不做</strong>。这样即使 D1 在预研中被否掉，D2+D3+D4 仍能拼出一篇分量偏弱但可发表的工作，不会全盘落空。
+</div>
+
+<h3>8.0 六个候选方向评分</h3>
+<table>
+<tr><th>#</th><th>方向</th><th>论文分量</th><th>新颖性风险</th><th>工作量</th><th>对第三篇的侵入性</th><th>推荐度</th></tr>
+<tr><td>D1</td><td><strong>周期核再卷 + 仿射操作数再生</strong><br><span class="small">把展平流卷回 II 长度的核，硬件逐周期再生</span></td><td class="tag best">高</td><td class="tag risk">中高<br><span class="small">三个近邻机制</span></td><td>中<br><span class="small">编译后处理 + 一个前级模块</span></td><td class="tag best">零<br><span class="small">不改 ISA/调度/数据通路</span></td><td><strong>★★★★★ 主推</strong></td></tr>
+<tr><td>D2</td><td>稀疏槽位掩码 + 模板 / 字段字典<br><span class="small">S1 + S2</span></td><td class="tag stop">低</td><td class="tag stop">高<br><span class="small">1996–2024 已充分覆盖</span></td><td>低</td><td class="tag best">零</td><td>★★☆☆☆ 基线 / 回退</td></tr>
+<tr><td>D3</td><td><strong>掩码驱动的解码与分发门控</strong><br><span class="small">空槽不驱动 crossbar 与模块控制端口</span></td><td>中低</td><td>中</td><td class="tag best">很低</td><td>低<br><span class="small">只加使能，不改逻辑</span></td><td>★★★★☆ 必做配套</td></tr>
+<tr><td>D4</td><td><strong>压缩感知的分块因子协同优化</strong><br><span class="small">重画 Table I 的存储–性能折中曲线</span></td><td>中低</td><td class="tag best">低<br><span class="small">是评估而非机制</span></td><td class="tag best">很低</td><td class="tag best">零</td><td>★★★★☆ 必做配套</td></tr>
+<tr><td>D5</td><td>逐负载定制 ISA / 参数化槽宽<br><span class="small">Tailored ISA</span></td><td>中</td><td>中</td><td>高</td><td class="tag stop">很高</td><td>★☆☆☆☆ <strong>不做</strong></td></tr>
+<tr><td>D6</td><td>给 ISA 直接加循环指令 + 旋转寄存器<br><span class="small">"显而易见的替代方案"</span></td><td class="tag stop">低<br><span class="small">1989 年 Cydra 5 已有</span></td><td class="tag stop">很高</td><td>高</td><td class="tag stop">很高<br><span class="small">推翻已发表数据</span></td><td>★☆☆☆☆ <strong>只作对照上界</strong></td></tr>
+</table>
+<p class="small">"侵入性"是本轮特别加进来的一列。第三篇已投稿/已发表，任何改动 ISA、调度器或数据通路的方案都会让 Table III（延迟）、Table V（面积）、Table VI/VIII/IX（性能与能效）全部失效，需要重新综合与重新验证——对单人 3～4 个月是致命的。<strong>零侵入性是 D1 相对 D5/D6 最被低估的优势。</strong></p>
+
+<h3>8.1 主推方向 D1 详解</h3>
+<div class="callout violet"><strong>一句话：</strong>编译器为了适配无循环的 ISA，把一个事实上的模调度<u>展平</u>成了几千到几万条直线指令；D1 用一个编译后处理把它<u>卷回去</u>，再用一个极小的硬件前级在运行时逐周期<u>再生</u>，且保证与展平流逐位完全一致。</div>
+
+<h4>编译侧四步</h4>
+<ol>
+<li><strong>周期结构识别。</strong>对调度器输出的展平流寻找最小启动间隔 <em>II</em> 与稳态核 <em>K</em>（长度 <em>II</em> 的槽位模式），使得对所有稳态周期 <em>t</em>，<code>Instr[t] = K[(t−t₀) mod II]</code> 在<u>除寄存器索引外</u>的所有字段上逐位相等。实现上是对 trace 做自相关 / 最小周期检测，O(T log T)。</li>
+<li><strong>仿射规则拟合。</strong>对寄存器索引字段拟合 <code>reg = (base + k·stride) mod depth</code>，<em>k</em> 为迭代序号，<code>depth</code> = 256（VGPR/SGPR 深度，p.9 §VI-B）。同样对 Ping-Pong Buffer 地址字段拟合。</li>
+<li><strong>残差分离。</strong>无法归入周期核的周期（prologue、epilogue、跨分段的层次归约节点）作为残差流，交给 D2 的掩码编码处理。</li>
+<li><strong>产出</strong> <code>{prologue(S1), K(定宽 II 条), 仿射规则表, 迭代次数 S, epilogue(S1)}</code>。</li>
+</ol>
+
+<h4>硬件侧数据通路</h4>
+<div class="flow">
+<div class="box">核 SRAM<br><span class="small">II 条全宽指令<br>（II ≈ 4–7）</span></div><div class="arrow">→</div>
+<div class="box">模计数器<br><span class="small">mod II</span></div><div class="arrow">→</div>
+<div class="box"><strong>仿射再生单元</strong><br><span class="small">回绕时 base += stride<br>只需加法器 + 掩位</span></div><div class="arrow">→</div>
+<div class="box">2 选 1<br><span class="small">核 / 残差</span></div><div class="arrow">→</div>
+<div class="box">现有 Decoder<br><span class="small">完全不改</span></div>
+</div>
+<p>迭代序号 <em>k</em> 由计数器在模计数器回绕时 +1；<code>stride</code> 是编译期常数，因此 <code>k·stride</code> 退化为"每次回绕对 base 寄存器做一次加法"，不需要乘法器。整个再生单元预计只有若干 8 bit 加法器与比较器，量级远小于 Table V 中 Decoder/Crossbar/Others 的 0.166 mm²。</p>
+
+<h4>编码示例（GELU，II = 4）</h4>
+<div class="code">展平流（现状，6144 段 × 4 = 24576 条 × ~150 bit ≈ 3.7 Mbit）：
+  cycle 0 : LOAD  v0 ← buf[0]        cycle 4 : LOAD  v3 ← buf[3]
+  cycle 1 : SFU   v1 ← GELU(v0)      cycle 5 : SFU   v4 ← GELU(v3)
+  cycle 2 : NOP                      cycle 6 : NOP
+  cycle 3 : STORE buf[0] ← v2        cycle 7 : STORE buf[1] ← v5
+  ... 重复 6144 次，仅寄存器号与 buffer 偏移平移 ...
+
+D1 编码：
+  K[0] = LOAD  vR(0) ← buf(0)        规则: vR(i) = (base_i + k) mod 256
+  K[1] = SFU   vR(1) ← GELU(vR(0))         buf(j) = base_j + k
+  K[2] = NOP                          II = 4,  S = 6144
+  K[3] = STORE buf(0) ← vR(2)         prologue/epilogue → 掩码编码
+
+  核存储 ≈ 4×150 = 600 bit + 规则表 ≈ 200 bit + 残差 ≈ 数十条
+  3.7 Mbit → 数 kbit</div>
+<p class="small">寄存器分配细节（活跃区间回绕、bank 冲突约束）须按实际调度器输出核对；此处仅说明编码形态。</p>
+
+<h4 id="neighbors">与三个最近邻机制的精确区别（本轮新增，最关键的一节）</h4>
+<div class="callout red"><strong>这是 D1 能不能成立的核心。</strong>"用一个小缓冲重复播放循环体、并让寄存器号逐迭代平移"——这件事本身在 1989 年的 Cydrome Cydra 5 上就有了。如果不能把区别说清楚，D1 会被一句话打回。以下三行是必须写进论文 Related Work 并逐条论证的。</div>
+<table>
+<tr><th>近邻机制</th><th>它是什么</th><th>它要求什么</th><th>为什么在第三篇上用不了</th><th>D1 的区别</th></tr>
+<tr>
+<td><strong>零开销循环缓冲 ZOLB</strong><br><span class="small">DSP 通用特性；Effective Exploitation of a Zero Overhead Loop Buffer, ACM SIGPLAN 1999</span></td>
+<td>编译器管理的小缓冲，存一段指令序列并重复执行指定次数，省取指能耗且不像 unrolling 那样膨胀代码</td>
+<td>每次迭代执行的指令<strong>逐位相同</strong></td>
+<td>第三篇稳态各迭代的指令<u>不</u>相同——寄存器索引与 buffer 偏移逐迭代平移。ZOLB 直接放不进去</td>
+<td>D1 = <strong>"迭代不逐位相同时也能用的 ZOLB"</strong>：加一层仿射再生把差异合成出来</td>
+</tr>
+<tr>
+<td><strong>旋转寄存器堆</strong><br><span class="small">Cydra 5 (Rau 等)；IA-64 rotating GR/FR + LC/EC + br.ctop</span></td>
+<td>编译器管理的硬件寄存器重命名，解决软流水跨迭代寄存器覆写问题</td>
+<td>①ISA 有循环型分支与 LC/EC 寄存器；②<strong>寄存器堆本身支持旋转</strong>；③编译器<u>发射循环</u></td>
+<td>第三篇 ISA 无任何分支/循环指令（已全篇核实），寄存器堆是普通 4-bank 交织 SRAM。三个前提都不成立</td>
+<td>旋转发生在<strong>寄存器堆内部</strong>、改变执行语义；D1 的仿射再生发生在<strong>解码之前的指令位上</strong>，寄存器堆、解码器、crossbar、数据通路<u>全部不改</u></td>
+</tr>
+<tr>
+<td><strong>CGRA 模调度压缩</strong><br><span class="small">ACM TACO 2018</span></td>
+<td>压缩模调度循环的配置存储与译码能耗，引入 context-fetching primitives</td>
+<td>输入是<strong>以循环形式给定</strong>的模调度；context 是 per-PE 配置字</td>
+<td>第三篇的周期性是<u>隐含</u>的——编译器已经把它展平掉了，必须先反向识别；且槽位含通用寄存器堆地址，CGRA context 不含</td>
+<td>D1 多两件事：<strong>从已展平的流中发现周期</strong>，以及<strong>对寄存器堆地址做仿射再生</strong><br><span class="tag stop">全文未读，首要查新对象</span></td>
+</tr>
+<tr>
+<td><strong>模变量扩展</strong><br><span class="small">Modulo Variable Expansion</span></td>
+<td>无旋转寄存器时，把 kernel 展开若干次以错开寄存器生命周期</td>
+<td>展开 → 代码膨胀</td>
+<td>这正是第三篇现状的一部分成因</td>
+<td>D1 是它的<strong>逆操作</strong>：把展开的结果重新折叠，且不需要旋转寄存器硬件</td>
+</tr>
+</table>
+<div class="callout amber"><strong>由此得到 D1 唯一站得住的定位：</strong>它不是一个新的执行机制，而是一个<strong>解压机制</strong>——目标是<u>逐位重建原始展平流</u>，因此对下游一切硬件透明。所有近邻机制都是"改变程序如何执行"，D1 是"改变程序如何存放"。论文的贡献声明必须严格限制在这条线内，一旦越界去声称执行优势就会被击穿。</div>
+
+<h4>最坏情况与失效模式</h4>
+<table>
+<tr><th>情形</th><th>后果</th><th>处置</th></tr>
+<tr><td>找不到稳态周期（<em>II</em> 不存在或核长 ≈ 总长）</td><td>D1 退化为全残差</td><td>自动回落 D2，压缩率 = D2 的值，<strong>不会比基线更差</strong></td></tr>
+<tr><td>寄存器索引非仿射（调度器做了非规则寄存器复用）</td><td>核内字段无法再生</td><td>该字段降级为"逐迭代显式小表"；或该槽降级为残差</td></tr>
+<tr><td>分段边界的层次归约节点打破周期</td><td>周期性被周期性地打断</td><td>两级结构：外层"每 ⌈Y/256⌉ 次迭代插一段归约残差"，本身也是周期的</td></tr>
+<tr><td>同一负载内切换 FUV 模式</td><td>核不唯一</td><td>论文数据显示每负载几乎恒选同一模式（p.7 左栏：LayerNorm 恒 Mode 0、GELU 恒 Mode 2、Softmax 16 例中仅 2 例选 Mode 1），影响可忽略；若发生则按模式分段各建一核</td></tr>
+</table>
+
+<h3>8.2 保底方向 D2 · 掩码 + 模板 + 字段字典</h3>
+<p>即前文的 S1（6 bit 槽位掩码 + payload 按槽分 bank）与 S2（模板 ID + 逐槽字段字典）。<strong>无论 D1 成败都必须实现</strong>，因为它同时是三件事：D1 的残差编码器、论文的对照基线 B1/B2、以及 D1 被否时的兜底方案。</p>
+<div class="grid">
+<div class="card"><h4>S1 编码</h4>
+<div class="code">周期 t   mask=100010  → LOAD, SFU 有效
+  DESC : 1 0 0 0 1 0            (6 bit)
+  PAYLD: [LOAD 28b][SFU 24b]    (52 bit)
+  合计 58 bit   (原 ~150 bit)
+
+周期 t+1 mask=000000  → 全 NOP
+  DESC : 0 0 0 0 0 0            (6 bit)
+  合计 6 bit    (原 ~150 bit)</div>
+<p class="small">Payload 按槽位分 6 个 bank，每 bank 读地址由自己的 mask 位累加得到，<strong>不需要跨槽变长对齐器</strong>——这是相对经典变长取指的一处实质简化，源自第三篇无分支这一结构性优势。</p>
+</div>
+<div class="card"><h4>S2 编码</h4>
+<div class="code">模板表 (compile-time, 16 项)
+  T0 = 000000  (全 NOP)
+  T1 = 100010  (LOAD+SFU)
+  T2 = 000110  (VECTOR+SFU)
+  ...
+周期 t : [T=0001][SFU.Op=idx2][VGPR src/dst]
+         4 bit  +  3 bit  +  16 bit = 23 bit</div>
+<p class="small">预期压缩率 3.5×～8×（≈ 加权槽位利用率倒数）。<strong>该数字不构成论文创新</strong>，只是基线。最坏情况是连续多周期 6 槽全满，压缩退化为 1×，须在 FIFO 下界模型中显式覆盖。</p>
+</div>
+</div>
+
+<h3>8.3 必做配套方向 D3 · 掩码驱动的解码与分发门控</h3>
+<p>第三篇 Table V：Decoder/Crossbar/Others = 0.166 mm² / <strong>0.156 W（占总功耗 4.3%）</strong>。而按 §5.1 推导，每周期 71%～88% 的槽位是 NOP——这意味着 crossbar <u>每个周期都在把 NOP 的控制字段分发到各计算模块</u>。用已有的 mask 位做时钟门控/操作数门控，可以省掉这部分翻转功耗，<strong>而且不需要任何新信息</strong>：mask 本来就是 D2 编码的副产品。</p>
+<div class="callout"><strong>为什么值得单列：</strong>它把论文的收益从"省面积"扩展到"省功耗"，覆盖了两个独立的评审关注点。工作量极低（综合时加使能条件），风险极低（不改功能）。<strong>这是性价比最高的一个加分项。</strong></div>
+<p><strong>需要注意的诚实边界：</strong>第三篇没有报告 decoder 内部的翻转率，所以收益上限未知；0.156 W 是这条路径的绝对天花板，实际可省的只是其中一部分。论文里不能写成"省 4.3% 功耗"，只能报实测。</p>
+
+<h3>8.4 必做配套方向 D4 · 压缩感知的分块因子协同优化</h3>
+<p>第三篇 Table I（p.8）是一条被迫二选一的曲线：R = 8 是性能最优点（8636 周期、972 条指令），R = 32 是存储最优点（288 条指令，但周期数涨到 10296，<strong>+19.2%</strong>）。原因是论文自己说的 "boundary under-utilization of VLIW slots"。</p>
+<table>
+<tr><th>R</th><th>Buffer (KB)</th><th>指令条数</th><th>总周期</th><th>压缩后指令存储<span class="small">（D1 生效时的预期）</span></th></tr>
+<tr><td>2</td><td>512</td><td>3662</td><td>10378</td><td rowspan="5" style="vertical-align:middle"><strong>随 R 基本不变</strong><br><span class="small">因为核长 II 与 R 无关，只有残差随 R 略增</span></td></tr>
+<tr><td>4</td><td>256</td><td>1848</td><td>8984</td></tr>
+<tr><td><strong>8</strong></td><td><strong>128</strong></td><td><strong>972</strong></td><td><strong>8636</strong>（性能最优）</td></tr>
+<tr><td>16</td><td>64</td><td>518</td><td>8782</td></tr>
+<tr><td>32</td><td>32</td><td>288</td><td>10296（存储最优）</td></tr>
+</table>
+<div class="callout green"><strong>这就是论文最漂亮的一张图：</strong>压缩把这条折中曲线<u>压平</u>——设计者可以选 R = 4 或 R = 8 的性能点，同时拿到优于 R = 32 的存储占用。这个论证完全建立在第三篇自己报告的数字上，不需要任何外部假设，也不需要读者相信任何新机制。<strong>建议把它做成论文的 Fig. 1（motivation 图）而不是放在评估末尾。</strong></div>
+
+<h3>8.5 评估过但不采纳的两个方向</h3>
+<div class="grid">
+<div class="card"><h4>D5 · 逐负载定制 ISA（不做）</h4>
+<p>按每个负载裁剪槽位宽度与字段编码，能拿到很高的压缩率。</p>
+<p><strong>否决理由：</strong>直接打脸第三篇的核心卖点。第三篇标题就是 "<u>Fully Reconfigurable and Programmable</u>"，p.2 强调新增复合函数"只需构建 DAG 并重新编译，无需改 ISA 或硬件"。逐负载定制 ISA 会把这条卖点变成谎话——审稿人一定会指出第四篇在拆第三篇的台。</p>
+<span class="tag stop">与第三篇论点冲突，明确不做</span>
+</div>
+<div class="card"><h4>D6 · 给 ISA 加循环指令 + 旋转寄存器（只作对照）</h4>
+<p>最"显而易见"的工程答案：既然编译器事实上在做模调度，那就给 ISA 加循环型分支、LC/EC 寄存器和旋转寄存器堆，让它直接发射循环。</p>
+<p><strong>不作为本文方案的理由：</strong>①这是 1989 年 Cydra 5、2001 年 IA-64 的既有方案，毫无新颖性；②要改 ISA + 调度器 + 寄存器堆，第三篇已发表的 Table III/V/VI/VIII/IX 全部作废，单人 3～4 个月做不完重新验证；③它只覆盖完美周期的部分，残差仍需 D2。</p>
+<span class="tag risk">必须作为评估中的对照上界出现</span>
+</div>
+</div>
+<div class="callout red">
+<strong>这个方向的最强反对意见，必须在开题时主动提出并回答：</strong><br>
+"既然问题是编译器被无循环 ISA 逼着展平，那为什么不直接给 ISA 加循环指令？"<br><br>
+<strong>预备回答（三层）：</strong>
+<ol>
+<li><strong>可行但不是本文的问题。</strong>加循环指令是重新设计一颗芯片；本文解决的是<u>已经存在</u>的静态调度加速器如何在不动 ISA 的前提下拿回指令存储。二者是不同的设计点，不是替代关系。</li>
+<li><strong>本文的可迁移性更强。</strong>解压前级对下游硬件透明，可以套到任何"小 DAG × 大量数据实例 + 无循环 ISA + 静态调度"的加速器上；加循环指令则是每一颗芯片各做一次的重新设计。</li>
+<li><strong>但要诚实：如果是设计新芯片，加循环指令可能确实是更好的工程答案。</strong>因此论文评估必须把 D6 作为<u>上界对照</u>报出来，明确回答"离理想设计点还差多少"。<strong>把最强反对意见做成评估的一列，比回避它可信得多。</strong></li>
+</ol>
+</div>
+
+<h3>8.6 论文骨架建议</h3>
+<h4>题目候选</h4>
+<ol>
+<li><strong>中：</strong>面向静态调度加速器的展平指令流周期结构恢复与压缩驻留供给<br><strong>英：</strong>Recovering Periodic Structure from Flattened Instruction Streams: Compressed-Resident Instruction Supply for Statically Scheduled Accelerators</li>
+<li><strong>中：</strong>周期等价的稀疏VLIW压缩：让静态调度加速器的指令存储不再随工作负载线性增长<br><strong>英：</strong>Cycle-Equivalent VLIW Compression for Statically Scheduled Nonlinear Function Accelerators</li>
+<li><strong>中：</strong>从展平回到周期：无循环ISA加速器的指令存储压缩<br><strong>英：</strong>From Flattened Back to Periodic: Instruction Memory Compression for Loop-Free Accelerator ISAs</li>
+</ol>
+<p class="small">推荐第 1 个：把"周期结构恢复"放在标题里，一眼区分于满坑满谷的"VLIW code compression"。</p>
+
+<h4>贡献点（可直接写进 Contributions 段）</h4>
+<ol>
+<li><strong>问题识别。</strong>指出并量化一类此前未被正面处理的冗余：静态调度加速器为适配无循环 ISA 而<u>主动展平</u>模调度，产生的指令存储代价随工作负载线性增长；在 FRV-SFU-VLIW 上不分块执行 Softmax(512×512) 时该代价可达核心面积的 <em>xx</em>%（实测值待补）。</li>
+<li><strong>压缩机制。</strong>提出周期核再卷 + 仿射操作数再生，在<u>不改变 ISA、调度器、寄存器堆与数据通路</u>的前提下把指令存储压缩 <em>xx</em>×，并证明重建结果与原展平流<strong>逐位、逐周期完全一致</strong>。</li>
+<li><strong>供给机制。</strong>论证在无分支直线流下，压缩驻留供给不需要地址翻译表、cache 或变长对齐器；稳态核定宽因而不产生带宽抖动，残差位置编译期已知可静态预取。给出无停顿供给的充要条件与缓冲下界。</li>
+<li><strong>系统效果。</strong>在 TSMC 28nm 下给出面积/功耗/主频代价，并证明压缩把"指令存储 vs 性能"的分块折中曲线压平——设计者可同时取得性能最优点与优于原存储最优点的占用。</li>
+</ol>
+
+<h4>章节结构</h4>
+<table>
+<tr><th>章</th><th>内容</th><th>对应本报告</th></tr>
+<tr><td>I. Introduction</td><td>静态调度 DSA 的指令存储问题；用 Table I 折中曲线开场</td><td>§3.7, §8.4</td></tr>
+<tr><td>II. Background &amp; Motivation</td><td>目标平台 ISA 概述；槽位稀疏度与周期性的实测刻画</td><td>§3, §五</td></tr>
+<tr><td>III. Related Work</td><td>九类压缩方法 + <strong>ZOLB / 旋转寄存器 / CGRA 模调度压缩三行差异表</strong></td><td>§六, §8.1</td></tr>
+<tr><td>IV. Periodic Structure Recovery</td><td>编译侧：周期检测、仿射拟合、残差分离</td><td>§8.1</td></tr>
+<tr><td>V. Compressed-Resident Supply</td><td>硬件侧：核 SRAM、模计数器、仿射再生、残差解码、供给条件</td><td>§8.1, §9.2</td></tr>
+<tr><td>VI. Evaluation</td><td>压缩率（vs B0/B1/B2/D6 上界）、周期等价验证、面积功耗主频、R 扫描、Y 扫描、六负载</td><td>§九</td></tr>
+<tr><td>VII. Conclusion</td><td>—</td><td>—</td></tr>
+</table>
+
+<h4>图表清单（建议先定图表，再写正文）</h4>
+<table>
+<tr><th>编号</th><th>内容</th><th>数据来源</th></tr>
+<tr><td>Fig. 1</td><td><strong>Motivation：</strong>分块因子 R 的存储–性能折中曲线，叠加"压缩后"的压平曲线</td><td>第三篇 Table I + 本文实测</td></tr>
+<tr><td>Fig. 2</td><td>目标平台 ISA 槽位与字段布局（从 RTL 取真值）</td><td>本人 RTL</td></tr>
+<tr><td>Fig. 3</td><td>六负载的逐周期槽位占用热力图 —— 直观展示稀疏与周期</td><td>调度器 trace</td></tr>
+<tr><td>Fig. 4</td><td>展平流的自相关图，标出检测到的 <em>II</em></td><td>调度器 trace</td></tr>
+<tr><td>Fig. 5</td><td>压缩编码格式（核 + 规则表 + 残差）与编码示例</td><td>本文</td></tr>
+<tr><td>Fig. 6</td><td>硬件数据通路：核 SRAM / 模计数器 / 仿射再生 / 残差解码 / 接入现有 Decoder</td><td>本文</td></tr>
+<tr><td>Fig. 7</td><td>Y 扫描下的压缩率（小规模周期性弱时是否劣化）</td><td>本文实测</td></tr>
+<tr><td>Table I</td><td>六负载的槽位占用率、<em>II</em>、稳态核覆盖率、仿射拟合成功率</td><td>调度器 trace</td></tr>
+<tr><td>Table II</td><td>压缩率对比：B0 原始 / B1 掩码 / B2 模板字典 / <strong>本文</strong> / D6 上界</td><td>本文实测</td></tr>
+<tr><td>Table III</td><td>周期等价验证结果（六负载逐位一致）</td><td>验证脚本</td></tr>
+<tr><td>Table IV</td><td>面积/功耗/主频：压缩前后，与第三篇 Table V 同口径</td><td>综合 + memory compiler</td></tr>
+<tr><td>Table V</td><td>指令流能耗分解：SRAM 读 + 解压逻辑 + 分发门控收益</td><td>本文实测</td></tr>
+<tr><td>Table VI</td><td>R 扫描：存储与周期数的联合变化</td><td>本文实测</td></tr>
+</table>
+
+<h3>8.7 审稿人质疑与预备回答</h3>
+<table>
+<tr><th>质疑</th><th>预备回答</th></tr>
+<tr><td><strong>Q1.</strong> 这不就是循环缓冲 / 旋转寄存器堆吗？</td><td>见 §8.1 差异表。核心区分：本文是<u>解压机制</u>，目标是逐位重建原流，寄存器堆/解码器/数据通路零改动；ZOLB 要求迭代逐位相同（此处不成立），旋转寄存器堆要求 ISA 有循环分支与可旋转 RF（此处三个前提全不成立）。</td></tr>
+<tr><td><strong>Q2.</strong> 为什么不直接给 ISA 加循环指令？</td><td>见 §8.5 三层回答，并在 Table II 中把 D6 作为上界列出。</td></tr>
+<tr><td><strong>Q3.</strong> 压缩率高只是因为你的基线（不分块）不合理。</td><td>正面接受：<u>所有</u>压缩率都在 R = 2/4/8/16/32 全扫描下报告，不只报不分块。核心论证不是"压缩率多高"，而是"折中曲线被压平"。</td></tr>
+<tr><td><strong>Q4.</strong> 只在一个平台上验证，一般性存疑。</td><td>把可迁移条件写成明确的三条判据（小 DAG × 大量数据实例、无循环 ISA、静态零停顿调度），并列举满足这些条件的公开架构；<u>不</u>声称在它们上面测过。</td></tr>
+<tr><td><strong>Q5.</strong> 周期检测在真实负载上会不会退化？</td><td>Fig. 7 的 Y 扫描专门回答这一点；并明确给出"退化时自动回落 B1、不劣于基线"的保证。</td></tr>
+<tr><td><strong>Q6.</strong> 解压是否影响主频？</td><td>报综合结果。由于无分支，增加取指流水级<u>没有</u>分支惩罚——这是该平台的结构性优势，可以用增加级数换时序而不损失性能，这一点要在论文中显式论证。</td></tr>
+<tr><td><strong>Q7.</strong> 收益是不是只在指令存储上，太局部？</td><td>D3 的分发门控把收益扩到动态功耗；D4 把收益扩到 buffer 容量与系统折中。三者合起来覆盖面积、功耗、系统三个层面。</td></tr>
+</table>
+
+<h3>8.8 投稿目标与时间线匹配</h3>
+<table>
+<tr><th>目标</th><th>匹配度</th><th>说明</th></tr>
+<tr><td><strong>IEEE TVLSI</strong></td><td class="tag best">高</td><td>第三篇同刊，评审熟悉平台，硬件实现 + 综合数据的组合正对口。缺点是与第三篇过近可能被要求强调差异</td></tr>
+<tr><td>IEEE TCAD / TC</td><td>中高</td><td>TC 是第一篇所在。若把"周期结构恢复"的编译算法部分做重，TCAD 更合适</td></tr>
+<tr><td>DATE / ASP-DAC</td><td>中</td><td>周期短，适合先发会议版再扩期刊；但 3～4 个月的时间窗要卡 deadline</td></tr>
+<tr><td>ACM TACO / CASES / LCTES</td><td>中</td><td>编译–硬件协同的社区，对"编译后处理 + 极小硬件"这种形态接受度高。但要与 TACO 2018 那篇正面比较</td></tr>
+</table>
+<p><strong>建议：</strong>目标 TVLSI，因为它同时接受"实现 + 综合 + 系统折中"三件套，且不要求像 TACO 那样在编译算法上有很深的理论贡献。16 周的计划（2 周预研 + 14 周）刚好留出投稿前 2 周的余量。</p>
+
+<h3>8.9 与大论文的串联叙事</h3>
+<div class="callout violet"><strong>建议主线：非线性函数的硬件加速——从概率计算到确定性可编程，再到控制流效率。</strong></div>
+<div class="timeline">
+<p><strong>第一章（第一篇 OOLU）</strong>：宽发射、指令驱动的数值计算加速。<u>弱化为前期工作</u>，但保留两条与后文的钩子：VLIW 实测 832 bit，以及它自己 Future Work 里写的 "instruction compression to reduce VLIW width"（p.13 §G）——<strong>问题在本人前期工作中已被识别</strong>，这是很有力的叙事连接。<span class="tag risk">注意：仅作叙事引用，第四篇正文不得声称方案同时适用于第一篇</span></p>
+<p><strong>第二章（第二篇 SMM-FSM）</strong>：非线性函数的<u>概率计算</u>路径。极致面积/功耗，代价是 2048 周期的码流延迟。</p>
+<p><strong>第三章（第三篇 FRV-SFU-VLIW）</strong>：非线性函数的<u>确定性可编程</u>路径。逐周期发射，延迟确定，代价是宽指令字与控制开销。<strong>第二、三章构成同一目标下的两条对立技术路线的完整对比</strong>——这样第二篇就不再是孤儿。</p>
+<p><strong>第四章（第四篇）</strong>：把第三章路线的代价<u>还回去</u>——在不牺牲任何确定性与可编程性的前提下消除控制流开销。<strong>全篇形成闭环：提出问题（一）→ 两条路线（二、三）→ 补上主路线的短板（四）。</strong></p>
+</div>
+<p class="small">这一叙事同时解决了交接文件 §4 约束 7 提出的"两篇概率计算 + 两篇 VLIW"结构问题：主题是<strong>非线性函数加速</strong>，VLIW 只是其中一条路线的实现手段。需与导师确认是否接受这一主线调整（见 §十二 问题 4）。</p>
+</section>
+
+<!-- ============ 9 ============ -->
+<section id="model">
+<h2>九、评估模型</h2>
+
+<h3>9.1 压缩率</h3>
+<div class="formula">CR = (Desc + Payload + Kernel + RuleTable + Residual) ⁄ (T · W<sub>VLIW</sub>)</div>
+<p>必须同时报告四个对照点：B0 = 原始展平流；B1 = stop-bit/mask（S1）；B2 = 模板+字典（S2）；<strong>D6 = 给 ISA 加循环指令+旋转寄存器的理想设计点（上界）</strong>。<strong>只报 B0 会被认为在跟稻草人比较。</strong></p>
+
+<h3>9.2 无停顿供给的缓冲下界</h3>
+<p>交接文件 §6.3 提出的下界模型经核对是正确的，但<strong>只适用于 D2</strong>：</p>
+<div class="formula">F<sub>min</sub> ≥ max<sub>[a,b]</sub> ( Σ<sub>t=a..b</sub> L<sub>t</sub> − (b−a+1)·B )</div>
+<p>其中 <em>L<sub>t</sub></em> 为第 t 周期 payload 位数，<em>B</em> 为存储每周期供给位数。这是标准的"漏桶"下界，可用前缀和在 O(T) 时间精确求出（求 <code>Σ(L_t − B)</code> 的最大子段和）。</p>
+<div class="callout green"><strong>但对 D1，这个模型基本不需要：</strong>周期核是<u>定宽</u>的（II 条全宽指令常驻小 SRAM 或寄存器组），稳态下每周期供给量恒定，不存在变长抖动。变长抖动只出现在残差流（prologue/epilogue），而残差流的位置在编译期完全已知，可以静态预取。<strong>这是 D1 相对 D2 的又一个实质优势，值得在论文里单独论证。</strong></div>
+
+<h3>9.3 面积/功耗/主频</h3>
+<table>
+<tr><th>指标</th><th>如何测</th><th>可接受门槛</th></tr>
+<tr><td>指令存储面积</td><td>TSMC 28nm memory compiler 生成压缩前后两组 SRAM，与 Table V 同口径</td><td>压缩后 IMEM 面积占核心 &lt; 1%</td></tr>
+<tr><td>解压逻辑面积</td><td>与第三篇同流程综合</td><td>&lt; 0.166 mm²（Table V 的 Decoder/Crossbar/Others）的 30%，即 &lt; 0.05 mm²，且总面积增量 &lt; 1%</td></tr>
+<tr><td>主频</td><td>同 1 GHz 目标，检查解压是否进入关键路径</td><td><strong>1 GHz 不得下降</strong>。若下降立即淘汰</td></tr>
+<tr><td>周期数</td><td>逐周期比对压缩前后的指令流</td><td><strong>必须逐位完全一致</strong>（周期等价是硬约束，不是指标）</td></tr>
+<tr><td>指令流能耗</td><td>SRAM 读能耗 × 访问次数 + 解压逻辑动态功耗</td><td>净下降；参考 CGRA 文献称指令存储占芯片能耗 25%–45%（<span class="tag abs">仅摘要，未核实</span>）</td></tr>
+</table>
+
+<h3>9.4 必须做的敏感性扫描</h3>
+<ul>
+<li>沿 Table I 的 R = 2/4/8/16/32 全部跑一遍 —— 证明"压缩让最优性能点同时是最优存储点"。</li>
+<li>沿 Fig.6 的 Softmax(32×Y), Y = 64…1024 —— 证明小规模（周期性弱）时不劣化。</li>
+<li>六个负载（Softmax / GELU / LayerNorm / LogSoftmax / Softplus / LogSumExp，Table IX 口径）全覆盖。</li>
+</ul>
+</section>
+
+<!-- ============ 10 ============ -->
+<section id="plan">
+<h2>十、两周预研 + 14 周计划</h2>
+
+<h3>第一阶段：两周可行性预研（Go / No-Go）</h3>
+<div class="timeline">
+<p><strong>第 1–2 天　取数。</strong>从自己的 RTL 与调度器源码中导出：VLIW 精确位宽、六个槽位的完整字段表、NOP 编码、IMEM 组织与 PC 逻辑。<u>产出 §四表格中所有"论文未给出"项的真值。</u></p>
+<p><strong>第 3–5 天　Trace 统计。</strong>让调度器 dump 出六个负载的完整逐周期指令流，统计：加权槽位利用率、mask 值分布、各字段取值分布、相邻周期字段重复率。<u>用实测替换 §5.1 的所有估算，并核实"2～3 槽位"这一说法的真伪。</u></p>
+<p><strong>第 6–9 天　周期性验证（决定性实验）。</strong>对每条 trace 做自相关/最小周期检测，求 <em>II</em>、稳态核占比、寄存器索引的仿射拟合残差率。<u>这是整个选题的生死线。</u></p>
+<p><strong>第 10–12 天　查新。</strong>下载并精读 TACO 2018、DAES 2024、ReConFig 2015 三篇全文，逐条填写差异表。</p>
+<p><strong>第 13–14 天　决策。</strong>写 3 页预研报告交导师，含压缩率上界估算、面积估算、与三篇最近先行工作的差异表。</p>
+</div>
+<div class="callout amber"><strong>Go 条件（须同时满足）：</strong>①稳态核覆盖 ≥ 70% 的周期；②寄存器索引仿射拟合成功率 ≥ 90%；③三篇查新全文均未同时具备"展平流再卷 + 仿射操作数再生 + 严格周期等价"。<br><strong>任一不满足 → 退回 D2（掩码 + 模板/字典），并重新与导师讨论选题是否继续。</strong></div>
+
+<h3>第二阶段：14 周完整计划</h3>
+<table>
+<tr><th>周次</th><th>工作</th><th>交付物</th></tr>
+<tr><td>W1–2</td><td>编译侧：周期结构识别 + 仿射拟合算法实现（Python，接在现有调度器之后，不改调度器本身）</td><td>压缩器原型；六负载压缩率数据</td></tr>
+<tr><td>W3–4</td><td>实现 S1、S2 两个基线压缩器；建立三方对比框架</td><td>基线对比表（B0/B1/B2/D1）</td></tr>
+<tr><td>W5–7</td><td>硬件侧：核 SRAM + 模计数器 + 仿射再生单元 + 残差解码器 RTL；接到现有 Decoder 前级</td><td>可综合 RTL</td></tr>
+<tr><td>W8–9</td><td><strong>周期等价验证</strong>：逐周期比对压缩-解压后的指令流与原始流，六负载全量逐位一致</td><td>形式化/穷举验证报告（<u>论文的关键可信度支撑</u>）</td></tr>
+<tr><td>W10–11</td><td>TSMC 28nm 综合：面积、功耗、时序（守住 1 GHz）；memory compiler 生成压缩前后 IMEM</td><td>与 Table V 同口径的面积/功耗表</td></tr>
+<tr><td>W12</td><td>敏感性扫描（R 扫描、Y 扫描、六负载）；<strong>D3 分发门控综合</strong>；<strong>D4 折中曲线重画</strong>；指令流能耗建模</td><td>全部实验图表（含 Fig.1 motivation 图）</td></tr>
+<tr><td>W13–14</td><td>撰稿、查新补充、投稿</td><td>论文初稿</td></tr>
+</table>
+<p class="small">总计 16 周（含 2 周预研），落在"3～4 个月"要求内。单人可完成的依据：编译侧是 Python 后处理（不动调度器）、硬件侧是一个前级模块（不动 Decoder/Crossbar/数据通路）、评估复用第三篇已有的综合流程。</p>
+</section>
+
+<!-- ============ 11 ============ -->
+<section id="kill">
+<h2>十一、风险与淘汰条件（Kill Criteria）</h2>
+<table>
+<tr><th>#</th><th>风险</th><th>触发条件</th><th>处置</th></tr>
+<tr><td>K1</td><td><strong>查新撞车</strong>：TACO 2018 已覆盖"展平流再卷 + 操作数再生"</td><td>该文全文中已有针对寄存器堆地址的仿射再生机制</td><td><strong>放弃 D1</strong>，退回 D2（掩码 + 模板/字典），并重新评估选题</td></tr>
+<tr><td>K2</td><td><strong>周期性不成立</strong>：实际 trace 中稳态核覆盖率低</td><td>稳态核覆盖 &lt; 70% 的周期</td><td>退回 D2；压缩率降至 3.5×～8× 量级，论文分量不足，须与导师重新讨论</td></tr>
+<tr><td>K3</td><td><strong>寄存器索引不可再生</strong></td><td>仿射拟合成功率 &lt; 90%</td><td>该字段退化为显式小表；若表大到吃掉大部分收益则触发 K2 处置</td></tr>
+<tr><td>K4</td><td><strong>解压进入关键路径</strong></td><td>综合后主频 &lt; 1 GHz</td><td>增加一级流水（因无分支，增加取指级数<u>不会</u>带来任何惩罚——这是第三篇的结构性优势，K4 实际上很容易化解）</td></tr>
+<tr><td>K5</td><td><strong>周期等价被破坏</strong></td><td>任一负载出现逐周期不一致</td><td><strong>整个方案作废重做。</strong>这是不可协商的底线，因为它会推翻第三篇已发表的全部 cycle 与能效数据</td></tr>
+<tr><td>K6</td><td><strong>面积不划算</strong></td><td>解压逻辑面积增量 ≥ 省下的 IMEM 面积</td><td>缩小核 SRAM / 简化再生规则；若仍不划算则只在大 R（小 tile）配置下声明收益，缩小论文声明范围</td></tr>
+<tr><td>K8</td><td><strong>被"直接加循环指令"打回</strong>：导师或审稿人认为 D6 才是正确答案</td><td>—</td><td>按 §8.5 三层回答；并在评估中把 D6 作为上界列出，明确回答"离理想设计点差多少"。<strong>把最强反对意见做成评估的一列，比回避它可信得多</strong></td></tr>
+<tr><td>K7</td><td><strong>导师认为"仍是压缩的老问题"</strong></td><td>—</td><td>预研报告的论证重点必须放在"<u>本文压缩的是编译器人为制造的冗余，不是程序固有的冗余</u>"这一点上，而不是压缩率数字</td></tr>
+</table>
+
+<h3>与已确认硬约束的符合性自查</h3>
+<table>
+<tr><th>导师硬约束（交接文件 §4）</th><th>本方案</th></tr>
+<tr><td>1. 不做 SMM-FSM 与 SFU 混合加速器</td><td class="tag best">符合</td></tr>
+<tr><td>2. 不做早停</td><td class="tag best">符合</td></tr>
+<tr><td>3. VLIW 指令压缩可继续，只针对第三篇，不声称同时解释第一、三篇</td><td class="tag best">符合</td>
+</tr>
+<tr><td>4. 不依赖 GEMM 支持</td><td class="tag best">符合（指令供给与外部 HBM/GEMM 通路解耦，见 §3.2）</td></tr>
+<tr><td>5. 永久排除 LU 方向</td><td class="tag best">符合</td></tr>
+<tr><td>6. 第一篇不向下扩展</td><td class="tag best">符合。<span class="tag risk">但有一个可选用法</span>第一篇（OOLU）自己的 Future Work 写了"We will investigate <strong>instruction compression to reduce VLIW width</strong> and support larger-scale deployments"（p.13 右栏 §G），且第一篇 VLIW 实测 <strong>832 bit</strong>、指令+数据存储占 60.39% BRAM（p.5 右栏 / p.10 左栏）。<u>这段话可以在大论文里作为"问题在本人前期工作中已被识别"的串联证据引用，但第四篇正文不得据此声称方案同时适用于第一篇</u></td></tr>
+<tr><td>7. 避免"两篇概率计算 + 两篇 VLIW"的结构问题</td><td class="tag risk">本方案仍是 VLIW 主线。大论文结构建议：第一篇=宽发射数值计算前期工作（弱化）、第二篇=非线性函数的随机计算路径、第三篇=非线性函数的确定性 VLIW 路径、第四篇=该 VLIW 路径的控制流效率。<strong>主线是"非线性函数硬件加速"，VLIW 是手段而非主题</strong>，这样第二篇不再是孤儿</td></tr>
+<tr><td>8. 不重新包装已否定的"吞吐导向表达式选择"与"有限时域 SMM-FSM"</td><td class="tag best">符合，两者均未出现</td></tr>
+</table>
+</section>
+
+<!-- ============ 12 ============ -->
+<section id="ask">
+<h2>十二、需要你确认的四个问题</h2>
+<ol>
+<li><strong>RTL 与调度器源码是否可取？</strong>§四表格中"论文未给出"的 6 项全部依赖它。如果这些代码不在手边（例如在 ZTE 侧），预研的第 1–2 天就会卡住，整个计划需要改写。</li>
+<li><strong>"平均每拍 2～3 个槽位"的出处。</strong>§5.1 的独立推导给出 0.75～1.7，与之不符。如果 2～3 是某次实测，请提供数据；否则以本轮推导为准并尽快用 trace 复核。</li>
+<li><strong>三篇待补全文（TACO 2018 / DAES 2024 / ReConFig 2015）是否有学校订阅可下载？</strong>K1 淘汰条件完全取决于第一篇。</li>
+<li><strong>大论文主线是否接受调整为"非线性函数硬件加速"？</strong>（见 §十一 约束 7 的处置）如果导师坚持 VLIW 为主线，第二篇的定位问题会重新浮现，需要另行讨论。</li>
+</ol>
+</section>
+
+<!-- ============ 13 ============ -->
+<section id="src">
+<h2>十三、来源清单</h2>
+<h3>本人论文（全文已读，本地 PDF）</h3>
+<ul class="src">
+<li><span class="tag full">全文已读</span> <strong>第三篇</strong>：<code>Revised_Paper_TVLSI_00472_2026.pdf</code> — "A Fully Reconfigurable and Programmable VLIW Architecture for Nonlinear Function Acceleration", Ke Hu, Zikai Zhao, Yuxuan Qiao, Yifan Song, Jun Liu, Lei Xu, Wenhao Cai, Xiankui Xiong, Fan Yang. 14 页。本报告引用页码：p.3–4（架构/槽位/取指）、p.5–7（SFU/FUV/编译）、p.8（Table I 分块）、p.9（Table III 延迟、§VI-B 配置）、p.10（Table V 面积）、p.11–12（Table VI/VIII/IX、§VI-E 讨论）。</li>
+<li><span class="tag full">全文已读</span> <strong>第一篇</strong>：<code>Revised_Paper_TC_2024_08_0644.pdf</code> — "OOLU: An Operation-based Optimized Sparse LU Decomposition Accelerator for Circuit Simulation", Ke Hu, Fan Yang. 关键引用：p.5 §III-C VLIW 五字段设计与 <strong>832 bit</strong> 总长（Fig.6, N=16）、p.10 §A 指令+数据占 <strong>60.39%</strong> BRAM、p.13 §G Future Work 明确提出 instruction compression。</li>
+<li><span class="tag full">全文已读</span> <strong>第二篇</strong>：<code>Highly_Efficient_Module_Design_...Stochastic_Computing.pdf</code> — IEEE TVLSI Vol.34 No.5, May 2026, Ke Hu, Jinwei Xie, Kaining Han, Fan Yang。核实：SMM-FSM、K–A 定理、bitstream length L ∈ {256,512,1024,2048}、L=2048 时 2048 cycles / 4096 ns、600 MHz。与交接文件描述一致。</li>
+</ul>
+
+<h3>外部文献</h3>
+<ul class="src">
+<li><span class="tag full">全文已读</span> Conte, Banerjia, Larin, Menezes, Sathaye, <em>Instruction Fetch Mechanisms for VLIW Architectures with Compressed Encodings</em>, MICRO-29, 1996. <a href="https://prod.tinker.cc.gatech.edu/symposia/micro29_icache.pdf">PDF（Georgia Tech TINKER）</a> · <a href="https://ieeexplore.ieee.org/document/566462/">IEEE</a></li>
+<li><span class="tag full">全文已读</span> Xie, Wolf, Lekatsas, <em>Code Compression for VLIW Processors Using Variable-to-fixed Coding</em>, ISSS 2002. <a href="https://www.cs.york.ac.uk/rts/docs/SIGDA-Compendium-1994-2004/papers/2002/isss02/pdffiles/p138.pdf">PDF（York SIGDA Compendium）</a></li>
+<li><span class="tag abs">仅摘要</span> Larin & Conte, <em>Compiler-Driven Cached Code Compression Schemes for Embedded ILP Processors</em>, MICRO-32, 1999. <a href="https://ieeexplore.ieee.org/document/809446/">IEEE</a></li>
+<li><span class="tag abs">仅摘要</span> Brandon, Hoozemans, van Straten, Lorenzon, Sartor, Beck, Wong, <em>A Sparse VLIW Instruction Encoding Scheme Compatible with Generic Binaries</em>, ReConFig 2015. <a href="https://ieeexplore.ieee.org/document/7393361/">IEEE</a> · <a href="http://rvex.ewi.tudelft.nl/">ρ-VEX 项目</a></li>
+<li><span class="tag abs">仅摘要</span> Helkala, Viitanen, Kultala, Jääskeläinen, Takala, Zetterman, Berg, <em>Variable Length Instruction Compression on Transport Triggered Architectures</em>, SAMOS 2014 / IJPP 2018. <a href="https://ieeexplore.ieee.org/abstract/document/6893206/">IEEE</a> · <a href="https://link.springer.com/article/10.1007/s10766-018-0568-8">Springer</a></li>
+<li><span class="tag abs">仅摘要</span> Multanen, de Bruin, Corporaal, Jääskeläinen, <em>Energy-Efficient Instruction Compression with Programmable Dictionaries</em>, Design Automation for Embedded Systems, 2024. <a href="https://link.springer.com/article/10.1007/s10617-024-09290-2">Springer（登录墙）</a>；前作 ICCD 2020, DOI 10.1109/ICCD50377.2020.00066</li>
+<li><span class="tag abs">仅摘要</span> <em>Improving Energy Efficiency of Coarse-Grain Reconfigurable Arrays Through Modulo Schedule Compression/Decompression</em>, ACM TACO 2018. <a href="https://dl.acm.org/doi/10.1145/3162018">ACM DL</a> —— <strong>首要查新对象</strong></li>
+<li><span class="tag abs">仅摘要</span> <em>Energy Efficient Configuration Unification and Compression for CGRAs</em>, Microprocessors and Microsystems, 2018. <a href="https://www.sciencedirect.com/science/article/abs/pii/S0141933117305847">ScienceDirect</a></li>
+<li><span class="tag abs">仅摘要</span> Lin, Xie, Wolf, <em>LZW-Based Code Compression for VLIW Embedded Systems</em>, DATE 2004. <a href="https://www.cs.york.ac.uk/rts/docs/SIGDA-Compendium-1994-2004/papers/2004/date04/df_files/04d_6.pdf">PDF 链接（未下载）</a></li>
+<li><span class="tag abs">仅摘要</span> <em>Improving Code Density with Variable Length Encoding-Aware Instruction Scheduling</em>, J. Signal Processing Systems. <a href="https://link.springer.com/article/10.1007/s11265-015-1081-6">Springer</a></li>
+<li><span class="tag abs">仅摘要</span> <em>Compilation Strategies for Reducing Code Size on a VLIW Processor with Variable Length Instructions</em>, HiPEAC 2008. <a href="https://link.springer.com/chapter/10.1007/978-3-540-77560-7_11">Springer</a></li>
+<li><span class="tag abs">仅摘要</span> <em>A Novel Instruction Stream Buffer for VLIW Architectures</em>, Comput. Electr. Eng., 2009. <a href="https://www.sciencedirect.com/science/article/abs/pii/S004579060900086X">ScienceDirect</a></li>
+<li><span class="tag abs">仅摘要</span> <em>Adaptive and Flexible Dictionary Code Compression for Embedded Applications</em>, CASES 2006. <a href="https://dl.acm.org/doi/10.1145/1176760.1176776">ACM DL</a></li>
+<li><span class="tag abs">仅摘要</span> <em>Bitmask-based Code Compression Technique for Embedded Systems</em>, ICCAD 2006. <a href="https://esl.cise.ufl.edu/Publications/iccad06.pdf">PDF（UF ESL）</a></li>
+<li><span class="tag abs">仅摘要</span> <em>Recent developments in code compression techniques for embedded systems</em>（综述）. <a href="https://www.sciencedirect.com/science/article/abs/pii/S2214785321017946">ScienceDirect</a></li>
+<li><span class="tag abs">仅摘要</span> <em>Effective Exploitation of a Zero Overhead Loop Buffer</em>, ACM SIGPLAN Notices, 1999. <a href="https://dl.acm.org/doi/pdf/10.1145/314403.314419">ACM DL</a></li>
+<li><span class="tag abs">仅摘要 / 二手</span> 旋转寄存器堆：Cydrome Cydra 5（Rau 等）与 IA-64。<a href="https://cseweb.ucsd.edu/classes/fa99/cse240/lee_ucsd_ia64.PDF">An Overview of IA-64 Architectural Features and Compiler Optimization</a> · <a href="http://refspecs.linux-foundation.org/IA64conventions.pdf">IA-64 Software Conventions and Runtime Architecture Guide</a></li>
+<li><span class="tag abs">仅摘要</span> Rau, <em>Iterative Modulo Scheduling: An Algorithm for Software Pipelining</em>, MICRO-27. <a href="https://www.cs.princeton.edu/courses/archive/fall99/cs597d/restricted/papers/rau_micro27.pdf">PDF</a>；<em>Code Generation Schema for Modulo Scheduled Loops</em>. <a href="https://dl.acm.org/doi/pdf/10.1145/144965.145795">ACM DL</a>；Huff, <em>Lifetime-Sensitive Modulo Scheduling</em>, PLDI 1993. <a href="https://iss.oden.utexas.edu/Publications/Papers/PLDI1993b.pdf">PDF</a></li>
+<li><span class="tag risk">仅题录 / 二手</span> AMD Versal AI Engine：7-way VLIW、每 tile 16 KB program memory。<a href="https://www.edge-ai-vision.com/wp-content/uploads/2022/05/E1T09_Denolf_AMD_2022.pdf">Denolf, Programming Vision Pipelines on AMD's AI Engines</a> —— <strong>"128-bit VLIW"之说未获证实，引用前须查 AMD 官方 AIE ISA 文档</strong></li>
+<li><span class="tag risk">仅题录</span> NOP 压缩相关专利：US6275921、US9286074、US7143268、US7409530、US9804853；<em>Nop compression scheme for high speed DSPs based on VLIW architecture</em>, IEEE 2014. <a href="https://ieeexplore.ieee.org/document/6776016/">IEEE</a></li>
+</ul>
+</section>
+
+<p class="footer">生成于 2026-08-26 ｜ 三篇 PDF 全文已读并逐页核对，外部文献 2 篇全文已读、13 篇仅摘要、若干仅题录，均已在正文标注 ｜ 本报告中所有非论文原文的数字均标注为"推导/估算"</p>
+</div>
+</body>
+</html>

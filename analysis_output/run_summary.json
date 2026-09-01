@@ -1,0 +1,2164 @@
+{
+  "word_width": 184,
+  "workloads": {
+    "softmax": {
+      "shape": [
+        32,
+        512
+      ],
+      "mode_cycles": {
+        "0": 609,
+        "1": 518,
+        "2": 515
+      },
+      "selected_mode": 2,
+      "trace_csv": "/Users/maghu/Desktop/work at school/compress/compress-vliw/analysis_output/softmax_x32_y512_best_trace.csv",
+      "analysis": {
+        "cycles_including_eop": 515,
+        "slot_counts": {
+          "load": 64,
+          "store": 64,
+          "vector": 256,
+          "scalar": 64,
+          "sfu": 96
+        },
+        "slot_activity": {
+          "load": 0.12427184466019417,
+          "store": 0.12427184466019417,
+          "vector": 0.4970873786407767,
+          "scalar": 0.12427184466019417,
+          "sfu": 0.18640776699029127
+        },
+        "average_active_slots": 1.0563106796116506,
+        "max_active_slots": 4,
+        "all_nop_cycle_fraction": 0.3766990291262136,
+        "full_word_period": {
+          "period": 1,
+          "match_ratio": 0.24319066147859922,
+          "longest_coverage": 0.011650485436893204
+        },
+        "structure_period": {
+          "period": 164,
+          "match_ratio": 0.27350427350427353,
+          "longest_coverage": 0.06407766990291262
+        },
+        "affine_groups": {
+          "eligible_value_occurrences": 1408,
+          "constant_coverage": 0.09090909090909091,
+          "affine_nonconstant_coverage": 0.22727272727272727,
+          "constant_or_affine_coverage": 0.3181818181818182,
+          "examples": [
+            {
+              "slot": "load",
+              "field": "mem_addr",
+              "occurrences": 64,
+              "base": 0,
+              "stride": 1,
+              "structure": {
+                "mem_fmt": 0,
+                "gpr_fmt": 0,
+                "optype": 3
+              }
+            },
+            {
+              "slot": "scalar",
+              "field": "src0",
+              "occurrences": 32,
+              "base": 0,
+              "stride": 7,
+              "structure": {
+                "imm": 0,
+                "connect": 0,
+                "mask": 0,
+                "optype": 4
+              }
+            },
+            {
+              "slot": "scalar",
+              "field": "dst",
+              "occurrences": 32,
+              "base": 2,
+              "stride": 7,
+              "structure": {
+                "imm": 0,
+                "connect": 0,
+                "mask": 0,
+                "optype": 4
+              }
+            },
+            {
+              "slot": "scalar",
+              "field": "src1",
+              "occurrences": 32,
+              "base": 1,
+              "stride": 7,
+              "structure": {
+                "imm": 0,
+                "connect": 0,
+                "mask": 0,
+                "optype": 4
+              }
+            },
+            {
+              "slot": "scalar",
+              "field": "src0",
+              "occurrences": 32,
+              "base": 3,
+              "stride": 7,
+              "structure": {
+                "imm": 0,
+                "connect": 0,
+                "mask": 0,
+                "optype": 2
+              }
+            },
+            {
+              "slot": "scalar",
+              "field": "dst",
+              "occurrences": 32,
+              "base": 5,
+              "stride": 7,
+              "structure": {
+                "imm": 0,
+                "connect": 0,
+                "mask": 0,
+                "optype": 2
+              }
+            },
+            {
+              "slot": "scalar",
+              "field": "src1",
+              "occurrences": 32,
+              "base": 4,
+              "stride": 7,
+              "structure": {
+                "imm": 0,
+                "connect": 0,
+                "mask": 0,
+                "optype": 2
+              }
+            },
+            {
+              "slot": "sfu",
+              "field": "src",
+              "occurrences": 32,
+              "base": 5,
+              "stride": 7,
+              "structure": {
+                "borrow": 2,
+                "is_vector": 0,
+                "rounds": 0,
+                "optype": 3
+              }
+            },
+            {
+              "slot": "sfu",
+              "field": "dst",
+              "occurrences": 32,
+              "base": 6,
+              "stride": 7,
+              "structure": {
+                "borrow": 2,
+                "is_vector": 0,
+                "rounds": 0,
+                "optype": 3
+              }
+            }
+          ]
+        },
+        "compression": {
+          "bits": {
+            "original": 94760,
+            "slot_sparse_per_cycle": 23675,
+            "li_byte_vertical": 28805,
+            "natural_field_vertical": 32900,
+            "per_slot_event_raw": 21998,
+            "per_slot_event_raw_gap_dictionary": 21120,
+            "per_slot_event_full_dictionary": 25870,
+            "per_slot_event_field_dictionary": 24449,
+            "per_slot_event_field_hybrid": 13566,
+            "per_slot_event_field_hybrid_gap_dictionary": 12688
+          },
+          "ratio_to_original": {
+            "original": 1.0,
+            "slot_sparse_per_cycle": 0.24984170536091177,
+            "li_byte_vertical": 0.303978471929084,
+            "natural_field_vertical": 0.34719290840016886,
+            "per_slot_event_raw": 0.23214436471084846,
+            "per_slot_event_raw_gap_dictionary": 0.2228788518362178,
+            "per_slot_event_full_dictionary": 0.2730054875474884,
+            "per_slot_event_field_dictionary": 0.25800970873786405,
+            "per_slot_event_field_hybrid": 0.14316167159138876,
+            "per_slot_event_field_hybrid_gap_dictionary": 0.1338961587167581
+          },
+          "reduction_vs_li_byte": {
+            "original": -2.2897066481513626,
+            "slot_sparse_per_cycle": 0.17809408088873457,
+            "li_byte_vertical": 0.0,
+            "natural_field_vertical": -0.14216281895504257,
+            "per_slot_event_raw": 0.23631314007984727,
+            "per_slot_event_raw_gap_dictionary": 0.26679395938205175,
+            "per_slot_event_full_dictionary": 0.10189203263322344,
+            "per_slot_event_field_dictionary": 0.1512237458774518,
+            "per_slot_event_field_hybrid": 0.5290400972053463,
+            "per_slot_event_field_hybrid_gap_dictionary": 0.5595209165075508
+          },
+          "timing_widths": {
+            "load": 1,
+            "store": 7,
+            "vector": 5,
+            "scalar": 6,
+            "sfu": 6
+          },
+          "timing_gap_stats": {
+            "load": {
+              "initial_cycle": 0,
+              "max_inter_event_gap": 1,
+              "unique_inter_event_gaps": 1,
+              "gap_index_width": 0,
+              "common_gaps": [
+                [
+                  1,
+                  63
+                ]
+              ]
+            },
+            "store": {
+              "initial_cycle": 105,
+              "max_inter_event_gap": 68,
+              "unique_inter_event_gaps": 10,
+              "gap_index_width": 4,
+              "common_gaps": [
+                [
+                  1,
+                  46
+                ],
+                [
+                  7,
+                  5
+                ],
+                [
+                  4,
+                  4
+                ],
+                [
+                  58,
+                  2
+                ],
+                [
+                  6,
+                  1
+                ],
+                [
+                  10,
+                  1
+                ]
+              ]
+            },
+            "vector": {
+              "initial_cycle": 3,
+              "max_inter_event_gap": 25,
+              "unique_inter_event_gaps": 8,
+              "gap_index_width": 3,
+              "common_gaps": [
+                [
+                  1,
+                  208
+                ],
+                [
+                  4,
+                  37
+                ],
+                [
+                  21,
+                  4
+                ],
+                [
+                  3,
+                  2
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  7,
+                  1
+                ]
+              ]
+            },
+            "scalar": {
+              "initial_cycle": 11,
+              "max_inter_event_gap": 43,
+              "unique_inter_event_gaps": 15,
+              "gap_index_width": 4,
+              "common_gaps": [
+                [
+                  2,
+                  33
+                ],
+                [
+                  8,
+                  13
+                ],
+                [
+                  4,
+                  2
+                ],
+                [
+                  5,
+                  2
+                ],
+                [
+                  11,
+                  2
+                ],
+                [
+                  37,
+                  2
+                ]
+              ]
+            },
+            "sfu": {
+              "initial_cycle": 25,
+              "max_inter_event_gap": 34,
+              "unique_inter_event_gaps": 12,
+              "gap_index_width": 4,
+              "common_gaps": [
+                [
+                  4,
+                  48
+                ],
+                [
+                  8,
+                  12
+                ],
+                [
+                  1,
+                  10
+                ],
+                [
+                  3,
+                  9
+                ],
+                [
+                  2,
+                  4
+                ],
+                [
+                  7,
+                  4
+                ]
+              ]
+            }
+          },
+          "hybrid_field_modes": {
+            "raw": 2,
+            "dictionary": 18,
+            "delta_dictionary": 11
+          },
+          "hybrid_field_details": [
+            {
+              "slot": "load",
+              "field": "mem_fmt",
+              "field_width": 2,
+              "events": 64,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 128,
+              "saving_fraction": 0.84375
+            },
+            {
+              "slot": "load",
+              "field": "mem_addr",
+              "field_width": 28,
+              "events": 64,
+              "mode": "delta_dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 74,
+              "raw_bits": 1792,
+              "saving_fraction": 0.9587053571428571
+            },
+            {
+              "slot": "load",
+              "field": "gpr_fmt",
+              "field_width": 2,
+              "events": 64,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 128,
+              "saving_fraction": 0.84375
+            },
+            {
+              "slot": "load",
+              "field": "gpr_addr",
+              "field_width": 8,
+              "events": 64,
+              "mode": "delta_dictionary",
+              "table_entries": 2,
+              "code_width": 1,
+              "encoded_bits_with_metadata": 105,
+              "raw_bits": 512,
+              "saving_fraction": 0.794921875
+            },
+            {
+              "slot": "load",
+              "field": "optype",
+              "field_width": 2,
+              "events": 64,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 128,
+              "saving_fraction": 0.84375
+            },
+            {
+              "slot": "store",
+              "field": "mem_fmt",
+              "field_width": 2,
+              "events": 64,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 128,
+              "saving_fraction": 0.84375
+            },
+            {
+              "slot": "store",
+              "field": "mem_addr",
+              "field_width": 28,
+              "events": 64,
+              "mode": "delta_dictionary",
+              "table_entries": 3,
+              "code_width": 2,
+              "encoded_bits_with_metadata": 256,
+              "raw_bits": 1792,
+              "saving_fraction": 0.8571428571428572
+            },
+            {
+              "slot": "store",
+              "field": "gpr_fmt",
+              "field_width": 2,
+              "events": 64,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 128,
+              "saving_fraction": 0.84375
+            },
+            {
+              "slot": "store",
+              "field": "gpr_addr",
+              "field_width": 8,
+              "events": 64,
+              "mode": "delta_dictionary",
+              "table_entries": 4,
+              "code_width": 2,
+              "encoded_bits_with_metadata": 184,
+              "raw_bits": 512,
+              "saving_fraction": 0.640625
+            },
+            {
+              "slot": "store",
+              "field": "optype",
+              "field_width": 2,
+              "events": 64,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 128,
+              "saving_fraction": 0.84375
+            },
+            {
+              "slot": "vector",
+              "field": "half",
+              "field_width": 2,
+              "events": 256,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 512,
+              "saving_fraction": 0.9609375
+            },
+            {
+              "slot": "vector",
+              "field": "imm",
+              "field_width": 1,
+              "events": 256,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 19,
+              "raw_bits": 256,
+              "saving_fraction": 0.92578125
+            },
+            {
+              "slot": "vector",
+              "field": "connect",
+              "field_width": 2,
+              "events": 256,
+              "mode": "dictionary",
+              "table_entries": 2,
+              "code_width": 1,
+              "encoded_bits_with_metadata": 278,
+              "raw_bits": 512,
+              "saving_fraction": 0.45703125
+            },
+            {
+              "slot": "vector",
+              "field": "dst",
+              "field_width": 8,
+              "events": 256,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 8,
+              "encoded_bits_with_metadata": 2066,
+              "raw_bits": 2048,
+              "saving_fraction": -0.0087890625
+            },
+            {
+              "slot": "vector",
+              "field": "src1",
+              "field_width": 8,
+              "events": 256,
+              "mode": "delta_dictionary",
+              "table_entries": 36,
+              "code_width": 6,
+              "encoded_bits_with_metadata": 1844,
+              "raw_bits": 2048,
+              "saving_fraction": 0.099609375
+            },
+            {
+              "slot": "vector",
+              "field": "src0",
+              "field_width": 8,
+              "events": 256,
+              "mode": "delta_dictionary",
+              "table_entries": 58,
+              "code_width": 6,
+              "encoded_bits_with_metadata": 2020,
+              "raw_bits": 2048,
+              "saving_fraction": 0.013671875
+            },
+            {
+              "slot": "vector",
+              "field": "mask",
+              "field_width": 1,
+              "events": 256,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 19,
+              "raw_bits": 256,
+              "saving_fraction": 0.92578125
+            },
+            {
+              "slot": "vector",
+              "field": "optype",
+              "field_width": 4,
+              "events": 256,
+              "mode": "dictionary",
+              "table_entries": 4,
+              "code_width": 2,
+              "encoded_bits_with_metadata": 546,
+              "raw_bits": 1024,
+              "saving_fraction": 0.466796875
+            },
+            {
+              "slot": "scalar",
+              "field": "imm",
+              "field_width": 1,
+              "events": 64,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 19,
+              "raw_bits": 64,
+              "saving_fraction": 0.703125
+            },
+            {
+              "slot": "scalar",
+              "field": "connect",
+              "field_width": 1,
+              "events": 64,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 19,
+              "raw_bits": 64,
+              "saving_fraction": 0.703125
+            },
+            {
+              "slot": "scalar",
+              "field": "dst",
+              "field_width": 8,
+              "events": 64,
+              "mode": "delta_dictionary",
+              "table_entries": 10,
+              "code_width": 4,
+              "encoded_bits_with_metadata": 358,
+              "raw_bits": 512,
+              "saving_fraction": 0.30078125
+            },
+            {
+              "slot": "scalar",
+              "field": "src1",
+              "field_width": 8,
+              "events": 64,
+              "mode": "delta_dictionary",
+              "table_entries": 10,
+              "code_width": 4,
+              "encoded_bits_with_metadata": 358,
+              "raw_bits": 512,
+              "saving_fraction": 0.30078125
+            },
+            {
+              "slot": "scalar",
+              "field": "src0",
+              "field_width": 8,
+              "events": 64,
+              "mode": "delta_dictionary",
+              "table_entries": 10,
+              "code_width": 4,
+              "encoded_bits_with_metadata": 358,
+              "raw_bits": 512,
+              "saving_fraction": 0.30078125
+            },
+            {
+              "slot": "scalar",
+              "field": "mask",
+              "field_width": 1,
+              "events": 64,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 19,
+              "raw_bits": 64,
+              "saving_fraction": 0.703125
+            },
+            {
+              "slot": "scalar",
+              "field": "optype",
+              "field_width": 4,
+              "events": 64,
+              "mode": "dictionary",
+              "table_entries": 2,
+              "code_width": 1,
+              "encoded_bits_with_metadata": 90,
+              "raw_bits": 256,
+              "saving_fraction": 0.6484375
+            },
+            {
+              "slot": "sfu",
+              "field": "borrow",
+              "field_width": 2,
+              "events": 96,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 192,
+              "saving_fraction": 0.8958333333333334
+            },
+            {
+              "slot": "sfu",
+              "field": "dst",
+              "field_width": 8,
+              "events": 96,
+              "mode": "delta_dictionary",
+              "table_entries": 28,
+              "code_width": 5,
+              "encoded_bits_with_metadata": 725,
+              "raw_bits": 768,
+              "saving_fraction": 0.05598958333333337
+            },
+            {
+              "slot": "sfu",
+              "field": "src",
+              "field_width": 8,
+              "events": 96,
+              "mode": "delta_dictionary",
+              "table_entries": 28,
+              "code_width": 5,
+              "encoded_bits_with_metadata": 725,
+              "raw_bits": 768,
+              "saving_fraction": 0.05598958333333337
+            },
+            {
+              "slot": "sfu",
+              "field": "is_vector",
+              "field_width": 1,
+              "events": 96,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 1,
+              "encoded_bits_with_metadata": 114,
+              "raw_bits": 96,
+              "saving_fraction": -0.1875
+            },
+            {
+              "slot": "sfu",
+              "field": "rounds",
+              "field_width": 8,
+              "events": 96,
+              "mode": "dictionary",
+              "table_entries": 2,
+              "code_width": 1,
+              "encoded_bits_with_metadata": 130,
+              "raw_bits": 768,
+              "saving_fraction": 0.8307291666666666
+            },
+            {
+              "slot": "sfu",
+              "field": "optype",
+              "field_width": 4,
+              "events": 96,
+              "mode": "dictionary",
+              "table_entries": 2,
+              "code_width": 1,
+              "encoded_bits_with_metadata": 122,
+              "raw_bits": 384,
+              "saving_fraction": 0.6822916666666667
+            }
+          ],
+          "nonzero_bytes": 2120
+        },
+        "hybrid_roundtrip": {
+          "bit_exact": true,
+          "mismatch_count": 0,
+          "first_mismatch_cycle": null
+        }
+      }
+    },
+    "layernorm": {
+      "shape": [
+        32,
+        768
+      ],
+      "mode_cycles": {
+        "0": 771
+      },
+      "selected_mode": 0,
+      "trace_csv": "/Users/maghu/Desktop/work at school/compress/compress-vliw/analysis_output/layernorm_x32_y768_best_trace.csv",
+      "analysis": {
+        "cycles_including_eop": 771,
+        "slot_counts": {
+          "load": 102,
+          "store": 96,
+          "vector": 672,
+          "scalar": 256,
+          "sfu": 64
+        },
+        "slot_activity": {
+          "load": 0.13229571984435798,
+          "store": 0.1245136186770428,
+          "vector": 0.8715953307392996,
+          "scalar": 0.3320363164721141,
+          "sfu": 0.08300907911802853
+        },
+        "average_active_slots": 1.5434500648508431,
+        "max_active_slots": 5,
+        "all_nop_cycle_fraction": 0.07133592736705577,
+        "full_word_period": {
+          "period": 7,
+          "match_ratio": 0.03664921465968586,
+          "longest_coverage": 0.005188067444876783
+        },
+        "structure_period": {
+          "period": 51,
+          "match_ratio": 0.03611111111111111,
+          "longest_coverage": 0.020752269779507133
+        },
+        "affine_groups": {
+          "eligible_value_occurrences": 3308,
+          "constant_coverage": 0.12575574365175332,
+          "affine_nonconstant_coverage": 0.11608222490931076,
+          "constant_or_affine_coverage": 0.2418379685610641,
+          "examples": [
+            {
+              "slot": "scalar",
+              "field": "src0",
+              "occurrences": 32,
+              "base": 4,
+              "stride": 16,
+              "structure": {
+                "imm": 1,
+                "connect": 0,
+                "mask": 0,
+                "optype": 1
+              }
+            },
+            {
+              "slot": "scalar",
+              "field": "dst",
+              "occurrences": 32,
+              "base": 5,
+              "stride": 16,
+              "structure": {
+                "imm": 1,
+                "connect": 0,
+                "mask": 0,
+                "optype": 1
+              }
+            },
+            {
+              "slot": "scalar",
+              "field": "src0",
+              "occurrences": 32,
+              "base": 10,
+              "stride": 16,
+              "structure": {
+                "imm": 1,
+                "connect": 0,
+                "mask": 0,
+                "optype": 15
+              }
+            },
+            {
+              "slot": "scalar",
+              "field": "dst",
+              "occurrences": 32,
+              "base": 11,
+              "stride": 16,
+              "structure": {
+                "imm": 1,
+                "connect": 0,
+                "mask": 0,
+                "optype": 15
+              }
+            },
+            {
+              "slot": "scalar",
+              "field": "src0",
+              "occurrences": 32,
+              "base": 11,
+              "stride": 16,
+              "structure": {
+                "imm": 1,
+                "connect": 0,
+                "mask": 0,
+                "optype": 2
+              }
+            },
+            {
+              "slot": "scalar",
+              "field": "dst",
+              "occurrences": 32,
+              "base": 12,
+              "stride": 16,
+              "structure": {
+                "imm": 1,
+                "connect": 0,
+                "mask": 0,
+                "optype": 2
+              }
+            },
+            {
+              "slot": "scalar",
+              "field": "src0",
+              "occurrences": 32,
+              "base": 13,
+              "stride": 16,
+              "structure": {
+                "imm": 1,
+                "connect": 0,
+                "mask": 1,
+                "optype": 1
+              }
+            },
+            {
+              "slot": "scalar",
+              "field": "dst",
+              "occurrences": 32,
+              "base": 14,
+              "stride": 16,
+              "structure": {
+                "imm": 1,
+                "connect": 0,
+                "mask": 1,
+                "optype": 1
+              }
+            },
+            {
+              "slot": "sfu",
+              "field": "src",
+              "occurrences": 32,
+              "base": 12,
+              "stride": 16,
+              "structure": {
+                "borrow": 0,
+                "is_vector": 0,
+                "rounds": 0,
+                "optype": 2
+              }
+            },
+            {
+              "slot": "sfu",
+              "field": "dst",
+              "occurrences": 32,
+              "base": 13,
+              "stride": 16,
+              "structure": {
+                "borrow": 0,
+                "is_vector": 0,
+                "rounds": 0,
+                "optype": 2
+              }
+            },
+            {
+              "slot": "sfu",
+              "field": "src",
+              "occurrences": 32,
+              "base": 14,
+              "stride": 16,
+              "structure": {
+                "borrow": 0,
+                "is_vector": 0,
+                "rounds": 0,
+                "optype": 3
+              }
+            },
+            {
+              "slot": "sfu",
+              "field": "dst",
+              "occurrences": 32,
+              "base": 15,
+              "stride": 16,
+              "structure": {
+                "borrow": 0,
+                "is_vector": 0,
+                "rounds": 0,
+                "optype": 3
+              }
+            }
+          ]
+        },
+        "compression": {
+          "bits": {
+            "original": 141864,
+            "slot_sparse_per_cycle": 48023,
+            "li_byte_vertical": 53341,
+            "natural_field_vertical": 58696,
+            "per_slot_event_raw": 47188,
+            "per_slot_event_raw_gap_dictionary": 45856,
+            "per_slot_event_full_dictionary": 51222,
+            "per_slot_event_field_dictionary": 48578,
+            "per_slot_event_field_hybrid": 34292,
+            "per_slot_event_field_hybrid_gap_dictionary": 32960
+          },
+          "ratio_to_original": {
+            "original": 1.0,
+            "slot_sparse_per_cycle": 0.33851435177352956,
+            "li_byte_vertical": 0.37600095866463656,
+            "natural_field_vertical": 0.41374837872892345,
+            "per_slot_event_raw": 0.33262843286527943,
+            "per_slot_event_raw_gap_dictionary": 0.3232391586308013,
+            "per_slot_event_full_dictionary": 0.3610641177465742,
+            "per_slot_event_field_dictionary": 0.3424265493712288,
+            "per_slot_event_field_hybrid": 0.24172446850504709,
+            "per_slot_event_field_hybrid_gap_dictionary": 0.232335194270569
+          },
+          "reduction_vs_li_byte": {
+            "original": -1.659567687144973,
+            "slot_sparse_per_cycle": 0.09969816838829415,
+            "li_byte_vertical": 0.0,
+            "natural_field_vertical": -0.10039181867606528,
+            "per_slot_event_raw": 0.11535216812583193,
+            "per_slot_event_raw_gap_dictionary": 0.14032357848559274,
+            "per_slot_event_full_dictionary": 0.039725539453703496,
+            "per_slot_event_field_dictionary": 0.0892934140717272,
+            "per_slot_event_field_hybrid": 0.3571174143716841,
+            "per_slot_event_field_hybrid_gap_dictionary": 0.3820888247314449
+          },
+          "timing_widths": {
+            "load": 7,
+            "store": 8,
+            "vector": 4,
+            "scalar": 5,
+            "sfu": 7
+          },
+          "timing_gap_stats": {
+            "load": {
+              "initial_cycle": 0,
+              "max_inter_event_gap": 126,
+              "unique_inter_event_gaps": 13,
+              "gap_index_width": 4,
+              "common_gaps": [
+                [
+                  1,
+                  76
+                ],
+                [
+                  2,
+                  6
+                ],
+                [
+                  8,
+                  5
+                ],
+                [
+                  9,
+                  4
+                ],
+                [
+                  3,
+                  2
+                ],
+                [
+                  7,
+                  1
+                ]
+              ]
+            },
+            "store": {
+              "initial_cycle": 166,
+              "max_inter_event_gap": 100,
+              "unique_inter_event_gaps": 21,
+              "gap_index_width": 5,
+              "common_gaps": [
+                [
+                  1,
+                  49
+                ],
+                [
+                  3,
+                  12
+                ],
+                [
+                  8,
+                  10
+                ],
+                [
+                  2,
+                  3
+                ],
+                [
+                  5,
+                  2
+                ],
+                [
+                  10,
+                  2
+                ]
+              ]
+            },
+            "vector": {
+              "initial_cycle": 9,
+              "max_inter_event_gap": 10,
+              "unique_inter_event_gaps": 7,
+              "gap_index_width": 3,
+              "common_gaps": [
+                [
+                  1,
+                  637
+                ],
+                [
+                  2,
+                  17
+                ],
+                [
+                  5,
+                  9
+                ],
+                [
+                  3,
+                  4
+                ],
+                [
+                  4,
+                  2
+                ],
+                [
+                  7,
+                  1
+                ]
+              ]
+            },
+            "scalar": {
+              "initial_cycle": 22,
+              "max_inter_event_gap": 26,
+              "unique_inter_event_gaps": 13,
+              "gap_index_width": 4,
+              "common_gaps": [
+                [
+                  1,
+                  94
+                ],
+                [
+                  2,
+                  69
+                ],
+                [
+                  3,
+                  35
+                ],
+                [
+                  4,
+                  22
+                ],
+                [
+                  7,
+                  15
+                ],
+                [
+                  5,
+                  8
+                ]
+              ]
+            },
+            "sfu": {
+              "initial_cycle": 99,
+              "max_inter_event_gap": 86,
+              "unique_inter_event_gaps": 22,
+              "gap_index_width": 5,
+              "common_gaps": [
+                [
+                  3,
+                  8
+                ],
+                [
+                  1,
+                  6
+                ],
+                [
+                  10,
+                  6
+                ],
+                [
+                  2,
+                  5
+                ],
+                [
+                  11,
+                  5
+                ],
+                [
+                  5,
+                  4
+                ]
+              ]
+            }
+          },
+          "hybrid_field_modes": {
+            "raw": 8,
+            "dictionary": 17,
+            "delta_dictionary": 6
+          },
+          "hybrid_field_details": [
+            {
+              "slot": "load",
+              "field": "mem_fmt",
+              "field_width": 2,
+              "events": 102,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 204,
+              "saving_fraction": 0.9019607843137255
+            },
+            {
+              "slot": "load",
+              "field": "mem_addr",
+              "field_width": 28,
+              "events": 102,
+              "mode": "delta_dictionary",
+              "table_entries": 4,
+              "code_width": 2,
+              "encoded_bits_with_metadata": 360,
+              "raw_bits": 2856,
+              "saving_fraction": 0.8739495798319328
+            },
+            {
+              "slot": "load",
+              "field": "gpr_fmt",
+              "field_width": 2,
+              "events": 102,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 204,
+              "saving_fraction": 0.9019607843137255
+            },
+            {
+              "slot": "load",
+              "field": "gpr_addr",
+              "field_width": 8,
+              "events": 102,
+              "mode": "delta_dictionary",
+              "table_entries": 8,
+              "code_width": 3,
+              "encoded_bits_with_metadata": 393,
+              "raw_bits": 816,
+              "saving_fraction": 0.5183823529411764
+            },
+            {
+              "slot": "load",
+              "field": "optype",
+              "field_width": 2,
+              "events": 102,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 204,
+              "saving_fraction": 0.9019607843137255
+            },
+            {
+              "slot": "store",
+              "field": "mem_fmt",
+              "field_width": 2,
+              "events": 96,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 192,
+              "saving_fraction": 0.8958333333333334
+            },
+            {
+              "slot": "store",
+              "field": "mem_addr",
+              "field_width": 28,
+              "events": 96,
+              "mode": "delta_dictionary",
+              "table_entries": 3,
+              "code_width": 2,
+              "encoded_bits_with_metadata": 320,
+              "raw_bits": 2688,
+              "saving_fraction": 0.8809523809523809
+            },
+            {
+              "slot": "store",
+              "field": "gpr_fmt",
+              "field_width": 2,
+              "events": 96,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 192,
+              "saving_fraction": 0.8958333333333334
+            },
+            {
+              "slot": "store",
+              "field": "gpr_addr",
+              "field_width": 8,
+              "events": 96,
+              "mode": "delta_dictionary",
+              "table_entries": 6,
+              "code_width": 3,
+              "encoded_bits_with_metadata": 359,
+              "raw_bits": 768,
+              "saving_fraction": 0.5325520833333333
+            },
+            {
+              "slot": "store",
+              "field": "optype",
+              "field_width": 2,
+              "events": 96,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 192,
+              "saving_fraction": 0.8958333333333334
+            },
+            {
+              "slot": "vector",
+              "field": "half",
+              "field_width": 2,
+              "events": 672,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 1344,
+              "saving_fraction": 0.9851190476190477
+            },
+            {
+              "slot": "vector",
+              "field": "imm",
+              "field_width": 1,
+              "events": 672,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 19,
+              "raw_bits": 672,
+              "saving_fraction": 0.9717261904761905
+            },
+            {
+              "slot": "vector",
+              "field": "connect",
+              "field_width": 2,
+              "events": 672,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 2,
+              "encoded_bits_with_metadata": 1362,
+              "raw_bits": 1344,
+              "saving_fraction": -0.013392857142857206
+            },
+            {
+              "slot": "vector",
+              "field": "dst",
+              "field_width": 8,
+              "events": 672,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 8,
+              "encoded_bits_with_metadata": 5394,
+              "raw_bits": 5376,
+              "saving_fraction": -0.0033482142857141906
+            },
+            {
+              "slot": "vector",
+              "field": "src1",
+              "field_width": 8,
+              "events": 672,
+              "mode": "dictionary",
+              "table_entries": 37,
+              "code_width": 6,
+              "encoded_bits_with_metadata": 4346,
+              "raw_bits": 5376,
+              "saving_fraction": 0.19159226190476186
+            },
+            {
+              "slot": "vector",
+              "field": "src0",
+              "field_width": 8,
+              "events": 672,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 8,
+              "encoded_bits_with_metadata": 5394,
+              "raw_bits": 5376,
+              "saving_fraction": -0.0033482142857141906
+            },
+            {
+              "slot": "vector",
+              "field": "mask",
+              "field_width": 1,
+              "events": 672,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 19,
+              "raw_bits": 672,
+              "saving_fraction": 0.9717261904761905
+            },
+            {
+              "slot": "vector",
+              "field": "optype",
+              "field_width": 4,
+              "events": 672,
+              "mode": "dictionary",
+              "table_entries": 6,
+              "code_width": 3,
+              "encoded_bits_with_metadata": 2058,
+              "raw_bits": 2688,
+              "saving_fraction": 0.234375
+            },
+            {
+              "slot": "scalar",
+              "field": "imm",
+              "field_width": 1,
+              "events": 256,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 1,
+              "encoded_bits_with_metadata": 274,
+              "raw_bits": 256,
+              "saving_fraction": -0.0703125
+            },
+            {
+              "slot": "scalar",
+              "field": "connect",
+              "field_width": 1,
+              "events": 256,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 19,
+              "raw_bits": 256,
+              "saving_fraction": 0.92578125
+            },
+            {
+              "slot": "scalar",
+              "field": "dst",
+              "field_width": 8,
+              "events": 256,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 8,
+              "encoded_bits_with_metadata": 2066,
+              "raw_bits": 2048,
+              "saving_fraction": -0.0087890625
+            },
+            {
+              "slot": "scalar",
+              "field": "src1",
+              "field_width": 8,
+              "events": 256,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 8,
+              "encoded_bits_with_metadata": 2066,
+              "raw_bits": 2048,
+              "saving_fraction": -0.0087890625
+            },
+            {
+              "slot": "scalar",
+              "field": "src0",
+              "field_width": 8,
+              "events": 256,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 8,
+              "encoded_bits_with_metadata": 2066,
+              "raw_bits": 2048,
+              "saving_fraction": -0.0087890625
+            },
+            {
+              "slot": "scalar",
+              "field": "mask",
+              "field_width": 1,
+              "events": 256,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 1,
+              "encoded_bits_with_metadata": 274,
+              "raw_bits": 256,
+              "saving_fraction": -0.0703125
+            },
+            {
+              "slot": "scalar",
+              "field": "optype",
+              "field_width": 4,
+              "events": 256,
+              "mode": "dictionary",
+              "table_entries": 4,
+              "code_width": 2,
+              "encoded_bits_with_metadata": 546,
+              "raw_bits": 1024,
+              "saving_fraction": 0.466796875
+            },
+            {
+              "slot": "sfu",
+              "field": "borrow",
+              "field_width": 2,
+              "events": 64,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 128,
+              "saving_fraction": 0.84375
+            },
+            {
+              "slot": "sfu",
+              "field": "dst",
+              "field_width": 8,
+              "events": 64,
+              "mode": "delta_dictionary",
+              "table_entries": 8,
+              "code_width": 3,
+              "encoded_bits_with_metadata": 279,
+              "raw_bits": 512,
+              "saving_fraction": 0.455078125
+            },
+            {
+              "slot": "sfu",
+              "field": "src",
+              "field_width": 8,
+              "events": 64,
+              "mode": "delta_dictionary",
+              "table_entries": 8,
+              "code_width": 3,
+              "encoded_bits_with_metadata": 279,
+              "raw_bits": 512,
+              "saving_fraction": 0.455078125
+            },
+            {
+              "slot": "sfu",
+              "field": "is_vector",
+              "field_width": 1,
+              "events": 64,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 19,
+              "raw_bits": 64,
+              "saving_fraction": 0.703125
+            },
+            {
+              "slot": "sfu",
+              "field": "rounds",
+              "field_width": 8,
+              "events": 64,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 26,
+              "raw_bits": 512,
+              "saving_fraction": 0.94921875
+            },
+            {
+              "slot": "sfu",
+              "field": "optype",
+              "field_width": 4,
+              "events": 64,
+              "mode": "dictionary",
+              "table_entries": 2,
+              "code_width": 1,
+              "encoded_bits_with_metadata": 90,
+              "raw_bits": 256,
+              "saving_fraction": 0.6484375
+            }
+          ],
+          "nonzero_bytes": 4451
+        },
+        "hybrid_roundtrip": {
+          "bit_exact": true,
+          "mismatch_count": 0,
+          "first_mismatch_cycle": null
+        }
+      }
+    },
+    "gelu": {
+      "shape": [
+        32,
+        3072
+      ],
+      "mode_cycles": {
+        "2": 1560
+      },
+      "selected_mode": 2,
+      "trace_csv": "/Users/maghu/Desktop/work at school/compress/compress-vliw/analysis_output/gelu_x32_y3072_best_trace.csv",
+      "analysis": {
+        "cycles_including_eop": 1560,
+        "slot_counts": {
+          "load": 384,
+          "store": 384,
+          "vector": 0,
+          "scalar": 0,
+          "sfu": 384
+        },
+        "slot_activity": {
+          "load": 0.24615384615384617,
+          "store": 0.24615384615384617,
+          "vector": 0.0,
+          "scalar": 0.0,
+          "sfu": 0.24615384615384617
+        },
+        "average_active_slots": 0.7384615384615385,
+        "max_active_slots": 2,
+        "all_nop_cycle_fraction": 0.38076923076923075,
+        "full_word_period": {
+          "period": 4,
+          "match_ratio": 0.35347043701799485,
+          "longest_coverage": 0.0019230769230769232
+        },
+        "structure_period": {
+          "period": 48,
+          "match_ratio": 0.9603174603174603,
+          "longest_coverage": 0.5987179487179487
+        },
+        "affine_groups": {
+          "eligible_value_occurrences": 2304,
+          "constant_coverage": 0.0,
+          "affine_nonconstant_coverage": 1.0,
+          "constant_or_affine_coverage": 1.0,
+          "examples": [
+            {
+              "slot": "load",
+              "field": "gpr_addr",
+              "occurrences": 384,
+              "base": 0,
+              "stride": 2,
+              "structure": {
+                "mem_fmt": 0,
+                "gpr_fmt": 0,
+                "optype": 3
+              }
+            },
+            {
+              "slot": "load",
+              "field": "mem_addr",
+              "occurrences": 384,
+              "base": 0,
+              "stride": 1,
+              "structure": {
+                "mem_fmt": 0,
+                "gpr_fmt": 0,
+                "optype": 3
+              }
+            },
+            {
+              "slot": "store",
+              "field": "gpr_addr",
+              "occurrences": 384,
+              "base": 1,
+              "stride": 2,
+              "structure": {
+                "mem_fmt": 0,
+                "gpr_fmt": 0,
+                "optype": 3
+              }
+            },
+            {
+              "slot": "store",
+              "field": "mem_addr",
+              "occurrences": 384,
+              "base": 0,
+              "stride": 1,
+              "structure": {
+                "mem_fmt": 0,
+                "gpr_fmt": 0,
+                "optype": 3
+              }
+            },
+            {
+              "slot": "sfu",
+              "field": "src",
+              "occurrences": 384,
+              "base": 0,
+              "stride": 2,
+              "structure": {
+                "borrow": 2,
+                "is_vector": 1,
+                "rounds": 4,
+                "optype": 4
+              }
+            },
+            {
+              "slot": "sfu",
+              "field": "dst",
+              "occurrences": 384,
+              "base": 1,
+              "stride": 2,
+              "structure": {
+                "borrow": 2,
+                "is_vector": 1,
+                "rounds": 4,
+                "optype": 4
+              }
+            }
+          ]
+        },
+        "compression": {
+          "bits": {
+            "original": 287040,
+            "slot_sparse_per_cycle": 58200,
+            "li_byte_vertical": 73128,
+            "natural_field_vertical": 92465,
+            "per_slot_event_raw": 49743,
+            "per_slot_event_raw_gap_dictionary": 45184,
+            "per_slot_event_full_dictionary": 51407,
+            "per_slot_event_field_dictionary": 48874,
+            "per_slot_event_field_hybrid": 6344,
+            "per_slot_event_field_hybrid_gap_dictionary": 1785
+          },
+          "ratio_to_original": {
+            "original": 1.0,
+            "slot_sparse_per_cycle": 0.20275919732441472,
+            "li_byte_vertical": 0.2547658862876254,
+            "natural_field_vertical": 0.3221328037904125,
+            "per_slot_event_raw": 0.17329640468227425,
+            "per_slot_event_raw_gap_dictionary": 0.15741360089186177,
+            "per_slot_event_full_dictionary": 0.17909350613154962,
+            "per_slot_event_field_dictionary": 0.1702689520624303,
+            "per_slot_event_field_hybrid": 0.02210144927536232,
+            "per_slot_event_field_hybrid_gap_dictionary": 0.006218645484949833
+          },
+          "reduction_vs_li_byte": {
+            "original": -2.925172300623564,
+            "slot_sparse_per_cycle": 0.20413521496553988,
+            "li_byte_vertical": 0.0,
+            "natural_field_vertical": -0.2644267585603326,
+            "per_slot_event_raw": 0.3197817525434854,
+            "per_slot_event_raw_gap_dictionary": 0.3821244940378514,
+            "per_slot_event_full_dictionary": 0.29702713051088503,
+            "per_slot_event_field_dictionary": 0.331665025708347,
+            "per_slot_event_field_hybrid": 0.9132480035007111,
+            "per_slot_event_field_hybrid_gap_dictionary": 0.9755907449950771
+          },
+          "timing_widths": {
+            "load": 6,
+            "store": 5,
+            "vector": 0,
+            "scalar": 0,
+            "sfu": 3
+          },
+          "timing_gap_stats": {
+            "load": {
+              "initial_cycle": 0,
+              "max_inter_event_gap": 37,
+              "unique_inter_event_gaps": 3,
+              "gap_index_width": 2,
+              "common_gaps": [
+                [
+                  1,
+                  363
+                ],
+                [
+                  37,
+                  19
+                ],
+                [
+                  23,
+                  1
+                ]
+              ]
+            },
+            "store": {
+              "initial_cycle": 26,
+              "max_inter_event_gap": 4,
+              "unique_inter_event_gaps": 1,
+              "gap_index_width": 0,
+              "common_gaps": [
+                [
+                  4,
+                  383
+                ]
+              ]
+            },
+            "vector": {
+              "initial_cycle": null,
+              "max_inter_event_gap": 0,
+              "unique_inter_event_gaps": 0,
+              "gap_index_width": 0,
+              "common_gaps": []
+            },
+            "scalar": {
+              "initial_cycle": null,
+              "max_inter_event_gap": 0,
+              "unique_inter_event_gaps": 0,
+              "gap_index_width": 0,
+              "common_gaps": []
+            },
+            "sfu": {
+              "initial_cycle": 3,
+              "max_inter_event_gap": 4,
+              "unique_inter_event_gaps": 1,
+              "gap_index_width": 0,
+              "common_gaps": [
+                [
+                  4,
+                  383
+                ]
+              ]
+            }
+          },
+          "hybrid_field_modes": {
+            "raw": 15,
+            "dictionary": 10,
+            "delta_dictionary": 6
+          },
+          "hybrid_field_details": [
+            {
+              "slot": "load",
+              "field": "mem_fmt",
+              "field_width": 2,
+              "events": 384,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 768,
+              "saving_fraction": 0.9739583333333334
+            },
+            {
+              "slot": "load",
+              "field": "mem_addr",
+              "field_width": 28,
+              "events": 384,
+              "mode": "delta_dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 74,
+              "raw_bits": 10752,
+              "saving_fraction": 0.9931175595238095
+            },
+            {
+              "slot": "load",
+              "field": "gpr_fmt",
+              "field_width": 2,
+              "events": 384,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 768,
+              "saving_fraction": 0.9739583333333334
+            },
+            {
+              "slot": "load",
+              "field": "gpr_addr",
+              "field_width": 8,
+              "events": 384,
+              "mode": "delta_dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 34,
+              "raw_bits": 3072,
+              "saving_fraction": 0.9889322916666666
+            },
+            {
+              "slot": "load",
+              "field": "optype",
+              "field_width": 2,
+              "events": 384,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 768,
+              "saving_fraction": 0.9739583333333334
+            },
+            {
+              "slot": "store",
+              "field": "mem_fmt",
+              "field_width": 2,
+              "events": 384,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 768,
+              "saving_fraction": 0.9739583333333334
+            },
+            {
+              "slot": "store",
+              "field": "mem_addr",
+              "field_width": 28,
+              "events": 384,
+              "mode": "delta_dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 74,
+              "raw_bits": 10752,
+              "saving_fraction": 0.9931175595238095
+            },
+            {
+              "slot": "store",
+              "field": "gpr_fmt",
+              "field_width": 2,
+              "events": 384,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 768,
+              "saving_fraction": 0.9739583333333334
+            },
+            {
+              "slot": "store",
+              "field": "gpr_addr",
+              "field_width": 8,
+              "events": 384,
+              "mode": "delta_dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 34,
+              "raw_bits": 3072,
+              "saving_fraction": 0.9889322916666666
+            },
+            {
+              "slot": "store",
+              "field": "optype",
+              "field_width": 2,
+              "events": 384,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 768,
+              "saving_fraction": 0.9739583333333334
+            },
+            {
+              "slot": "vector",
+              "field": "half",
+              "field_width": 2,
+              "events": 0,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 2,
+              "encoded_bits_with_metadata": 18,
+              "raw_bits": 0,
+              "saving_fraction": 0.0
+            },
+            {
+              "slot": "vector",
+              "field": "imm",
+              "field_width": 1,
+              "events": 0,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 1,
+              "encoded_bits_with_metadata": 18,
+              "raw_bits": 0,
+              "saving_fraction": 0.0
+            },
+            {
+              "slot": "vector",
+              "field": "connect",
+              "field_width": 2,
+              "events": 0,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 2,
+              "encoded_bits_with_metadata": 18,
+              "raw_bits": 0,
+              "saving_fraction": 0.0
+            },
+            {
+              "slot": "vector",
+              "field": "dst",
+              "field_width": 8,
+              "events": 0,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 8,
+              "encoded_bits_with_metadata": 18,
+              "raw_bits": 0,
+              "saving_fraction": 0.0
+            },
+            {
+              "slot": "vector",
+              "field": "src1",
+              "field_width": 8,
+              "events": 0,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 8,
+              "encoded_bits_with_metadata": 18,
+              "raw_bits": 0,
+              "saving_fraction": 0.0
+            },
+            {
+              "slot": "vector",
+              "field": "src0",
+              "field_width": 8,
+              "events": 0,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 8,
+              "encoded_bits_with_metadata": 18,
+              "raw_bits": 0,
+              "saving_fraction": 0.0
+            },
+            {
+              "slot": "vector",
+              "field": "mask",
+              "field_width": 1,
+              "events": 0,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 1,
+              "encoded_bits_with_metadata": 18,
+              "raw_bits": 0,
+              "saving_fraction": 0.0
+            },
+            {
+              "slot": "vector",
+              "field": "optype",
+              "field_width": 4,
+              "events": 0,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 4,
+              "encoded_bits_with_metadata": 18,
+              "raw_bits": 0,
+              "saving_fraction": 0.0
+            },
+            {
+              "slot": "scalar",
+              "field": "imm",
+              "field_width": 1,
+              "events": 0,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 1,
+              "encoded_bits_with_metadata": 18,
+              "raw_bits": 0,
+              "saving_fraction": 0.0
+            },
+            {
+              "slot": "scalar",
+              "field": "connect",
+              "field_width": 1,
+              "events": 0,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 1,
+              "encoded_bits_with_metadata": 18,
+              "raw_bits": 0,
+              "saving_fraction": 0.0
+            },
+            {
+              "slot": "scalar",
+              "field": "dst",
+              "field_width": 8,
+              "events": 0,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 8,
+              "encoded_bits_with_metadata": 18,
+              "raw_bits": 0,
+              "saving_fraction": 0.0
+            },
+            {
+              "slot": "scalar",
+              "field": "src1",
+              "field_width": 8,
+              "events": 0,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 8,
+              "encoded_bits_with_metadata": 18,
+              "raw_bits": 0,
+              "saving_fraction": 0.0
+            },
+            {
+              "slot": "scalar",
+              "field": "src0",
+              "field_width": 8,
+              "events": 0,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 8,
+              "encoded_bits_with_metadata": 18,
+              "raw_bits": 0,
+              "saving_fraction": 0.0
+            },
+            {
+              "slot": "scalar",
+              "field": "mask",
+              "field_width": 1,
+              "events": 0,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 1,
+              "encoded_bits_with_metadata": 18,
+              "raw_bits": 0,
+              "saving_fraction": 0.0
+            },
+            {
+              "slot": "scalar",
+              "field": "optype",
+              "field_width": 4,
+              "events": 0,
+              "mode": "raw",
+              "table_entries": 0,
+              "code_width": 4,
+              "encoded_bits_with_metadata": 18,
+              "raw_bits": 0,
+              "saving_fraction": 0.0
+            },
+            {
+              "slot": "sfu",
+              "field": "borrow",
+              "field_width": 2,
+              "events": 384,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 20,
+              "raw_bits": 768,
+              "saving_fraction": 0.9739583333333334
+            },
+            {
+              "slot": "sfu",
+              "field": "dst",
+              "field_width": 8,
+              "events": 384,
+              "mode": "delta_dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 34,
+              "raw_bits": 3072,
+              "saving_fraction": 0.9889322916666666
+            },
+            {
+              "slot": "sfu",
+              "field": "src",
+              "field_width": 8,
+              "events": 384,
+              "mode": "delta_dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 34,
+              "raw_bits": 3072,
+              "saving_fraction": 0.9889322916666666
+            },
+            {
+              "slot": "sfu",
+              "field": "is_vector",
+              "field_width": 1,
+              "events": 384,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 19,
+              "raw_bits": 384,
+              "saving_fraction": 0.9505208333333334
+            },
+            {
+              "slot": "sfu",
+              "field": "rounds",
+              "field_width": 8,
+              "events": 384,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 26,
+              "raw_bits": 3072,
+              "saving_fraction": 0.9915364583333334
+            },
+            {
+              "slot": "sfu",
+              "field": "optype",
+              "field_width": 4,
+              "events": 384,
+              "mode": "dictionary",
+              "table_entries": 1,
+              "code_width": 0,
+              "encoded_bits_with_metadata": 22,
+              "raw_bits": 1536,
+              "saving_fraction": 0.9856770833333334
+            }
+          ],
+          "nonzero_bytes": 4656
+        },
+        "hybrid_roundtrip": {
+          "bit_exact": true,
+          "mismatch_count": 0,
+          "first_mismatch_cycle": null
+        }
+      }
+    }
+  },
+  "notes": {
+    "gelu_mode": 2,
+    "layernorm_mode": 0,
+    "softmax_modes_tested": [
+      0,
+      1,
+      2
+    ],
+    "equivalence_target": "cycle-level effective behavior; bit identity used only for trace reconstruction measurements"
+  }
+}

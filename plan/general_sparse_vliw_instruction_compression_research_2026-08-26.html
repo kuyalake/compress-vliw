@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>低密度VLIW控制流：周期等价压缩与无停顿指令供给</title>
+  <style>
+    :root{--ink:#182230;--muted:#667085;--line:#d8e0ea;--bg:#f4f7fb;--paper:#fff;--blue:#175cd3;--navy:#102a56;--cyan:#087a8c;--green:#067647;--amber:#a15c00;--red:#b42318;--violet:#6938ef;--soft:#eef4ff}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--bg);font:16px/1.72 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif}a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}.wrap{max-width:1180px;margin:auto;padding:0 22px 70px}
+    .hero{margin:28px 0 16px;padding:44px;border-radius:24px;color:#fff;background:linear-gradient(135deg,#101828 0%,#193c75 55%,#087a8c 100%);box-shadow:0 18px 45px rgba(16,42,86,.18)}.eyebrow{font-size:13px;letter-spacing:.13em;text-transform:uppercase;opacity:.78}.hero h1{font-size:35px;line-height:1.25;margin:10px 0}.hero p{max-width:940px;color:#e9f1ff;font-size:17px}.meta{display:flex;gap:9px;flex-wrap:wrap;margin-top:22px}.pill{padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.13);font-size:13px}
+    nav{position:sticky;top:0;z-index:20;display:flex;gap:8px;overflow:auto;padding:10px 0;margin-bottom:15px;background:rgba(244,247,251,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}nav a,nav button{white-space:nowrap;border:1px solid var(--line);border-radius:9px;background:white;color:var(--ink);padding:7px 11px;font:inherit;font-size:13px;cursor:pointer}
+    section{scroll-margin-top:70px;background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:30px;margin:18px 0;box-shadow:0 5px 18px rgba(16,24,40,.035)}h2{font-size:25px;line-height:1.35;margin:0 0 18px}h3{font-size:20px;margin:27px 0 10px}h4{font-size:16px;margin:20px 0 7px}.lead{font-size:18px;color:#344054}.small{font-size:13px;color:var(--muted)}
+    .callout{border-left:5px solid var(--blue);background:var(--soft);border-radius:10px;padding:16px 18px;margin:16px 0}.callout.green{border-color:var(--green);background:#ecfdf3}.callout.amber{border-color:var(--amber);background:#fff8e7}.callout.red{border-color:var(--red);background:#fff1f0}.callout.violet{border-color:var(--violet);background:#f5f3ff}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.card{border:1px solid var(--line);border-radius:14px;padding:18px;background:#fff}.card h3,.card h4{margin-top:0}.num{float:right;color:#98a2b3;font-size:29px;font-weight:800}.tag{display:inline-block;margin:2px;padding:3px 8px;border-radius:999px;background:#eef2f6;color:#344054;font-size:12px}.tag.best{background:#dcfae6;color:#087443}.tag.risk{background:#fff0c2;color:#7a2e0e}.tag.stop{background:#fee4e2;color:#912018}
+    table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}th,td{text-align:left;vertical-align:top;border:1px solid var(--line);padding:10px 11px}th{background:#f7f9fc}.formula{overflow:auto;text-align:center;font-family:Georgia,"Times New Roman",serif;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:16px;margin:12px 0}.code{white-space:pre;overflow:auto;background:#111827;color:#d1fae5;border-radius:12px;padding:17px;font:13px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.flow{display:flex;align-items:stretch;justify-content:center;gap:9px;flex-wrap:wrap;margin:20px 0}.box{min-width:145px;text-align:center;border:1px solid #b9c7dc;border-radius:12px;background:#f8fbff;padding:13px}.arrow{align-self:center;color:#7a8aa2;font-size:22px}.timeline{border-left:3px solid #b8c8ea;margin-left:8px;padding-left:20px}.timeline p{margin:10px 0}.src li{margin:8px 0}.footer{text-align:center;color:var(--muted);font-size:13px;margin-top:25px}ul,ol{padding-left:23px}li{margin:5px 0}
+    @media(max-width:800px){.hero{padding:28px}.hero h1{font-size:27px}.grid,.grid.three{grid-template-columns:1fr}.wrap{padding:0 12px 50px}section{padding:22px}table{display:block;overflow:auto}}
+    @media print{body{background:#fff}.wrap{max-width:none;padding:0}.hero{box-shadow:none}.hero,th,.callout{-webkit-print-color-adjust:exact;print-color-adjust:exact}nav{display:none}section{box-shadow:none;break-inside:avoid;margin:10px 0}.card{break-inside:avoid}a{color:var(--ink)}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">Fourth-paper topic research · focused revision</div>
+    <h1>低密度VLIW控制流<br>周期等价压缩与无停顿指令供给</h1>
+    <p>围绕第三篇逐周期发射超长指令字、平均仅少数槽位有效的现象，将“指令压缩”提升为静态调度宽发射架构的一般性问题。本报告不再讨论已否定的混合计算、早停、LU或GEMM方向，而是集中分析需求、已有技术边界、可切入的创新点和三到四个月的实现路线。</p>
+    <div class="meta"><span class="pill">更新日期：2026-08-26</span><span class="pill">验证平台：第三篇FRV-SFU-VLIW</span><span class="pill">周期语义不变</span><span class="pill">每周期一条VLIW</span><span class="pill">单人3～4个月</span></div>
+  </header>
+
+  <nav><a href="#summary">核心结论</a><a href="#problem">一般性问题</a><a href="#demand">需求分析</a><a href="#prior">已有方法</a><a href="#requirements">设计需求</a><a href="#innovation">创新切入点</a><a href="#architecture">完整方案</a><a href="#evaluation">验证指标</a><a href="#plan">工作计划</a><a href="#sources">参考依据</a><button onclick="window.print()">打印 / 导出PDF</button></nav>
+
+  <section id="summary">
+    <h2>一、核心结论</h2>
+    <div class="callout green"><strong>该方向成立，而且目前比其他候选方向更可靠。</strong>第三篇暴露的不是一个孤立现象，而是静态调度宽发射架构的固有矛盾：硬件和指令格式按照最大并行度设计，但逐周期实际可提取的并行度随数据依赖和功能单元类型变化，造成大量槽位为空，却仍需存储、读取和传输完整控制字。</div>
+    <p class="lead">论文不能只做“槽位掩码＋删除NOP”，因为这一类方法已有大量研究。更有价值的研究问题是：</p>
+    <div class="callout"><strong>如何把低槽位利用率的异构VLIW压缩驻留在片上指令存储中，同时以有限存储带宽和小型缓冲，保证每周期无停顿地恢复一条与原程序周期语义完全一致的VLIW？</strong></div>
+    <div class="grid three">
+      <div class="card"><span class="num">1</span><h3>周期等价</h3><p>不改变操作所属周期、槽位和依赖关系，不重新调度，不影响第三篇数值结果。</p></div>
+      <div class="card"><span class="num">2</span><h3>压缩驻留</h3><p>指令在片上存储中保持压缩，而不是加载时全部展开到另一块全宽存储。</p></div>
+      <div class="card"><span class="num">3</span><h3>无停顿供给</h3><p>压缩长度虽逐周期变化，但稳态执行仍保证每周期输出一条完整VLIW。</p></div>
+    </div>
+    <h3>建议题目</h3>
+    <p><strong>中文：</strong>面向异构宽发射加速器的周期等价稀疏指令编码与无停顿供给机制</p>
+    <p><strong>英文：</strong>Cycle-Equivalent Sparse Instruction Encoding and Stall-Free Delivery for Heterogeneous VLIW Accelerators</p>
+  </section>
+
+  <section id="problem">
+    <h2>二、一般性问题定义</h2>
+    <p>设一条VLIW包含 <em>M</em> 个异构槽位，程序运行 <em>T</em> 个周期，第 <em>t</em> 个周期的有效槽位集合为 <em>A<sub>t</sub></em>，槽位 <em>i</em> 的字段宽度为 <em>w<sub>i</sub></em>。加权槽位利用率定义为：</p>
+    <div class="formula">U<sub>slot</sub> = Σ<sub>t</sub> Σ<sub>i∈A<sub>t</sub></sub> w<sub>i</sub> / [T · Σ<sub>i</sub>w<sub>i</sub>]</div>
+    <p>使用位宽加权而不是简单统计有效槽位个数，是因为第三篇不同槽位的opcode、操作数、立即数和控制字段可能不等宽。两个周期即使都使用三个槽位，其有效控制位数量也可能差异很大。</p>
+    <div class="grid">
+      <div class="card"><h3>计算资源利用率</h3><p>功能单元是否参与有效运算。提高它通常需要改变调度、增加并发任务或修改架构。</p><span class="tag stop">不是本文直接解决的问题</span></div>
+      <div class="card"><h3>指令槽/控制位利用率</h3><p>空闲功能单元对应的指令字段是否仍被存储、读取和传输。压缩可以减少这些开销而不改变计算。</p><span class="tag best">本文研究对象</span></div>
+    </div>
+    <h3>适用架构范围</h3>
+    <ul><li>传统VLIW DSP和媒体处理器；</li><li>逐周期读取Context Word的CGRA；</li><li>AI Engine和异构向量处理器；</li><li>面向特定领域、具有多个异构功能槽位的可编程加速器；</li><li>第三篇FRV-SFU-VLIW非线性函数加速平台。</li></ul>
+    <p>AMD AI Engine仍使用128-bit VLIW，并通过多种短格式和小型指令缓冲减少程序存储，说明宽指令控制密度仍是现实架构问题。</p>
+  </section>
+
+  <section id="demand">
+    <h2>三、需求分析：为什么需要研究</h2>
+    <h3>3.1 最大并行能力与平均并行度不匹配</h3>
+    <p>第三篇为了覆盖不同非线性计算图，指令格式必须容纳最坏情况下可能并行执行的多类操作。然而实际调度受到以下约束：</p>
+    <ul><li>计算图中的数据依赖限制同周期并行度；</li><li>FRV和SFU延迟、启动间隔及操作能力不同；</li><li>异构槽位不能完全相互替代；</li><li>不同函数以及同一函数的不同阶段具有不同计算图宽度；</li><li>部分专用槽位仅在少量函数或少量周期中使用。</li></ul>
+    <p>因此最大指令宽度与平均有效控制量之间天然存在差距。这不是第三篇设计错误，而是静态调度异构宽发射架构的一般矛盾。</p>
+
+    <h3>3.2 全宽取指造成多层开销</h3>
+    <table><tr><th>开销位置</th><th>低槽位利用率造成的影响</th><th>压缩可能带来的收益</th></tr>
+      <tr><td>片上指令存储</td><td>NOP或空字段占据容量；增加新槽位后所有旧程序被动变宽</td><td>减小存储宏或容纳更多函数微程序</td></tr>
+      <tr><td>逐周期读端口</td><td>每拍读取完整超长字</td><td>降低每拍读取位数和动态能耗</td></tr>
+      <tr><td>取指—解码总线</td><td>宽总线及大量无效位翻转</td><td>降低互连电容和切换活动</td></tr>
+      <tr><td>函数配置/加载</td><td>微程序传输量增大</td><td>缩短加载时间和外部带宽占用</td></tr>
+      <tr><td>可扩展性</td><td>增加一个专用槽位会扩大全部指令</td><td>不活跃槽位只付少量描述符代价</td></tr>
+    </table>
+
+    <h3>3.3 第三篇为什么是合适验证平台</h3>
+    <ul><li>每周期发射一条超长指令，问题边界明确；</li><li>已有观察显示平均每拍仅2～3个槽位有效；</li><li>程序静态已知，适合进行离线分析、编码和供给验证；</li><li>操作所属周期不能改变，能够自然提出“周期等价”要求；</li><li>非线性函数通常为顺序或短循环微程序，分支复杂度可控；</li><li>可以复用第三篇RTL、函数集、综合条件和精度验证平台。</li></ul>
+    <div class="callout amber"><strong>需求仍需量化。</strong>平均2～3个有效槽只是初步现象。正式立项前必须得到指令存储面积、取指能耗、加权槽位利用率以及滑动窗口Payload突发量，否则只能证明“可以压缩”，不能证明“值得增加硬件压缩”。</div>
+  </section>
+
+  <section id="prior">
+    <h2>四、已有方法边界：为什么简单掩码不够</h2>
+    <table>
+      <tr><th>已有方法</th><th>能够解决什么</th><th>主要不足/本文需要越过的边界</th></tr>
+      <tr><td>槽位掩码、NOP删除</td><td>只保存有效槽位，结构直观</td><td>基本思想成熟；若不解决变长取指、分发和无停顿问题，创新不足</td></tr>
+      <tr><td>Stop-bit / 可变长Bundle</td><td>去除Bundle中的NOP，提升代码密度</td><td>Next-PC复杂、Bundle可能跨存储行、分支对齐与Split Fetch可能产生停顿</td></tr>
+      <tr><td>有限模板</td><td>用短ID表示常见有效槽组合，解码较快</td><td>模板覆盖有限；已有模板感知调度；普通模板不是新贡献</td></tr>
+      <tr><td>分Bank纵向压缩</td><td>各槽位独立存储有效指令并行读取，可单周期重组</td><td>需要多个Bank和地址生成器；容量碎片、异构位宽和扩展成本需要考虑；已有2020 IEEE Access工作</td></tr>
+      <tr><td>Huffman/算术编码</td><td>压缩率可能更高</td><td>变长串行解码可能破坏每周期供给和关键路径</td></tr>
+      <tr><td>字典压缩</td><td>利用指令/字段重复，兼顾解码速度</td><td>需要字典存储和多路查表；重复率依赖程序；仅字典方案已有较多研究</td></tr>
+      <tr><td>解压Cache</td><td>外部存储保持压缩，执行端取指简单</td><td>程序进入片上后重新膨胀，不能解决片上全宽存储和逐周期读取问题</td></tr>
+    </table>
+    <div class="callout red"><strong>不能作为论文唯一贡献的表述：</strong>“统计发现空槽很多，因此加入一个槽位掩码并只存有效指令，最终压缩约50%。”已有稀疏VLIW、Stop-bit、纵向分Bank压缩都覆盖了这一基本思想。</div>
+  </section>
+
+  <section id="requirements">
+    <h2>五、必须同时满足的设计需求</h2>
+    <div class="grid">
+      <div class="card"><h3>R1 周期语义保持</h3><p>第t周期的操作仍在第t周期执行；不合并周期、不移动操作、不改变依赖和数值行为。</p></div>
+      <div class="card"><h3>R2 稳态一拍一条</h3><p>内核正式执行后，每周期恢复一条完整VLIW，不得因当前压缩字较长而停顿。</p></div>
+      <div class="card"><h3>R3 片上压缩驻留</h3><p>压缩指令直接存放在实际指令存储中，不通过另一块等容量全宽Cache恢复。</p></div>
+      <div class="card"><h3>R4 异构槽位支持</h3><p>不同槽位允许具有不同位宽、不同opcode和操作数字段，而非假设所有槽位完全对称。</p></div>
+      <div class="card"><h3>R5 低开销与时序安全</h3><p>解码、FIFO和分发网络不能成为关键路径，面积/功耗不能抵消指令存储收益。</p></div>
+      <div class="card"><h3>R6 可控随机访问</h3><p>至少支持函数入口和静态循环起点；若有分支，提供压缩地址恢复或Checkpoint。</p></div>
+      <div class="card"><h3>R7 软件工具完整</h3><p>必须有Trace分析、模板生成、格式选择、Payload布局和缓冲下溢验证工具。</p></div>
+      <div class="card"><h3>R8 公平基线</h3><p>至少比较全宽、简单Mask、Stop-bit/可变Bundle、分Bank纵向压缩和所提方案。</p></div>
+    </div>
+  </section>
+
+  <section id="innovation">
+    <h2>六、可能形成论文的创新切入点</h2>
+
+    <h3>创新点1：周期描述符—有效负载双流编码</h3>
+    <p>将原始VLIW拆分为两条逻辑流：</p>
+    <ol><li><strong>Descriptor流：</strong>每周期一项，确定当前周期有效槽位及编码模式；</li><li><strong>Payload流：</strong>连续保存实际有效槽位的指令字段。</li></ol>
+    <div class="code">Original VLIW
+Cycle 0: [ NOP ][ SFU0 ][ NOP ][ RFU1 ][ NOP ][ NOP ]
+Cycle 1: [ RFU0 ][ NOP ][ NOP ][ NOP ][ MEM0 ][ NOP ]
+
+Compressed streams
+Descriptor: 010100 | 100010
+Payload:    SFU0, RFU1 | RFU0, MEM0</div>
+    <p>Descriptor严格保存周期边界，不把相邻周期的有效操作错误地组合成一个周期；Payload消除空槽位。双流结构只是基础，真正的新意需要来自后面的确定带宽供给和异构模板联合设计。</p>
+
+    <h3>创新点2：带逐周期Deadline的无停顿Payload供给</h3>
+    <p>压缩后每周期Payload长度 <em>L<sub>t</sub></em> 不同，而指令存储每周期只能提供固定 <em>B</em> bit。高密度周期可能瞬时需要超过 <em>B</em> bit，因此需要提前取指和小型FIFO进行带宽平滑。</p>
+    <div class="formula">F<sub>min</sub> ≥ max<sub>a,b</sub> [ Σ<sub>t=a..b</sub>L<sub>t</sub> − (b−a+1)B ]</div>
+    <p>公式表示：在任意执行窗口内，如果Payload需求超过存储累计供给，其最大差额就是无停顿所需的最小缓存量。编译器可以据此：</p>
+    <ul><li>计算给定存储带宽下的最小FIFO；</li><li>对Payload进行分块和布局；</li><li>在执行前完成初始预填充；</li><li>对高密度区段提前拉取；</li><li>验证所有周期均不会发生FIFO下溢；</li><li>必要时将局部区段切换为RAW格式。</li></ul>
+    <div class="callout violet"><strong>这是最值得作为主创新的问题：</strong>把指令压缩转化为“具有逐周期消费Deadline的离线打包与确定带宽供给”，评价目标不再只有压缩率，而是压缩率、存储带宽、FIFO面积和零停顿保证的联合Pareto优化。</div>
+
+    <h3>创新点3：异构槽位的位宽加权模板生成</h3>
+    <p>从第三篇函数Trace中选择有限数量的常用有效槽组合：</p>
+    <ul><li>高频组合用短Template ID表示；</li><li>低频组合采用Escape＋完整Mask；</li><li>模板选择考虑槽位出现频率和字段位宽；</li><li>限制模板数量、解码MUX和分发网络复杂度；</li><li>与Payload FIFO需求联合评估，而不是只优化静态代码大小。</li></ul>
+    <div class="formula">min<sub>Templates</sub> Σ<sub>t</sub>[L<sub>descriptor</sub>(A<sub>t</sub>)+L<sub>payload</sub>(A<sub>t</sub>)] + λ·C<sub>decoder</sub></div>
+
+    <h3>创新点4：RAW / SPARSE / TEMPLATE多模式分块</h3>
+    <table><tr><th>模式</th><th>适用场景</th><th>作用</th></tr>
+      <tr><td>RAW</td><td>槽位接近填满或压缩开销大</td><td>直接保存原始VLIW，避免负压缩和复杂解码</td></tr>
+      <tr><td>SPARSE</td><td>有效组合不常见但槽位数量少</td><td>完整Mask＋有效Payload</td></tr>
+      <tr><td>TEMPLATE</td><td>有效槽组合高频重复</td><td>短模板ID＋有效Payload</td></tr>
+      <tr><td>DELTA（可选）</td><td>相邻周期大量字段不变</td><td>只保存变化字段；需恢复状态和Checkpoint</td></tr>
+    </table>
+    <p>DELTA不应在立项时强行加入。只有Trace证明相邻周期opcode、寄存器或配置字段高度重复，才把它作为第二阶段增强。</p>
+
+    <h3>创新点5：面向循环/跳转的周期—Payload地址Checkpoint</h3>
+    <p>变长Payload使执行周期索引不再等于固定存储地址。可以每隔K周期或在函数入口/循环入口设置恢复点，记录Descriptor地址、Payload地址及可选解码状态。</p>
+    <ul><li>K较小：恢复快，但索引表开销较大；</li><li>K较大：索引表小，但随机恢复需要更多处理；</li><li>第三篇若只有顺序程序和静态循环，可先只支持入口及循环边界；</li><li>无需在三到四个月内扩展为完整通用处理器的异常和动态分支系统。</li></ul>
+  </section>
+
+  <section id="architecture">
+    <h2>七、建议的完整软硬件方案</h2>
+    <h3>7.1 离线软件流程</h3>
+    <div class="flow"><div class="box">原始VLIW<br>Trace</div><div class="arrow">→</div><div class="box">槽位利用率/熵<br>窗口需求分析</div><div class="arrow">→</div><div class="box">模板生成与<br>模式选择</div><div class="arrow">→</div><div class="box">Payload布局与<br>Checkpoint</div><div class="arrow">→</div><div class="box">FIFO下溢<br>形式化验证</div></div>
+    <h3>7.2 硬件数据通路</h3>
+    <div class="flow"><div class="box">Descriptor<br>Memory</div><div class="box">Compressed Payload<br>Memory</div><div class="arrow">→</div><div class="box">Prefetch FIFO</div><div class="arrow">→</div><div class="box">Template / Mask<br>Decode</div><div class="arrow">→</div><div class="box">Sparse Slot<br>Dispersal</div><div class="arrow">→</div><div class="box">Full VLIW<br>Register</div></div>
+    <h3>7.3 与第三篇的接口边界</h3>
+    <ul><li>第三篇调度结果不改；</li><li>FRV/SFU执行单元不改；</li><li>每周期得到的完整VLIW与原始程序逐位或逐字段等价；</li><li>修改范围集中在指令生成后处理、指令存储和取指/重组前端；</li><li>因此能够复用原精度验证和综合环境，工作量可控。</li></ul>
+  </section>
+
+  <section id="evaluation">
+    <h2>八、验证需求、论文指标与立项门槛</h2>
+    <h3>8.1 必要性分析必须输出的数据</h3>
+    <ul><li>每个函数的平均、中位及分位数加权槽位利用率；</li><li>有效槽位组合频率及熵；</li><li>每周期有效Payload位数分布；</li><li>8/16/32周期滑动窗口中的最大Payload需求；</li><li>指令存储占第三篇总面积和总功耗的比例；</li><li>原始取指总线切换活动和每周期读取能耗；</li><li>微程序加载量、可驻留函数数量及函数切换需求。</li></ul>
+
+    <h3>8.2 方案必须比较的指标</h3>
+    <table><tr><th>类别</th><th>指标</th></tr>
+      <tr><td>压缩</td><td>静态存储压缩率、动态取指位数、Descriptor/Checkpoint/对齐开销</td></tr>
+      <tr><td>性能</td><td>每周期VLIW供给率、FIFO下溢次数、循环/跳转恢复延迟、执行总周期是否完全一致</td></tr>
+      <tr><td>硬件</td><td>指令存储面积、FIFO/解码器/分发网络面积、最高频率、关键路径</td></tr>
+      <tr><td>能耗</td><td>指令存储读能耗、取指网络翻转、每条VLIW控制能耗、整个内核能耗</td></tr>
+      <tr><td>扩展性</td><td>随槽位数量、槽位位宽、函数数量和微程序长度变化的收益</td></tr>
+    </table>
+
+    <h3>8.3 公平基线</h3>
+    <ol><li>原始固定全宽VLIW；</li><li>简单Mask＋有效槽位顺序保存；</li><li>Stop-bit或通用可变Bundle；</li><li>有限模板编码；</li><li>2020 IEEE Access类型的分Bank纵向压缩；</li><li>所提双流＋模板＋确定带宽供给方案。</li></ol>
+
+    <h3>8.4 建议立项门槛</h3>
+    <div class="grid">
+      <div class="card"><h3>问题确实严重</h3><p>加权槽位利用率低于约40%，简单删除NOP的理论压缩潜力超过45%。</p></div>
+      <div class="card"><h3>系统收益可见</h3><p>指令存储或取指网络具有可观面积/能耗占比，或压缩能明显增加常驻函数数量。</p></div>
+      <div class="card"><h3>实际压缩有效</h3><p>计入Descriptor、Checkpoint和对齐后，片上存储仍减少约50%以上。</p></div>
+      <div class="card"><h3>硬件代价可控</h3><p>FIFO、解码器和分发网络面积低于原加速器约3%～5%，不降低主频。</p></div>
+      <div class="card"><h3>执行完全无损</h3><p>所有测试函数执行周期不增加，完整VLIW序列与原程序周期等价。</p></div>
+      <div class="card"><h3>优于简单方案</h3><p>相对Mask和分Bank基线，在存储、能耗、Bank数量、缓冲或扩展性中至少两项明显占优。</p></div>
+    </div>
+
+    <h3>8.5 “压缩50%”是否足够</h3>
+    <div class="callout amber"><strong>作为单一结果不够，作为完整系统结果可以。</strong>已有工作已经报告更高的代码缩减。如果论文能证明：在异构槽位和固定带宽约束下，以低于3%的硬件开销将片上指令存储和取指能耗降低50%～65%，同时对全部函数严格保持逐周期零停顿，则论文价值来自确定性供给与系统权衡，而不是压缩率数字本身。</div>
+  </section>
+
+  <section id="plan">
+    <h2>九、三到四个月工作计划</h2>
+    <div class="timeline">
+      <p><strong>第1～2周：需求审计。</strong>读取第三篇完整指令格式与所有函数Trace；建立加权利用率、槽位组合、Payload长度和滑动窗口带宽分析器；得到指令存储面积/能耗。</p>
+      <p><strong>第3周：实现已有基线。</strong>固定全宽、简单Mask、Stop-bit/变长Bundle、有限模板和分Bank纵向压缩软件模型。</p>
+      <p><strong>第4～5周：定义编码格式。</strong>完成Descriptor/Payload双流，RAW/SPARSE/TEMPLATE模式，明确函数入口和循环Checkpoint格式。</p>
+      <p><strong>第6～7周：供给算法。</strong>实现Payload布局、最小FIFO计算、预填充和下溢验证；形成压缩率—带宽—FIFO Pareto曲线。</p>
+      <p><strong>第8～9周：RTL实现。</strong>Descriptor读取、Payload FIFO、模板/Mask解码、槽位分发和全宽输出寄存器。</p>
+      <p><strong>第10～11周：集成验证。</strong>接入第三篇RTL；逐周期比对解压VLIW和原始VLIW；完成所有函数数值与周期一致性测试。</p>
+      <p><strong>第12周：综合与功耗。</strong>比较指令存储、前端面积、时序、取指能耗及完整内核能耗。</p>
+      <p><strong>第13～14周：扩展与写作。</strong>槽位数/函数数敏感性实验，整理消融、Pareto曲线和论文。</p>
+    </div>
+    <h3>范围控制</h3>
+    <table><tr><th>本论文应做</th><th>本论文暂不做</th></tr><tr><td>原调度的无损压缩；片上压缩存储；确定带宽供给；轻量模板；静态循环/函数入口；RTL综合与能耗</td><td>修改调度提高计算利用率；跨实例并行；通用Huffman处理器；完整异常/动态分支；复杂Cache层次；与第二篇SMM-FSM融合</td></tr></table>
+    <div class="callout red"><strong>两周淘汰条件：</strong>若实际加权槽位利用率并不低、Descriptor开销使压缩率不足35%、指令存储和取指能耗在第三篇中几乎可以忽略，或者分Bank基线已经以更小开销达到同等结果，应重新评估是否足以独立成文。</div>
+  </section>
+
+  <section id="thesis">
+    <h2>十、与前三篇和大论文的串联</h2>
+    <p>第四篇不需要继续第一篇的具体算法或指令格式，但可以在大论文中形成“宽发射可编程架构的控制效率”演进：</p>
+    <ol><li><strong>第一篇：</strong>通过指令级组织和静态/依赖信息驱动复杂数值计算；</li><li><strong>第二篇：</strong>以随机状态机实现低成本通用非线性计算；</li><li><strong>第三篇：</strong>构建逐周期VLIW驱动的确定性可重构非线性平台；</li><li><strong>第四篇：</strong>解决第三篇及同类宽发射架构中低密度控制流的存储和供给效率问题。</li></ol>
+    <p>这样第四篇是第三篇的直接纵向扩展，又把问题抽象到异构VLIW和逐周期配置加速器，而不是只写成某一个非线性函数模块的小优化。</p>
+  </section>
+
+  <section id="sources">
+    <h2>十一、前沿与已有工作依据</h2>
+    <p class="small">以下优先列出官方文档、正式出版页、DOI或高校研究门户，用于界定问题的一般性和论文创新边界。</p>
+    <ul class="src">
+      <li><a href="https://docs.amd.com/r/en-US/am009-versal-ai-engine/Instruction-Fetch-and-Decode-Unit">AMD Versal AI Engine Instruction Fetch and Decode Unit</a>：官方文档说明128-bit VLIW、短格式和指令缓冲的实际使用。</li>
+      <li><a href="https://research.tudelft.nl/en/publications/a-sparse-vliw-instruction-encoding-scheme-compatible-with-generic/">A Sparse VLIW Instruction Encoding Scheme Compatible with Generic Binaries</a>：Stop-bit稀疏编码、变长Bundle、跨Cache Line和分支代价。</li>
+      <li><a href="https://doi.org/10.1109/ACCESS.2020.2985501">An Efficient and Fast VLIW Compression Scheme for Stream Processor</a>：水平/纵向压缩以及分Bank单周期重组，是必须比较的直接基线。</li>
+      <li><a href="https://doi.org/10.1007/s11265-015-1081-6">Improving Code Density with Variable Length Encoding-Aware Instruction Scheduling</a>：模板/隐式NOP与调度联合优化的已有研究。</li>
+      <li><a href="https://doi.org/10.1016/j.compeleceng.2009.08.006">A Novel Instruction Stream Buffer for VLIW Architectures</a>：压缩Bundle跨行导致Split Fetch，并使用缓冲维持连续供给。</li>
+      <li><a href="https://doi.org/10.1109/MICRO.1996.566462">Instruction Fetch Mechanisms for VLIW Architectures with Compressed Encodings</a>：压缩VLIW取指、分发和缓存组织的经典工作。</li>
+      <li><a href="https://doi.org/10.1007/s10617-024-09290-2">Energy-Efficient Instruction Compression with Programmable Dictionaries</a>：近期字段字典、解码吞吐和动态取指能耗权衡。</li>
+      <li><a href="https://doi.org/10.1016/j.micpro.2018.06.010">Energy Efficient Configuration Unification and Compression for CGRAs</a>：宽Context存储和配置传输能耗问题，支持该问题向CGRA推广。</li>
+      <li><a href="https://scale.eecs.berkeley.edu/papers/xoxo-meng.pdf">High Performance, Variable-Length Instruction Encodings</a>：宽发射可变长编码、并行解码和分发网络的近期系统讨论。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>十二、最终推荐表述</h2>
+    <div class="callout green"><strong>推荐立项表述：</strong>面向静态调度异构宽发射加速器中普遍存在的低密度控制流问题，研究周期描述符—有效负载双流编码、位宽加权模板和带Deadline的Payload预取布局，在压缩驻留的片上指令存储中，以小型FIFO保证每周期无停顿恢复一条原语义VLIW，并在第三篇FRV-SFU-VLIW平台完成周期一致性、面积、能耗和扩展性验证。</div>
+    <p>这一表述同时包含：</p>
+    <ul><li>一般性问题，而非只服务第三篇某个函数；</li><li>明确且可量化的需求；</li><li>与简单Mask、Stop-bit和分Bank方案不同的创新切入；</li><li>能够在三到四个月完成的软硬件范围；</li><li>与第三篇直接相连的大论文叙事。</li></ul>
+  </section>
+
+  <div class="footer">本报告中的性能目标是立项门槛而非已有实验结论；需先完成第三篇完整Trace和指令存储成本审计。</div>
+</div>
+</body>
+</html>
