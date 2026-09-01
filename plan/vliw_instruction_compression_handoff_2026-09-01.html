@@ -263,7 +263,8 @@
           <ul>
             <li>不存在覆盖所有 workload 的“通用稳定周期核”。</li>
             <li>仿射地址/寄存器再生不能作为通用主创新。</li>
-            <li>gap 字典相对简单 6-bit ifnull 仅多约 <strong>5.2%</strong> 逻辑收益。</li>
+            <li>gap 字典相对修正后的 5-bit 功能 mask + 隐式 EOP 基线仅多约 <strong>2.9%</strong> 的算术平均逻辑收益。</li>
+            <li>10.02% 字段混合结果是逐 workload、逐字段自由选择 RAW/DICT/DELTA 的 oracle 下界，不能证明存在跨 workload 通用 codec。</li>
             <li>独立槽流、NOP 删除、Mask、字典和差分本身均有直接先行工作。</li>
             <li>当前 11.6% 字段混合结果是软件上界，不是已实现硬件结果。</li>
           </ul>
@@ -271,10 +272,9 @@
       </div>
       <div class="callout good">
         <strong>当前最合理的主线</strong>
-        以简单的 <code>6-bit ifnull + 六槽紧凑 payload</code> 作为低风险前端，在其上研究
-        <strong>受硬件预算约束的异构槽内字段编码</strong>以及<strong>确定带宽、零停顿供给</strong>。
-        创新不能宣称来自 RAW/CONST/DICT/DELTA 任一原语，而应来自固定预算下的编码选择、
-        物理存储组织、一拍并行恢复和压缩率—带宽—FIFO—面积联合 Pareto。
+        以简单的 <code>5-bit 功能 mask + 隐式 EOP + 五个执行槽 RAW 紧凑 payload</code> 作为跨 workload 的统一前端，
+        优先研究<strong>异构物理存储组织</strong>以及<strong>确定带宽、零停顿供给</strong>。
+        1–2 bit 固定地址 delta + RAW escape 只作为后期小优化；必须报告其加法器、状态和 MUX 成本，不能用 10.02% oracle 结果替代真实格式结果。
       </div>
     </section>
 
@@ -435,11 +435,20 @@ Hmax  = 六个 slot 中最高的有效事件数
 
     <section id="decisions">
       <h2>5. 当前关键决策与原因</h2>
-      <div class="decision"><span class="tag good">保留</span><span><strong>6-bit ifnull。</strong>它直接描述每周期哪些槽有效，一拍重组简单，平均逻辑比例 23.10%。</span></div>
-      <div class="decision"><span class="tag warn">降级</span><span><strong>固定 gap / gap 字典。</strong>仅作为消融实验；字典相对 ifnull 平均只多约 5.2% 逻辑收益。</span></div>
+      <div class="decision"><span class="tag good">保留并修正</span><span><strong>5-bit 功能 mask + 隐式 EOP。</strong>五个功能槽共有 32 种组合；CONTROL 只在最后一条 EOP 指令为 1，因此由函数总周期数隐式产生，不必逐周期保存第六位。含 32-bit 周期数字段后的算术平均逻辑比例为 22.57%，加权比例为 21.74%。</span></div>
+      <div class="decision"><span class="tag bad">不进入主格式</span><span><strong>mask 模板压缩。</strong>4-bit 模板 + escape 在 12 条 trace 上平均约 4.09 bit/cycle，相对固定 5-bit 仅省 0.91 bit/cycle；总容量只下降约 0.50 个百分点，尚未扣除模板表和 decode MUX。</span></div>
+      <div class="decision"><span class="tag warn">降级</span><span><strong>固定 gap / gap 字典。</strong>仅作为消融实验；gap 字典相对修正后的 mask 基线平均只多约 2.9% 逻辑收益。</span></div>
       <div class="decision"><span class="tag bad">否决</span><span><strong>通用稳定周期核。</strong>Softmax 与 LayerNorm 的严格结构核覆盖低于 4%，不满足通用方案条件。</span></div>
       <div class="decision"><span class="tag info">可选</span><span><strong>周期 fast path。</strong>可用于 GELU 等规则 workload 的上界或附加模式，但不能代表全部函数。</span></div>
-      <div class="decision"><span class="tag good">继续</span><span><strong>槽内字段压缩。</strong>字段熵与重复率支持继续研究，但必须把当前逐字段最优模型收紧为固定 token 和有限硬件。</span></div>
+      <div class="decision"><span class="tag bad">降为 oracle</span><span><strong>通用字段混合编码。</strong>普通值字典和逐 workload 训练的寄存器 delta 表不能作为通用非线性计算方案；10.02% 只保留为压缩潜力下界，不进入主格式。</span></div>
+      <div class="decision"><span class="tag info">后期小优化</span><span><strong>固定小 delta fast path。</strong>仅考虑 LOAD/STORE 的 28-bit mem_addr 与 8-bit gpr_addr，以及 SFU 的 8-bit dst/src。默认仍为 RAW；命中固定的 1–2 bit delta 编码时做模加，未命中时用 escape 并补充完整地址。该模式必须对所有 workload 使用同一格式和同一组硬连线 delta，不能逐 workload 建表。</span></div>
+      <div class="callout warn">
+        <strong>delta 码宽与 escape 必须一起计算：</strong>
+        若 escape 占用同一个 b-bit 码字，则最多只能容纳 <code>2^b−1</code> 种常用 delta；
+        例如 2-bit 码只能表示 3 种 delta + 1 个 escape，1-bit 码只能表示 1 种 delta + 1 个 escape。
+        若要让 2-bit 覆盖完整 4 项 delta，则必须另存 escape 标志/位图，实际事件开销不再只有 2 bit。
+        escape 事件还要在独立 RAW 流中保存完整的 28-bit mem 地址或 8-bit gpr 地址。
+      </div>
       <div class="decision"><span class="tag good">优先</span><span><strong>物理公平建模。</strong>下一步先定义 SRAM 组织与固定格式，再讨论最终压缩率和面积收益。</span></div>
     </section>
 
@@ -477,7 +486,7 @@ Hmax  = 六个 slot 中最高的有效事件数
         <table class="wrap">
           <thead><tr><th>指标</th><th>定义</th><th>用途与限制</th></tr></thead>
           <tbody>
-            <tr><td>六位 mask 分布</td><td>bit 顺序 LOAD/STORE/VECTOR/SCALAR/SFU/CONTROL；统计所有 mask 的频数、概率与熵。</td><td>判断模板是否有意义；不能直接等同最终模板压缩率。</td></tr>
+            <tr><td>六位 Trace mask 分布</td><td>原始统计 bit 顺序为 LOAD/STORE/VECTOR/SCALAR/SFU/CONTROL；实现时前五位作为功能 mask，末尾 EOP 单独处理。</td><td>每条 trace 实际出现 7–27 种；合法空间为 32 种功能组合 + 1 种 EOP，而非 64 种。</td></tr>
             <tr><td>位宽加权槽利用率</td><td>所有周期有效 slot 位宽之和 ÷ <code>184×T</code>。</td><td>比“平均活跃槽数”更公平，因为槽位宽不同。</td></tr>
             <tr><td>字段分布</td><td>每个 active slot 内，每个字段统计唯一值数、Shannon 熵、众数比例。</td><td>熵只是无元数据、无随机访问约束的理论下界。</td></tr>
             <tr><td>相邻重复率</td><td>分别统计事件到事件，以及两个相邻周期均 active 时字段是否相等。</td><td>支持 CONST/DICT/DELTA 候选判断，不证明硬件收益。</td></tr>
@@ -488,6 +497,11 @@ Hmax  = 六个 slot 中最高的有效事件数
           </tbody>
         </table>
       </div>
+      <p class="small">
+        CONTROL 在所有功能周期均为 0，只在最终 EOP 周期为 1，且该周期五个功能槽均为空。因此正常周期只需 5-bit mask；
+        若函数描述符保存总周期数，解压器可在末周期自动产生 EOP。现有 <code>mask_distribution.csv</code> 仍按原始六位 Trace 统计，
+        但不代表最终物理格式必须保存第六位。
+      </p>
     </section>
 
     <section id="trace-results">
@@ -626,30 +640,33 @@ Hmax  = 六个 slot 中最高的有效事件数
       </div>
       <p><strong>算术平均剩余：</strong>50.95%。<strong>总位数：</strong>1,765,998 / 3,755,992 = 47.02%。</p>
 
-      <h3>8.2 方案 B：简单 6-bit ifnull + 不补齐的有效 payload</h3>
-      <div class="formula">S_ifnull = 6 × T + Σ_slot (N_slot × W_slot)</div>
+      <h3>8.2 方案 B：5-bit 功能 mask + 隐式 EOP + 不补齐的有效 payload</h3>
+      <div class="formula">S_5mask = 5 × (T − 1) + 32 + Σ_functional_slot (N_slot × W_slot)
+
+32 bit 用于保存总周期数；末周期 EOP 和 4-bit CONTROL payload 不再单独保存。</div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Case</th><th>总位数</th><th>剩余比例</th></tr></thead>
           <tbody>
-            <tr><td>Softmax X32</td><td>22,134</td><td>23.36%</td></tr>
-            <tr><td>Softmax X64</td><td>43,898</td><td>24.62%</td></tr>
-            <tr><td>LayerNorm X32</td><td>45,714</td><td>32.22%</td></tr>
-            <tr><td>LayerNorm X64</td><td>90,620</td><td>33.97%</td></tr>
-            <tr><td>GELU X32</td><td>53,524</td><td>18.65%</td></tr>
-            <tr><td>GELU X64</td><td>106,900</td><td>18.77%</td></tr>
-            <tr><td>LogSoftmax X32</td><td>90,330</td><td>26.32%</td></tr>
-            <tr><td>LogSoftmax X64</td><td>180,170</td><td>26.83%</td></tr>
-            <tr><td>Softplus X32</td><td>31,096</td><td>12.59%</td></tr>
-            <tr><td>Softplus X64</td><td>62,188</td><td>12.59%</td></tr>
-            <tr><td>LogSumExp X32</td><td>36,892</td><td>23.10%</td></tr>
-            <tr><td>LogSumExp X64</td><td>73,228</td><td>24.21%</td></tr>
+            <tr><td>Softmax X32</td><td>21,642</td><td>22.84%</td></tr>
+            <tr><td>Softmax X64</td><td>42,952</td><td>24.09%</td></tr>
+            <tr><td>LayerNorm X32</td><td>44,966</td><td>31.70%</td></tr>
+            <tr><td>LayerNorm X64</td><td>89,193</td><td>33.43%</td></tr>
+            <tr><td>GELU X32</td><td>51,987</td><td>18.11%</td></tr>
+            <tr><td>GELU X64</td><td>103,827</td><td>18.23%</td></tr>
+            <tr><td>LogSoftmax X32</td><td>88,488</td><td>25.79%</td></tr>
+            <tr><td>LogSoftmax X64</td><td>176,544</td><td>26.29%</td></tr>
+            <tr><td>Softplus X32</td><td>29,777</td><td>12.06%</td></tr>
+            <tr><td>Softplus X64</td><td>59,527</td><td>12.05%</td></tr>
+            <tr><td>LogSumExp X32</td><td>36,047</td><td>22.57%</td></tr>
+            <tr><td>LogSumExp X64</td><td>71,607</td><td>23.67%</td></tr>
           </tbody>
         </table>
       </div>
       <p>
-        <strong>算术平均剩余：</strong>23.10%。<strong>总位数：</strong>836,694 / 3,755,992 = 22.28%。
-        这是重要的低风险逻辑基线，但接近 Li 的片上逻辑组织，不能作为新颖性声明。
+        <strong>算术平均剩余：</strong>22.57%。<strong>总位数：</strong>816,557 / 3,755,992 = 21.74%。
+        旧的 6-bit ifnull 文献口径为 836,694 bit（22.28%）；两者应同时保留用于可追溯比较。
+        该修正是平台特定的低风险工程简化，不是足以单独支撑论文的新颖性。
       </p>
 
       <h3>8.3 方案 C：固定宽 gap 事件流（已降级）</h3>
@@ -673,7 +690,7 @@ Hmax  = 六个 slot 中最高的有效事件数
           </tbody>
         </table>
       </div>
-      <p><strong>算术平均剩余：</strong>23.22%，比简单 ifnull 略差；不推荐作为主路径。</p>
+      <p><strong>算术平均剩余：</strong>23.22%，比修正后的 5-bit mask 基线 22.57% 高约 0.65 个百分点；不推荐作为主路径。</p>
 
       <h3>8.4 方案 D：gap 字典事件流（已降级）</h3>
       <p>
@@ -700,7 +717,7 @@ Hmax  = 六个 slot 中最高的有效事件数
         </table>
       </div>
       <p>
-        <strong>算术平均剩余：</strong>21.91%。它相对简单 ifnull 的平均额外改善约 5.2%，
+        <strong>算术平均剩余：</strong>21.91%。它相对修正后的 5-bit mask 基线平均额外改善仅约 2.9%，
         但增加字典、索引查表和每槽时间状态；当前决定是只保留为消融。
       </p>
 
@@ -739,25 +756,30 @@ Hmax  = 六个 slot 中最高的有效事件数
         gap 字典目前只有位成本统计，尚未实现最终 wire-format 的序列化和反序列化；
         因而不能声称“最终 hybrid-gap 文件格式已经端到端验证”。
       </div>
+      <div class="callout bad">
+        <strong>重新定位：per-trace oracle，而非候选通用格式</strong>
+        当前程序允许每条 trace 的每个字段独立选择模式、字典内容、表项数和索引宽度，因此结果会针对具体 workload 过拟合。
+        普通值字典不再用于地址/寄存器字段，VECTOR/SCALAR 寄存器 delta 也不再视为通用机会。
+      </div>
     </section>
 
     <section id="breakthroughs">
       <h2>9. 可能成立的突破方向</h2>
       <div class="callout good">
-        <strong>首选候选：Hardware-Budgeted Heterogeneous Slot-Field Codec</strong>
-        保留 ifnull 的直接周期语义；对各 slot 内部仅开放少数固定硬件模式，由编译器在面积、
-        token 宽度、字典项数、加法器数和 bank 数预算下选择。必须以可综合格式和物理 SRAM 为评价对象。
+        <strong>当前主线：跨 workload 固定格式与物理供给闭环</strong>
+        保留 5-bit 功能 mask、隐式 EOP 和 RAW 有效槽作为统一保底格式；主要评估异构 bank 的物理容量、
+        固定读取带宽和零停顿恢复。任何字段优化都必须对所有 workload 使用同一 codec，并计入 escape、状态、加法器和对齐成本。
       </div>
       <div class="table-wrap">
         <table class="wrap">
           <thead><tr><th>候选方向</th><th>具体内容</th><th>可能的新颖性</th><th>必须证明</th><th>风险</th></tr></thead>
           <tbody>
             <tr>
-              <td>A. 受预算约束的异构字段编码</td>
-              <td>每槽限定少数模式，例如 RAW/CONST/小 DICT/有限 DELTA；编译器求最小物理容量而非逐字段理论位数。</td>
-              <td>异构 slot + 固定一拍恢复 + 物理预算联合选择，而不是字典原语。</td>
-              <td>相对 Li 片上物理基线仍显著节省；MUX/LUT/累加器不压主频。</td>
-              <td>DAES 2024 很接近；若只剩“可编程字典”则创新不足。</td>
+              <td>A. 后期固定小 delta fast path</td>
+              <td>仅对 LOAD/STORE 的 mem/gpr 地址及 SFU 的 gpr 地址开放 1–2 bit 固定 delta 码；未命中通过 RAW escape 保存完整地址。</td>
+              <td>它只是统一格式上的小优化，不作为论文主创新；不能使用逐 workload 字典。</td>
+              <td>扩展 workload 后仍有净收益；逐周期精确恢复；escape、初值、状态寄存器和物理对齐全部计入。</td>
+              <td>需要 28-bit mem 地址模加法器和若干 8-bit gpr 地址模加法器、状态寄存器与 MUX，面积/功耗/时序可能抵消容量收益。</td>
             </tr>
             <tr>
               <td>B. 不等高、不等宽 bank 的物理布局</td>
@@ -775,10 +797,10 @@ Hmax  = 六个 slot 中最高的有效事件数
             </tr>
             <tr>
               <td>D. Mask/字段编码联合优化</td>
-              <td>Mask 仅 7–27 种且熵约 2.0–3.4 bit/cycle，可用受限模板；与字段 payload 布局联合而非独立最小化。</td>
-              <td>面向实际异构位宽和物理 token 的联合目标。</td>
-              <td>模板相对 6-bit mask 的净收益覆盖模板表和 decode MUX。</td>
-              <td>模板已有大量先行工作，宜作为配套而非主创新。</td>
+              <td>仅在消融中比较固定 5-bit mask 与 4-bit 模板 + escape；字段 payload 布局仍可独立研究。</td>
+              <td>验证低熵是否能转化为真实物理收益，而不是只报理论熵。</td>
+              <td>当前模板仅省约 0.91 bit/cycle、总容量约 0.50 个百分点，还未计模板表。</td>
+              <td><strong>当前不建议作为候选突破方向：</strong>解码成本与先行工作风险均高。</td>
             </tr>
             <tr>
               <td>E. Workload-specific 周期 fast path</td>
@@ -821,9 +843,10 @@ Hmax  = 六个 slot 中最高的有效事件数
           <tbody>
             <tr><td>通用稳定周期核</td><td><span class="tag bad">不成立</span></td><td>Softmax 核覆盖 2.0%–3.7%，LayerNorm 0.9%–1.7%。</td><td>规则 workload 的可选 fast path 或理论上界。</td></tr>
             <tr><td>寄存器/地址全局仿射再生</td><td><span class="tag bad">不成立</span></td><td>100% 只在部分 workload 的严格周期核内部成立；核外和 Softmax/LayerNorm 不能覆盖。</td><td>周期模式内部的子编码。</td></tr>
-            <tr><td>gap 字典作为主创新</td><td><span class="tag bad">不成立</span></td><td>相对简单 ifnull 平均只多约 5.2%，还需字典、索引、计数器；Pause/事件流已有工作。</td><td>消融或极规则 slot 的可选模式。</td></tr>
-            <tr><td>固定宽 gap 取代 ifnull</td><td><span class="tag bad">不推荐</span></td><td>12 组算术平均 23.22%，略差于 ifnull 的 23.10%。</td><td>硬件对照。</td></tr>
-            <tr><td>独立槽流 / 去 NOP / 6-bit mask</td><td><span class="tag bad">不新</span></td><td>Li、Stop-bit、Mask+payload、DVLIW 等已经覆盖。</td><td>必要基线和解压前端。</td></tr>
+            <tr><td>gap 字典作为主创新</td><td><span class="tag bad">不成立</span></td><td>相对修正后的 5-bit mask 基线平均只多约 2.9%，还需字典、索引、计数器；Pause/事件流已有工作。</td><td>消融或极规则 slot 的可选模式。</td></tr>
+            <tr><td>固定宽 gap 取代 ifnull</td><td><span class="tag bad">不推荐</span></td><td>12 组算术平均 23.22%，比 5-bit mask + 隐式 EOP 的 22.57% 更差。</td><td>硬件对照。</td></tr>
+            <tr><td>独立槽流 / 去 NOP / 固定 mask</td><td><span class="tag bad">不新</span></td><td>Li、Stop-bit、Mask+payload、DVLIW 等已经覆盖；5-bit + 隐式 EOP 只是平台简化。</td><td>必要基线和解压前端。</td></tr>
+            <tr><td>mask 模板压缩作为主方向</td><td><span class="tag bad">不推荐</span></td><td>合法空间仅 32 种功能组合 + 1 种 EOP；模板相对固定 5-bit 平均只省约 0.91 bit/cycle，未计表和 MUX。</td><td>仅保留消融，验证净收益是否为正。</td></tr>
             <tr><td>字段字典本身</td><td><span class="tag bad">不新</span></td><td>传统字典与 DAES 2024 可编程细粒度字典已有直接覆盖。</td><td>受限 codec 中的一种原语。</td></tr>
             <tr><td>模板 ID 本身</td><td><span class="tag bad">不新</span></td><td>IA-64/TTA/VLIW 模板及压缩感知调度已有成熟工作。</td><td>Mask 的配套优化，必须报告净收益。</td></tr>
             <tr><td>23×8-bit “Li 基线”</td><td><span class="tag bad">口径错误</span></td><td>本平台应先按六个语义槽比较；23 字节拆分可作次级字段实验，不能替代 Li 纵向主基线。</td><td>字段粒度敏感性分析。</td></tr>
@@ -840,7 +863,7 @@ Hmax  = 六个 slot 中最高的有效事件数
         <table class="wrap">
           <thead><tr><th>问题</th><th>当前状态</th><th>为什么影响结论</th><th>解决办法</th></tr></thead>
           <tbody>
-            <tr><td>字段混合格式过于自由</td><td>每字段独立选最优，模式元数据固定估计 18 bit。</td><td>可能需要太多并行 LUT、MUX、加法器和窄流。</td><td>限定每槽 token 格式、共享表和硬件模式总数。</td></tr>
+            <tr><td>字段混合格式过于自由</td><td>每字段独立选最优，模式元数据固定估计 18 bit。</td><td>逐 workload 过拟合且需要太多并行 LUT、MUX、加法器和窄流。</td><td>降为 oracle；主格式使用 RAW，仅在后期评估固定地址 delta + escape。</td></tr>
             <tr><td>SRAM 宏未建模</td><td>统计为逻辑 bit。</td><td>小字典、窄 bank 和不规则深度可能造成严重取整浪费。</td><td>获取 28nm memory compiler 可用宏；对每方案做 bank packing。</td></tr>
             <tr><td>带宽模型无端口时序</td><td>按 bit deadline 计算，无读延迟/对齐。</td><td>96 bit/cycle“零预填充”可能无法由实际宏实现。</td><td>加入读字宽、端口数、1–2 周期延迟和 burst 粒度。</td></tr>
             <tr><td>周期搜索是后处理启发式</td><td>最大 period 1024，精确重复至少三轮。</td><td>未与调度器内部 loop/iteration ID 对齐。</td><td>让调度器导出 iteration/phase 标签，交叉验证 period。</td></tr>
@@ -883,7 +906,7 @@ Hmax  = 六个 slot 中最高的有效事件数
       <h3>12.2 Trace 实验输出</h3>
       <p>当前输出目录共 528 个文件：根目录 24 个汇总/最佳 Trace 文件，28 个 mode 子目录各含 18 个调度器输出。</p>
       <ul>
-        <li><a href="../analysis_output_6x2/mask_distribution.csv"><code>mask_distribution.csv</code></a>：每个 case 的全部六位 mask 频数和概率。</li>
+        <li><a href="../analysis_output_6x2/mask_distribution.csv"><code>mask_distribution.csv</code></a>：每个 case 的原始六位 Trace mask 频数和概率；最终格式应按五位功能 mask + 隐式 EOP 重新序列化。</li>
         <li><a href="../analysis_output_6x2/field_statistics.csv"><code>field_statistics.csv</code></a>：每个 slot/field 的宽度、事件数、唯一值、熵、众数和重复率。</li>
         <li><a href="../analysis_output_6x2/period_analysis.csv"><code>period_analysis.csv</code></a>：full-word 与忽略变量字段后的严格周期结果。</li>
         <li><a href="../analysis_output_6x2/period_aligned_affine_series.csv"><code>period_aligned_affine_series.csv</code></a>：每个 period phase、slot、field 的 base/stride/残差。</li>
@@ -927,8 +950,9 @@ python3 "compress-vliw/analyze_compression.py" \
         <div class="card">
           <h3>第 2 周：收紧候选编码</h3>
           <ul class="checklist">
-            <li>删除主路径 gap 字典，保留 6-bit ifnull。</li>
-            <li>定义每槽固定 token；限制字典总项数和 delta 单元数。</li>
+            <li>删除主路径 gap 字典和 mask 模板，保留 5-bit 功能 mask + 隐式 EOP。</li>
+            <li>主格式保持 RAW 有效槽；普通值字典和逐 workload 寄存器 delta 表不进入主路径。</li>
+            <li>仅为后期实验定义 LOAD/STORE mem/gpr 与 SFU gpr 的固定 1–2 bit delta + RAW escape 格式。</li>
             <li>把 byte/word 对齐与宏取整加入编译期成本函数。</li>
             <li>重新报告逻辑 bit、物理容量和解码资源三组结果。</li>
           </ul>
@@ -972,7 +996,7 @@ python3 "compress-vliw/analyze_compression.py" \
             <tr><td>VLIW</td><td>一个周期同时控制多个功能单元的宽指令。本平台固定为 184 bit。</td></tr>
             <tr><td>slot</td><td>VLIW 中对应某类功能单元的字段；五个执行槽加一个控制槽。</td></tr>
             <tr><td>NOP</td><td>该槽当周期无操作；当前编码为槽值全 0。</td></tr>
-            <tr><td>ifnull / mask</td><td>每周期六位有效表；1 表示该槽需要从紧凑流取出下一条有效 payload。</td></tr>
+            <tr><td>ifnull / mask</td><td>原始统计是六位有效表；推荐物理格式只保存五个功能槽位，1 表示该槽需从紧凑流取出下一条 payload，末周期 EOP 由总周期数隐式产生。</td></tr>
             <tr><td>payload</td><td>去掉 NOP 后真正需要保存的有效槽指令内容。</td></tr>
             <tr><td>gap</td><td>同一 slot 两次有效事件之间的周期距离；gap=4 表示中间有三个空周期。</td></tr>
             <tr><td>descriptor</td><td>解释压缩流所需的长度、模式、表大小、位宽或地址等元数据。</td></tr>

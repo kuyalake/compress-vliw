@@ -1,0 +1,1123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FRV-SFU-VLIW 指令压缩整体方案设计——导师评估版（2026-09-01）</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --paper: #ffffff;
+      --ink: #172130;
+      --muted: #5a6879;
+      --line: #d7dee8;
+      --accent: #1f57a4;
+      --accent-soft: #eaf1fc;
+      --good: #17643a;
+      --good-bg: #e8f5ed;
+      --warn: #855700;
+      --warn-bg: #fff5d9;
+      --bad: #9a2e2e;
+      --bad-bg: #fdecec;
+      --code: #eef2f6;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font: 15px/1.68 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      padding: 0.12rem 0.34rem;
+      border-radius: 4px;
+      background: var(--code);
+      font: 0.92em "SFMono-Regular", Consolas, monospace;
+    }
+    pre, .formula {
+      overflow-x: auto;
+      padding: 13px 15px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--code);
+      font: 0.92rem/1.55 "SFMono-Regular", Consolas, monospace;
+      white-space: pre-wrap;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(220px, 285px) minmax(0, 1120px);
+      gap: 24px;
+      max-width: 1460px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    nav {
+      position: sticky;
+      top: 20px;
+      align-self: start;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper);
+    }
+    nav strong { display: block; margin-bottom: 8px; }
+    nav ol { margin: 0; padding-left: 22px; }
+    nav li { margin: 5px 0; }
+    main {
+      min-width: 0;
+      padding: 34px 44px 58px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper);
+    }
+    h1 { margin: 0 0 8px; font-size: 2rem; line-height: 1.25; }
+    h2 {
+      margin: 42px 0 14px;
+      padding-bottom: 7px;
+      border-bottom: 2px solid var(--line);
+      font-size: 1.45rem;
+    }
+    h3 { margin: 26px 0 8px; font-size: 1.12rem; }
+    h4 { margin: 18px 0 6px; }
+    p { margin: 8px 0 12px; }
+    ul, ol { margin-top: 7px; }
+    .subtitle { color: var(--muted); font-size: 1.03rem; }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 10px;
+      margin: 22px 0;
+    }
+    .meta > div {
+      padding: 11px 13px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+    }
+    .meta small { display: block; color: var(--muted); }
+    .meta strong { display: block; margin-top: 2px; }
+    .callout {
+      margin: 16px 0;
+      padding: 14px 16px;
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+    }
+    .callout.good { border-color: var(--good); background: var(--good-bg); }
+    .callout.warn { border-color: var(--warn); background: var(--warn-bg); }
+    .callout.bad { border-color: var(--bad); background: var(--bad-bg); }
+    .callout > strong { display: block; margin-bottom: 4px; }
+    .grid-2, .grid-3 {
+      display: grid;
+      gap: 14px;
+    }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card {
+      padding: 15px 17px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .card h3, .card h4 { margin-top: 0; }
+    .table-wrap { overflow-x: auto; margin: 12px 0 18px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+    th, td {
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      text-align: right;
+      vertical-align: top;
+    }
+    th { background: #edf1f6; font-weight: 650; }
+    th:first-child, td:first-child { text-align: left; }
+    .wrap td, .wrap th { white-space: normal; text-align: left; }
+    .num { text-align: right !important; font-variant-numeric: tabular-nums; }
+    .small { color: var(--muted); font-size: 0.9rem; }
+    .tag {
+      display: inline-block;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 650;
+    }
+    .tag.good { color: var(--good); background: var(--good-bg); }
+    .tag.warn { color: var(--warn); background: var(--warn-bg); }
+    .tag.bad { color: var(--bad); background: var(--bad-bg); }
+    .tag.info { color: var(--accent); background: var(--accent-soft); }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 9px;
+      margin: 15px 0;
+    }
+    .flow > div {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      text-align: center;
+    }
+    .decision {
+      display: grid;
+      grid-template-columns: 135px 1fr;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .decision:last-child { border-bottom: 0; }
+    .checklist { list-style: none; padding-left: 0; }
+    .checklist li::before { content: "□"; margin-right: 8px; color: var(--accent); }
+    @media (max-width: 950px) {
+      .layout { display: block; padding: 10px; }
+      nav { position: static; margin-bottom: 12px; max-height: none; }
+      main { padding: 24px 18px 40px; }
+      .meta, .grid-2, .grid-3, .flow { grid-template-columns: 1fr; }
+    }
+    @media print {
+      body { background: white; }
+      .layout { display: block; max-width: none; padding: 0; }
+      nav { display: none; }
+      main { border: 0; padding: 0; }
+      a { color: inherit; }
+      .card, .callout, table { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <nav aria-label="目录">
+    <strong>导师评估目录</strong>
+    <ol>
+      <li><a href="#summary">执行摘要与判断</a></li>
+      <li><a href="#platform">平台、指令与硬约束</a></li>
+      <li><a href="#evidence">Trace 证据</a></li>
+      <li><a href="#baselines">已有工作与对比 Baseline</a></li>
+      <li><a href="#format">Candidate A/B 与优先级</a></li>
+      <li><a href="#software">下一步软件方案</a></li>
+      <li><a href="#hardware">下一步硬件方案</a></li>
+      <li><a href="#exactness">逐周期精确恢复</a></li>
+      <li><a href="#innovation">本文核心创新点</a></li>
+      <li><a href="#exclude">明确排除的方向</a></li>
+      <li><a href="#later">后期可选增强</a></li>
+      <li><a href="#alternatives">其他可能思路</a></li>
+      <li><a href="#evaluation">实验与 Go/No-Go</a></li>
+      <li><a href="#schedule">工作安排</a></li>
+      <li><a href="#files">数据和文件位置</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header>
+      <h1>FRV-SFU-VLIW 指令压缩整体方案设计</h1>
+      <p class="subtitle">导师评估版：融合 2026-08-31 方向评审后全部讨论、修正与新增定量结果</p>
+      <div class="meta">
+        <div><small>日期</small><strong>2026-09-01</strong></div>
+        <div><small>目标周期</small><strong>单人 3–4 个月</strong></div>
+        <div><small>当前状态</small><strong>方案候选，尚未物理闭环</strong></div>
+        <div><small>实证规模</small><strong>6 workloads × X=32/64</strong></div>
+      </div>
+      <div class="callout warn">
+        <strong>阅读口径</strong>
+        本文将“软件逻辑位数”“固定包后的实际存储位数”“SRAM 宏物理面积”和“包含 FIFO/恢复器后的总面积”严格分开。
+        当前已有前两类数据；真实 SRAM、有限 FIFO 和 RTL 综合尚未完成，因此本文给出的是供导师决定是否进入实现阶段的设计提案，
+        不是已经完成的芯片结论。
+      </div>
+    </header>
+
+    <section id="summary">
+      <h2>1. 执行摘要与当前判断</h2>
+      <div class="callout good">
+        <strong>修正后的首要方案：Candidate A，直接分槽读取</strong>
+        压缩指令完整驻留片上 SRAM 时，最自然的实现是
+        <strong>5-bit Mask SRAM + 五个原生宽度槽 SRAM + 五个独立地址计数器</strong>。
+        每周期先得到 mask，各有效槽 Bank 并行读一条并递增本槽地址，无效槽直接补 NOP。
+        除固定 SRAM 流水寄存器外，不需要深 FIFO、stream ID、packet demux 或供给期限调度。
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <h3>Candidate A：默认实现</h3>
+          <p><strong>六个分离 SRAM，按 mask 直接并行读</strong></p>
+          <p class="small">逻辑有效量 21.74%；必须取得真实宏的深宽取整、外围面积和读能耗。</p>
+        </div>
+        <div class="card">
+          <h3>Candidate B：条件候选</h3>
+          <p><strong>单/少 Bank fixed packet + 有限 FIFO</strong></p>
+          <p class="small">256-bit包为22.79%，128-bit包为27.33%；均未计FIFO与恢复器。</p>
+        </div>
+        <div class="card">
+          <h3>论文生死线</h3>
+          <p><strong>Candidate B 总成本显著优于 A</strong></p>
+          <p class="small">如果A更优，则Bank Folding方向失败，不能把增加FIFO本身称为创新。</p>
+        </div>
+      </div>
+
+      <div class="callout bad">
+        <strong>当前不能声称“核心创新已经成立”</strong>
+        5-bit mask、RAW 槽流、固定包和 FIFO 各自都不是新原语。本文只有在证明
+        “编译期供给期限约束的包交织 + 多逻辑槽流向单物理 Bank 的时间折叠 + 周期精确零停顿 + 真实物理净收益”
+        这一完整闭环后，才具备可辩护的新颖性。如果 Candidate A 优于 B，则当前候选创新被否决；
+        直接分槽虽然是正确实现，却接近 Li 2020，只能作为 Baseline，不能包装成本文核心创新。
+      </div>
+    </section>
+
+    <section id="platform">
+      <h2>2. 平台、指令特征与不可妥协约束</h2>
+      <h3>2.1 原平台</h3>
+      <p>
+        目标平台是已有论文提出的 FRV-SFU-VLIW 非线性函数加速器。静态调度器把函数 DAG 映射成无分支、
+        按周期顺序执行的 VLIW Trace。硬件每周期消费一条 184-bit 指令，直到最后一个 EOP 周期。
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>槽</th><th>位宽</th><th>主要字段</th><th>当前 NOP</th></tr></thead>
+          <tbody>
+            <tr><td>LOAD</td><td>42</td><td>mem_fmt、28-bit mem_addr、gpr_fmt、8-bit gpr_addr、optype</td><td>全零</td></tr>
+            <tr><td>STORE</td><td>42</td><td>mem_fmt、28-bit mem_addr、gpr_fmt、8-bit gpr_addr、optype</td><td>全零</td></tr>
+            <tr><td>VECTOR</td><td>34</td><td>half、imm、connect、dst/src1/src0、mask、optype</td><td>全零</td></tr>
+            <tr><td>SCALAR</td><td>31</td><td>imm、connect、dst/src1/src0、mask、optype</td><td>全零</td></tr>
+            <tr><td>SFU</td><td>31</td><td>borrow、dst/src、is_vector、rounds、optype</td><td>全零</td></tr>
+            <tr><td>CONTROL</td><td>4</td><td>reserved(3)、eop(1)</td><td>仅末周期 EOP 有效</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>2.2 设计硬约束</h3>
+      <div class="grid-2">
+        <div class="card">
+          <h3>周期行为严格一致</h3>
+          <ul>
+            <li>第 <em>t</em> 周期的每个槽必须与原 Trace 第 <em>t</em> 周期一致。</li>
+            <li>不允许提前执行、延迟执行、重新调度或插入气泡。</li>
+            <li>NOP 位置、同周期并行关系和 EOP 周期均保持。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>压缩驻留与零停顿</h3>
+          <ul>
+            <li>片上指令存储保存压缩格式，不能放一份等容量全宽展开副本。</li>
+            <li>Candidate A 可直接流水读取；Candidate B 可以提前恢复到 FIFO，但只能在原周期输出。</li>
+            <li>正式执行期间每周期必须形成完整 184-bit VLIW。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>通用格式</h3>
+          <ul>
+            <li>所有非线性 workload 使用相同包格式、相同硬件和相同编码算法。</li>
+            <li>不允许每个 workload 训练不同字典或选择任意字段编码器。</li>
+            <li>编码内容不同是程序数据不同，不等于方案不同。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>低开销</h3>
+          <ul>
+            <li>目标 28 nm、1 GHz，不让解压进入原执行发射关键路径。</li>
+            <li>总面积/功耗必须计算 FIFO、路由、状态寄存器和 SRAM 外围。</li>
+            <li>单人四个月内能够完成软件、RTL、综合和论文实验。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="evidence">
+      <h2>3. 当前 Trace 证据</h2>
+      <p>工作负载为 Softmax、LayerNorm、GELU、LogSoftmax、Softplus、LogSumExp，各测试 X=32/64，共 12 条最终 Trace。</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Case</th><th>Mode</th><th>周期 T</th><th>位宽加权利用率</th><th>事件数 L/S/V/Sc/SFU</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Softmax X32</td><td>2</td><td>515</td><td>20.1%</td><td>64 / 64 / 256 / 64 / 96</td></tr>
+            <tr><td>Softmax X64</td><td>2</td><td>969</td><td>21.4%</td><td>128 / 128 / 512 / 128 / 192</td></tr>
+            <tr><td>LayerNorm X32</td><td>0</td><td>771</td><td>29.0%</td><td>102 / 96 / 672 / 256 / 64</td></tr>
+            <tr><td>LayerNorm X64</td><td>0</td><td>1,450</td><td>30.7%</td><td>198 / 192 / 1,344 / 512 / 128</td></tr>
+            <tr><td>GELU X32</td><td>2</td><td>1,560</td><td>15.4%</td><td>384 / 384 / 0 / 0 / 384</td></tr>
+            <tr><td>GELU X64</td><td>2</td><td>3,096</td><td>15.5%</td><td>768 / 768 / 0 / 0 / 768</td></tr>
+            <tr><td>LogSoftmax X32</td><td>1</td><td>1,865</td><td>23.1%</td><td>256 / 256 / 1,024 / 448 / 288</td></tr>
+            <tr><td>LogSoftmax X64</td><td>1</td><td>3,649</td><td>23.6%</td><td>512 / 512 / 2,048 / 896 / 576</td></tr>
+            <tr><td>Softplus X32</td><td>2</td><td>1,342</td><td>9.3%</td><td>128 / 128 / 128 / 0 / 256</td></tr>
+            <tr><td>Softplus X64</td><td>2</td><td>2,684</td><td>9.3%</td><td>256 / 256 / 256 / 0 / 512</td></tr>
+            <tr><td>LogSumExp X32</td><td>2</td><td>868</td><td>19.8%</td><td>128 / 32 / 384 / 224 / 160</td></tr>
+            <tr><td>LogSumExp X64</td><td>2</td><td>1,644</td><td>20.9%</td><td>256 / 64 / 768 / 448 / 320</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid-3">
+        <div class="card"><h3>稳定稀疏</h3><p>位宽加权槽利用率仅 <strong>9.3%–30.7%</strong>，平均每周期约 0.5–1.6 个功能槽有效。</p></div>
+        <div class="card"><h3>局部突发</h3><p>单周期仍可能有 5 个槽同时有效，RAW+mask 需求最高约 <strong>185 bit/cycle</strong>。</p></div>
+        <div class="card"><h3>异构事件密度</h3><p>不同槽事件数和位宽明显不均，Li 式按最高列补齐会产生显著浪费。</p></div>
+      </div>
+      <div class="callout warn">
+        <strong>带宽事实</strong>
+        当前 bit-tight 的 5-bit mask + RAW payload 平均需求约 22.2–61.5 bit/cycle。
+        因此带 3-bit 标签的 64-bit 包只有 61 bit/cycle 有效数据，已经低于 LayerNorm X64 的长期平均需求；
+        64-bit/cycle 不适合作为主方案。128/256-bit/cycle 应作为主比较范围。
+      </div>
+    </section>
+
+    <section id="baselines">
+      <h2>4. 已有工作、比较 Baseline 与最新量化</h2>
+      <h3>4.1 必须比较的已有方案</h3>
+      <div class="table-wrap">
+        <table class="wrap">
+          <thead><tr><th>Baseline / 先行工作</th><th>已覆盖机制</th><th>本文不能重复声称</th><th>本文需要比较</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>原始固定 184-bit VLIW</td>
+              <td>每周期完整读取，最简单、无解压。</td>
+              <td>—</td>
+              <td>容量、端口宽度、读能耗、执行周期。</td>
+            </tr>
+            <tr>
+              <td>Li et al., IEEE Access 2020</td>
+              <td>纵向删除 NOP、ifnull、按槽分 Bank、并行一拍重组；外部格式按最高列补齐。</td>
+              <td>独立槽流、NOP 删除、mask/ifnull、分 Bank 和一拍重组。</td>
+              <td>外部补齐位数、片上逻辑量、真实多 Bank SRAM 面积/能耗。</td>
+            </tr>
+            <tr>
+              <td>Conte/TINKER 1996；Brandon/ρ-VEX 2015</td>
+              <td>Stop-bit、header/tail、mask+payload、变长 bundle、取指展开与路由。</td>
+              <td>稀疏 bundle、mask 指示有效操作、一般变长取指。</td>
+              <td>Stop-bit/可变 bundle 软件与 RTL 基线。</td>
+            </tr>
+            <tr>
+              <td>TTA/IA-64 模板；压缩感知调度</td>
+              <td>有限模板、短 ID、模板感知调度。</td>
+              <td>模板 ID 和通过改调度提高模板命中率。</td>
+              <td>固定模板 + escape；本文不改变原调度。</td>
+            </tr>
+            <tr>
+              <td>Multanen et al., DAES 2024</td>
+              <td>可编程细粒度字段字典、RAW/COMPRESSED 混排、能耗评估。</td>
+              <td>字段字典、编译期模式选择本身。</td>
+              <td>说明本文主格式不依赖可编程字典。</td>
+            </tr>
+            <tr>
+              <td>CGRA 模调度压缩、ZOLB、旋转寄存器</td>
+              <td>周期 context、循环缓冲、旋转地址/寄存器。</td>
+              <td>通用周期核再卷或硬件循环本身。</td>
+              <td>仅将循环/周期生成器作为理想上界或局部 fast path。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>4.2 12 条 Trace 的存储结果</h3>
+      <div class="table-wrap">
+        <table class="wrap">
+          <thead><tr><th>方案</th><th>总位数</th><th>占原始 184-bit</th><th>当前定位</th></tr></thead>
+          <tbody>
+            <tr><td>原始 184-bit VLIW</td><td class="num">3,755,992</td><td class="num">100%</td><td>原始基线。</td></tr>
+            <tr><td>Li 六槽外部补齐</td><td class="num">1,765,998</td><td class="num">47.02%</td><td>用户要求的主要总存储比较口径；仍需另做片上物理宏比较。</td></tr>
+            <tr><td>Li 类 6-bit ifnull + 不补齐 RAW</td><td class="num">836,694</td><td class="num">22.28%</td><td>片上逻辑有效量近似，不能与 47.02% 混为同一指标。</td></tr>
+            <tr><td>5-bit mask + 隐式 EOP + bit-tight RAW</td><td class="num">816,557</td><td class="num">21.74%</td><td>无固定包限制的理想工程基线。</td></tr>
+            <tr><td>固定宽 gap 事件流</td><td class="num">836,159</td><td class="num">22.26%</td><td>加权结果；算术平均 23.22%，不推荐。</td></tr>
+            <tr><td>gap 字典 + RAW payload</td><td class="num">781,368</td><td class="num">20.80%</td><td>相对 5-bit 基线加权改善 4.31%，但字典/索引/状态不划算，仅消融。</td></tr>
+            <tr><td>字段混合 oracle</td><td class="num">376,477</td><td class="num">10.02%</td><td>逐 workload、逐字段自由选择 RAW/DICT/DELTA；不是候选硬件格式。</td></tr>
+            <tr><td>128-bit固定包，不允许指令跨包</td><td class="num">1,026,688</td><td class="num">27.33%</td><td>含每 Trace 256-bit头；假设无限 FIFO。</td></tr>
+            <tr><td>256-bit固定包，不允许指令跨包</td><td class="num">855,808</td><td class="num">22.79%</td><td>含每 Trace 256-bit头；假设无限 FIFO。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small">
+        “占原始”越低越好。gap 方案同时给出加权总位数和算术平均时必须注明口径。
+        固定包结果尚未计有限 FIFO、包交织可行性、SRAM 最小宏深宽和恢复器面积。
+      </p>
+
+      <h3>4.3 每条 Trace 的主要候选比较</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Case</th><th>Li padded</th><th>5-bit bit-tight</th><th>128-bit包</th><th>256-bit包</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Softmax X32</td><td>53.0%</td><td>22.84%</td><td>28.77%</td><td>24.58%</td></tr>
+            <tr><td>Softmax X64</td><td>56.1%</td><td>24.09%</td><td>30.15%</td><td>25.70%</td></tr>
+            <tr><td>LayerNorm X32</td><td>90.5%</td><td>31.70%</td><td>39.34%</td><td>33.56%</td></tr>
+            <tr><td>LayerNorm X64</td><td>96.0%</td><td>33.43%</td><td>41.40%</td><td>35.21%</td></tr>
+            <tr><td>GELU X32</td><td>27.9%</td><td>18.11%</td><td>24.30%</td><td>18.64%</td></tr>
+            <tr><td>GELU X64</td><td>28.1%</td><td>18.23%</td><td>24.40%</td><td>18.65%</td></tr>
+            <tr><td>LogSoftmax X32</td><td>58.2%</td><td>25.79%</td><td>32.04%</td><td>27.15%</td></tr>
+            <tr><td>LogSoftmax X64</td><td>59.4%</td><td>26.29%</td><td>32.62%</td><td>27.57%</td></tr>
+            <tr><td>Softplus X32</td><td>22.4%</td><td>12.06%</td><td>15.08%</td><td>12.75%</td></tr>
+            <tr><td>Softplus X64</td><td>22.3%</td><td>12.05%</td><td>15.03%</td><td>12.54%</td></tr>
+            <tr><td>LogSumExp X32</td><td>47.5%</td><td>22.57%</td><td>27.33%</td><td>24.04%</td></tr>
+            <tr><td>LogSumExp X64</td><td>50.0%</td><td>23.67%</td><td>28.60%</td><td>24.88%</td></tr>
+            <tr><td><strong>加权总计</strong></td><td><strong>47.02%</strong></td><td><strong>21.74%</strong></td><td><strong>27.33%</strong></td><td><strong>22.79%</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>4.4 关键架构修正：片上完整驻留时为什么可以不使用 FIFO</h3>
+      <p>
+        以上逻辑流可以直接落入六个独立片上 SRAM，而不必先改造成单一 tagged packet 流：
+      </p>
+      <pre>Mask SRAM:    5 × T bit
+LOAD SRAM:   42 × Nload bit
+STORE SRAM:  42 × Nstore bit
+VECTOR SRAM: 34 × Nvector bit
+SCALAR SRAM: 31 × Nscalar bit
+SFU SRAM:    31 × Nsfu bit</pre>
+      <p>
+        每个执行槽维护一个地址计数器。周期 <em>t</em> 的 mask 位为 1 时，对应 Bank 读取当前地址并令计数器加一；
+        mask 位为 0 时地址保持、输出 NOP。五个槽 Bank 彼此独立，因此即使局部周期五槽同时有效，也能并行各读一条。
+        同步 SRAM 的 1–2 拍延迟只产生固定启动流水延迟，不要求事件 FIFO，也不改变程序内部逐周期关系。
+      </p>
+      <div class="formula">addr_s(t+1) = addr_s(t) + mask[t][s]
+
+mask[t][s] = 0 ⇒ output[t][s] = NOP
+mask[t][s] = 1 ⇒ output[t][s] = SlotSRAM_s[addr_s(t)]</div>
+      <div class="callout warn">
+        <strong>逻辑位数不能直接决定物理优劣</strong>
+        Candidate A 的逻辑容量就是 5-bit mask + 不补齐 RAW 槽流，约为原始存储的 21.74%。
+        它的潜在代价是六个小 SRAM 宏各自的最小深宽取整、外围电路、地址器、布局布线和并行读能耗。
+        Candidate B 引入 FIFO 的唯一合理动机，是以单/少 Bank 时间复用减少这些物理代价；若真实宏结果不支持这一点，FIFO 就是多余开销。
+      </div>
+    </section>
+
+    <section id="format">
+      <h2>5. Candidate A/B 架构及评估优先级</h2>
+      <h3>5.1 Candidate A：直接分槽、按 mask 读取</h3>
+      <pre>5-bit Mask SRAM ───────────────► 周期 t 的有效槽控制
+LOAD/STORE/VECTOR/SCALAR/SFU ──► 五个独立原生宽度 SRAM
+五个槽地址计数器 ──────────────► mask=1 时各自递增
+并行槽输出 + NOP 填充 ─────────► 原始 184-bit VLIW</pre>
+      <ul>
+        <li>无深 FIFO、无 3-bit stream ID、无 packet demux、无运行时调度。</li>
+        <li>同周期多槽由不同 Bank 并行提供，直接满足局部五槽峰值。</li>
+        <li>这是首要 RTL/物理 Baseline，也是默认工程实现。</li>
+        <li>该机制与 Li 的纵向槽流、ifnull/mask 和多 Bank 重组接近，不能单独作为论文创新。</li>
+      </ul>
+
+      <h3>5.2 Candidate B：单/少 Bank fixed packet + 有限 FIFO</h3>
+      <div class="callout">
+        <strong>仅作为有条件的物理优化候选</strong>
+        Candidate B 不是功能正确性所必需。只有当多个窄小 SRAM 宏的取整和外围开销显著大于
+        单/少宽 Bank 加有限缓冲与路由的成本时，继续研究 Bank Folding 才有意义。
+      </div>
+
+      <h3>5.3 Candidate B 的六条逻辑流</h3>
+      <p>编码器先从原 184-bit Trace 中建立六条按原周期/事件顺序排列的逻辑流：</p>
+      <pre>Stream 0: Calendar，正常周期每项 5-bit mask
+Stream 1: LOAD，有效事件每项 42 bit
+Stream 2: STORE，有效事件每项 42 bit
+Stream 3: VECTOR，有效事件每项 34 bit
+Stream 4: SCALAR，有效事件每项 31 bit
+Stream 5: SFU，有效事件每项 31 bit</pre>
+      <ul>
+        <li>CONTROL 不再形成独立每周期流；函数头保存总周期数，末周期自动产生 EOP。</li>
+        <li>每个槽内只保存有效 RAW 指令，不使用普通值字典、字段字典或逐 workload delta 表。</li>
+        <li>同一槽流中的事件顺序严格等于原 Trace 中该槽的时间顺序。</li>
+      </ul>
+
+      <h3>5.4 固定包原则</h3>
+      <pre>Packet = [stream_id | data]
+
+stream_id = 3 bit
+一个 packet 只属于一条逻辑流
+一条槽指令不得跨 packet
+包内不足部分补 0
+包间可以按编译器生成的供给顺序交织</pre>
+      <p>3-bit ID 的意义是把整包路由到对应 Reservoir，而不是为每条指令保存 slot tag。</p>
+
+      <h3>5.5 128-bit 与 256-bit 包容量</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>逻辑流</th><th>单项宽度</th><th>128包：125数据位</th><th>数据区利用率</th><th>256包：253数据位</th><th>数据区利用率</th></tr></thead>
+          <tbody>
+            <tr><td>Mask</td><td>5</td><td>25 项</td><td>100.0%</td><td>50 项</td><td>98.8%</td></tr>
+            <tr><td>LOAD</td><td>42</td><td>2 条</td><td>67.2%</td><td>6 条</td><td>99.6%</td></tr>
+            <tr><td>STORE</td><td>42</td><td>2 条</td><td>67.2%</td><td>6 条</td><td>99.6%</td></tr>
+            <tr><td>VECTOR</td><td>34</td><td>3 条</td><td>81.6%</td><td>7 条</td><td>94.1%</td></tr>
+            <tr><td>SCALAR</td><td>31</td><td>4 条</td><td>99.2%</td><td>8 条</td><td>98.0%</td></tr>
+            <tr><td>SFU</td><td>31</td><td>4 条</td><td>99.2%</td><td>8 条</td><td>98.0%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="formula">128-bit 包数：
+P128 = ceil((T−1)/25)
+     + ceil(NL/2) + ceil(NS/2) + ceil(NV/3)
+     + ceil(NSc/4) + ceil(NSFU/4)
+
+S128 = 128 × P128 + 256-bit header</div>
+      <div class="formula">256-bit 包数：
+P256 = ceil((T−1)/50)
+     + ceil(NL/6) + ceil(NS/6) + ceil(NV/7)
+     + ceil(NSc/8) + ceil(NSFU/8)
+
+S256 = 256 × P256 + 256-bit header</div>
+
+      <h3>5.6 256-bit包为何容量更接近理想值</h3>
+      <p>
+        关键是 <code>6×42=252</code>，253-bit 数据区几乎完美容纳六条 LOAD 或 STORE；
+        128-bit 包则每两条 LOAD/STORE 固定浪费 41 bit。12 条 Trace 中，
+        256-bit 包相对 128-bit 包总容量减少 16.64%，从 27.33% 降至 22.79%，只比理想 bit-tight 的 21.74% 高 1.05 个百分点。
+      </p>
+
+      <h3>5.7 函数头建议</h3>
+      <p>当前容量估算统一预留 256-bit 函数头。建议字段包括：</p>
+      <ul>
+        <li>版本、包宽模式（128/256）、总执行周期 T；</li>
+        <li>五个槽事件数和 Calendar 项数；</li>
+        <li>总包数与执行前预取包数；</li>
+        <li>可选模式使能位、校验/保留位。</li>
+      </ul>
+      <p class="small">最终位分配必须在 wire-format 定稿时固定，不能继续用抽象“descriptor预算”替代。</p>
+    </section>
+
+    <section id="software">
+      <h2>6. 下一步软件方案</h2>
+      <h3>6.1 两条实现分支</h3>
+      <ol>
+        <li><strong>先实现 Candidate A：</strong>生成 Mask SRAM 和五个槽 SRAM 的独立初始化文件，模拟五个计数器和固定 SRAM 延迟，逐周期对拍。</li>
+        <li><strong>再实现 Candidate B：</strong>仅在相同逻辑流上增加固定包、供给期限、包交织和有限 FIFO，以便与 A 公平比较。</li>
+      </ol>
+
+      <h3>6.2 Candidate B 编码器</h3>
+      <div class="flow">
+        <div>读取原始<br>184-bit Trace</div>
+        <div>拆出 Calendar<br>与五槽 RAW 流</div>
+        <div>按包容量<br>形成固定包</div>
+        <div>计算包的<br>供给就绪期限</div>
+        <div>交织并输出<br>顺序物理包流</div>
+      </div>
+      <ol>
+        <li>逐周期解析原 Trace，生成 5-bit 功能 mask；最后 EOP 不保存 mask 第六位。</li>
+        <li>对每个有效槽按固定容量分组，保证槽指令不跨包。</li>
+        <li>为每个包计算其数据覆盖的事件范围，以及最早必须准备好的执行周期。</li>
+        <li>在同槽包顺序不可改变的约束下，生成全局包交织顺序。</li>
+        <li>模拟 SRAM 读延迟、包解复用、Reservoir/FIFO 写入和逐周期消费。</li>
+        <li>输出最小预取量、各 FIFO 峰值、下溢周期和总物理位数。</li>
+      </ol>
+
+      <h3>6.3 “供给截止周期”的严格含义</h3>
+      <p>
+        为避免与执行时序混淆，建议论文使用“供给就绪期限”而不是简单“截止周期”。
+        对原 Trace 中周期 <em>t</em>、槽 <em>s</em> 的事件 <em>e</em>：
+      </p>
+      <div class="formula">Ready(e) ≤ t
+Issue(e) = t</div>
+      <p>
+        SRAM 读取和解包可以提前，事件可提前进入 FIFO；但只能在原来的第 <em>t</em> 周期从 FIFO pop 并输出。
+        包交织改变的是“何时把数据准备好”，不改变“何时执行”。
+      </p>
+
+      <h3>6.4 包交织问题</h3>
+      <p>软件应把包交织建模为带顺序约束和缓冲上限的离线调度问题：</p>
+      <ul>
+        <li>每周期最多读取一个 128-bit 或 256-bit 包；</li>
+        <li>同一逻辑流内部包顺序固定；</li>
+        <li>每个包的数据必须在其最早消费事件前进入对应 Reservoir/FIFO；</li>
+        <li>过早读取也受 FIFO 容量限制，不能继续依赖“无限 FIFO”；</li>
+        <li>目标是最小化预取包数、最大 FIFO 位数和 SRAM 读使能次数。</li>
+      </ul>
+      <div class="callout warn">
+        <strong>下一步必须从无限 FIFO 转向有限 FIFO</strong>
+        目前 128/256-bit 包的 27.33%/22.79% 仅是容量结果。
+        只有生成真实可行的包交织序列，并证明有限 FIFO 下全部 Trace 不下溢，这个格式才能进入 RTL。
+      </div>
+
+      <h3>6.5 解码参考模型</h3>
+      <p>建立与最终 RTL 同构的 cycle-accurate Python 模型，每周期模拟：</p>
+      <ol>
+        <li>SRAM 请求、1–2 拍返回和 read-enable；</li>
+        <li>stream ID 解复用；</li>
+        <li>整包/槽指令写入对应 FIFO；</li>
+        <li>当前 5-bit mask 消费；</li>
+        <li>五槽 pop、NOP 填充和 EOP 生成；</li>
+        <li>与原 184-bit word 逐位比较。</li>
+      </ol>
+    </section>
+
+    <section id="hardware">
+      <h2>7. 下一步硬件方案</h2>
+      <h3>7.1 Candidate A：首要数据通路</h3>
+      <pre>5-bit Mask SRAM ───────────────┐
+                              │
+LOAD SRAM   + addr_load ──────┤
+STORE SRAM  + addr_store ─────┤
+VECTOR SRAM + addr_vector ────┼─► mask选择 / NOP填充 ─► 184-bit VLIW
+SCALAR SRAM + addr_scalar ────┤
+SFU SRAM    + addr_sfu ───────┘</pre>
+      <p>
+        五个槽 SRAM 可在同周期并行读取；各计数器只在对应 mask 位为 1 时递增。
+        实现只需要固定延迟对齐寄存器，不需要按槽深 FIFO。若 mask SRAM 也为同步读，
+        可在执行启动前预取首个 mask，随后让 mask 与槽数据保持固定流水对齐。
+      </p>
+
+      <h3>7.2 Candidate B：条件候选数据通路</h3>
+      <pre>单个顺序 Compressed IMEM（主评估：256 bit/cycle）
+                         │
+                  1–2 拍 SRAM 延迟
+                         ▼
+                  Packet Input Register
+                         │  stream_id[2:0]
+                         ▼
+             固定 3→6 解复用 / 写入控制
+        ┌────────┬────────┬────────┬────────┬────────┬────────┐
+        ▼        ▼        ▼        ▼        ▼        ▼
+ Calendar    LOAD      STORE    VECTOR   SCALAR     SFU
+ Reservoir   FIFO      FIFO      FIFO      FIFO      FIFO
+        │        │        │        │        │        │
+        └────────┴────────┴────────┴────────┴────────┘
+                         │
+                当前周期 5-bit mask
+                         ▼
+          按 mask pop；无效槽填 0；末周期产生 EOP
+                         ▼
+                 原始 184-bit VLIW</pre>
+
+      <h3>7.3 128-bit 与 256-bit硬件权衡</h3>
+      <div class="table-wrap">
+        <table class="wrap">
+          <thead><tr><th>设计</th><th>程序存储</th><th>优势</th><th>主要代价</th><th>必须验证</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>1×128-bit口，128-bit包</td>
+              <td>27.33%</td>
+              <td>输入寄存器和路由较窄；单包解码简单。</td>
+              <td>LOAD/STORE与VECTOR包内空洞大；包数 7,997。</td>
+              <td>能否在有限 FIFO 下覆盖峰值；总读能耗。</td>
+            </tr>
+            <tr>
+              <td>1×256-bit口，256-bit包</td>
+              <td>22.79%</td>
+              <td>LOAD/STORE几乎满包；包数仅 3,331；带宽裕量高。</td>
+              <td>宽输入寄存器、253-bit路由、宽包缓冲和潜在多写入。</td>
+              <td>FIFO/解包器是否抵消 16.64% 的程序存储下降。</td>
+            </tr>
+            <tr>
+              <td>256-bit口，每拍两个128-bit包</td>
+              <td>27.33%</td>
+              <td>包缓冲仍为128 bit；可同时补充两条逻辑流。</td>
+              <td>两套 ID 解码和路由；128包空洞仍存在。</td>
+              <td>面积/能耗是否优于单256包。</td>
+            </tr>
+            <tr>
+              <td>Li式多窄Bank</td>
+              <td>文献基线</td>
+              <td>同周期多槽直接并行读取，FIFO需求低。</td>
+              <td>多宏、地址器、端口和容量碎片。</td>
+              <td>同工艺宏级物理面积与读能耗。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>7.4 FIFO不能按“无限”或“与端口同宽”简单处理</h3>
+      <p>若六条逻辑流各保留一个完整包：</p>
+      <div class="formula">128-bit包：6 × 128 = 768 bit
+256-bit包：6 × 256 = 1,536 bit
+固定增加：768 bit</div>
+      <p>两包深时分别为 1,536 bit 与 3,072 bit。若包 FIFO 用触发器实现，每 bit 面积远高于 SRAM bit。</p>
+      <p>另一种方法是立即拆成原生槽指令 FIFO，此时 FIFO 字宽仍是 42/42/34/31/31/5，不因 SRAM 口翻倍；但一个 256-bit 包可能含：</p>
+      <ul>
+        <li>6 条 LOAD/STORE，或 7 条 VECTOR，或 8 条 SCALAR/SFU，或 50 条 mask；</li>
+        <li>若一拍全部写入，需要高写端口 FIFO；</li>
+        <li>若分多拍写入，需要 256-bit 保留寄存器，并可能暂停后续 SRAM 读取。</li>
+      </ul>
+      <div class="callout warn">
+        <strong>因此当前不直接选择 256 bit</strong>
+        256-bit 包在程序 SRAM 容量上占优，但端口宽度必须由
+        <code>程序 SRAM + Packet Buffer + Slot FIFO + Demux + Write Ports</code>
+        的总物理面积和能耗决定。128/256 两个版本应共享 RTL 参数化设计后综合比较。
+      </div>
+
+      <h3>7.5 时序隔离</h3>
+      <ul>
+        <li>SRAM 返回、ID 解码和 FIFO 写入可流水化，不进入执行侧组合关键路径。</li>
+        <li>执行周期只做 5-bit mask 读取、五个 FIFO valid/pop 和 NOP 选择。</li>
+        <li>若 FIFO 数据已经按原槽宽保存，最终 184-bit 拼接只需布线和固定位置复用。</li>
+        <li>目标是保持原 1 GHz，不以降低频率换取压缩。</li>
+      </ul>
+    </section>
+
+    <section id="exactness">
+      <h2>8. 逐周期精确恢复原则与验证</h2>
+      <h3>8.1 恢复不等于提前执行</h3>
+      <p>包可以提前读取、解复用和进入 FIFO；但 Calendar 在执行周期 <em>t</em> 才触发相应槽 pop：</p>
+      <div class="formula">对所有周期 t、槽 s：
+
+mask[t][s] = 0  ⇒ output[t][s] = NOP
+mask[t][s] = 1  ⇒ output[t][s] = next(FIFO_s)
+
+必须满足：
+output[t][s] = original[t][s]</div>
+      <h3>8.2 为什么顺序槽流可以恢复同周期并行</h3>
+      <ol>
+        <li>每条槽流只删除该槽自己的 NOP，有效事件保持时间顺序。</li>
+        <li>到周期 <em>t</em> 前，Calendar 中槽 <em>s</em> 的 1 的数量等于该槽已经消费的事件数。</li>
+        <li>因此周期 <em>t</em> 的下一事件就是原 Trace 在该周期的槽事件。</li>
+        <li>不同槽是否同时 pop 由同一个 5-bit mask 决定，同周期关系不会变化。</li>
+      </ol>
+      <h3>8.3 必须完成的验证层次</h3>
+      <ul>
+        <li><strong>软件 wire-format：</strong>编码文件→解码文件逐周期逐 bit 等于原 Trace。</li>
+        <li><strong>cycle model：</strong>加入有限 FIFO、SRAM 读延迟和包写入吞吐，验证无下溢。</li>
+        <li><strong>RTL 对拍：</strong>每周期比较五槽、reserved、EOP 和完整 184-bit word。</li>
+        <li><strong>系统行为：</strong>函数输出数值、执行周期和原论文结果一致。</li>
+      </ul>
+    </section>
+
+    <section id="innovation">
+      <h2>9. 本文核心创新点：候选表述与成立条件</h2>
+      <div class="callout warn">
+        <strong>有条件的候选名称，并非已经成立的创新</strong>
+        面向周期精确稀疏 VLIW 的<strong>供给期限排序固定包编码与物理 Bank 时间折叠</strong><br>
+        <span class="small">Deadline-Ordered Packetization and Temporal Bank Folding for Cycle-Exact Compressed-Resident VLIW</span>
+      </div>
+
+      <h3>9.1 先回答“为什么不直接分槽存储”</h3>
+      <p>
+        可以，而且应当先这样做。压缩程序完整驻留片上时，Candidate A 直接按槽存入独立 SRAM，
+        再由 mask 控制每个 Bank 的读使能和地址递增，即可无 FIFO 地逐周期恢复。
+        Candidate B 中 FIFO 和解码器不是正确性必需品，只是为了把多个物理 Bank 折叠为单/少 Bank 而支付的代价。
+      </p>
+      <div class="callout bad">
+        <strong>如果 Candidate A 优于 Candidate B</strong>
+        当前 Bank Folding 候选创新即告失败。Candidate A 虽然更合理，但与 Li 2020 的纵向槽流、
+        mask/ifnull、分 Bank 并行重组高度接近，只能作为正确而强的 Baseline，不能成为本文的新贡献。
+        此时应重新寻找创新点，而不是继续增加 FIFO、字典或解码复杂度。
+      </div>
+      <div class="callout good">
+        <strong>如果 Candidate B 优于 Candidate A</strong>
+        创新才可能落在“编译期受限包交织 + 有限缓冲 + 多槽逻辑流向单/少物理 Bank 的时间折叠”这一完整协同设计，
+        且必须由总 SRAM 宏、FIFO、路由、能耗和 1 GHz 时序结果证明显著净收益。
+      </div>
+
+      <h3>9.2 Candidate B 的核心机制</h3>
+      <ol>
+        <li><strong>固定包编码：</strong>Calendar 与原生宽度槽流形成统一 tagged packet，不依赖 workload 字典。</li>
+        <li><strong>供给期限建模：</strong>每个包对应一组未来槽事件，具有不得晚于的准备周期。</li>
+        <li><strong>编译期包交织：</strong>在同流顺序和有限 FIFO 约束下，生成单一顺序包流；物理顺序就是运行时预取计划。</li>
+        <li><strong>Bank 时间折叠：</strong>把 Li 在执行周期空间并行访问的多条物理槽 Bank，转换为执行前在单/少 Bank 上时间复用读取。</li>
+        <li><strong>周期精确重建：</strong>运行时无动态调度，只用固定 ID 路由、FIFO 和 Calendar 在原周期输出。</li>
+      </ol>
+
+      <h3>9.3 与 Li 2020 的差异</h3>
+      <div class="table-wrap">
+        <table class="wrap">
+          <thead><tr><th>维度</th><th>Li 2020</th><th>本文候选</th></tr></thead>
+          <tbody>
+            <tr><td>物理并行方式</td><td>多个槽 Bank 在当前执行周期并行读取。</td><td>单/少 Bank 在执行前按编译期包序时间复用读取。</td></tr>
+            <tr><td>存储布局</td><td>槽列/Bank；外部格式由最高列产生补齐。</td><td>不同槽包在同一顺序物理流中交织，不按最高列补齐。</td></tr>
+            <tr><td>运行时地址</td><td>每 Bank 独立索引/地址。</td><td>一个顺序包指针；3-bit ID 路由。</td></tr>
+            <tr><td>突发处理</td><td>依赖当前周期多 Bank 并行供给。</td><td>利用静态未来周期提前读，以有限 FIFO 吸收峰值。</td></tr>
+            <tr><td>正确性</td><td>ifnull控制一拍重组。</td><td>Calendar控制原周期pop；Ready可提前，Issue必须等于原周期。</td></tr>
+            <tr><td>论文比较</td><td>已有机制。</td><td>必须证明总物理面积/能耗的不同 Pareto 点，而非仅比较逻辑位数。</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>9.4 仅在 B 胜出后可以写入 Contributions 的内容</h3>
+      <ol>
+        <li>提出带同流顺序、有限 FIFO、SRAM 延迟和单端口约束的固定包交织/供给综合问题及算法。</li>
+        <li>提出把多逻辑槽流折叠到单一顺序物理包流的轻量前端，并给出周期精确与无下溢保证。</li>
+        <li>在真实 28 nm SRAM 宏和 RTL 下证明相对 Li 多 Bank 的净面积/能耗 Pareto 优势。</li>
+        <li>以 R/tile 扫描证明压缩后可选择性能更优的分块点，而不再被 IMEM 容量迫使选择高 R。</li>
+      </ol>
+
+      <h3>9.5 如果 A 胜出，下一轮可验证的真正创新方向</h3>
+      <ol>
+        <li>
+          <strong>跨 workload 统一的语义字段编码：</strong>
+          只利用 ISA 明确定义的隐含字段、未使用操作数、固定控制位或同寄存器关系；
+          使用一套固定格式和 RAW escape，不使用逐 Trace 训练字典。
+        </li>
+        <li>
+          <strong>物理 SRAM 感知的有界块压缩：</strong>
+          以固定周期块保存 mask 序列和紧凑 payload，只允许严格上限的双块缓冲；
+          目标是减少小宏取整与外围开销，而不是依赖无限槽 FIFO。
+        </li>
+        <li>
+          <strong>异构 Bank 的物理组织优化：</strong>
+          基于槽宽、槽深和共激活关系提出新的 Bank 组合或低能耗读取结构。
+          单纯采用不同深度的五个 SRAM 过于直接，必须有可量化的新组织机制才可能构成创新。
+        </li>
+      </ol>
+      <p>
+        这些方向仍只是待验证候选。论文最终方案必须同时满足：统一格式、全部 workload 周期精确恢复、
+        总存储明显优于纵向压缩、解码低开销，并且不依赖逐 workload 字典。
+      </p>
+
+      <h3>9.6 不能夸大的边界</h3>
+      <ul>
+        <li>固定包、mask、FIFO、预取、分 Bank 各自都不是新颖性。</li>
+        <li>若包交织只是普通 EDF，且已有 VLIW stream buffer 已覆盖同一问题，算法新颖性可能不足，需进一步查新。</li>
+        <li>若物理综合后只剩“mask+payload加FIFO”，应停止以该方向投稿，而不是通过增加字典复杂度包装。</li>
+      </ul>
+    </section>
+
+    <section id="exclude">
+      <h2>10. 根据本 VLIW 指令特点明确排除的方向</h2>
+      <div class="table-wrap">
+        <table class="wrap">
+          <thead><tr><th>排除点</th><th>证据/原因</th><th>允许保留的用途</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>通用稳定周期核</td>
+              <td>Softmax 核覆盖仅 2.0%–3.7%，LayerNorm 仅 0.9%–1.7%，不能代表全部非线性函数。</td>
+              <td>GELU 等规则函数的后期局部 fast path。</td>
+            </tr>
+            <tr>
+              <td>全局仿射/回绕寄存器再生</td>
+              <td>256 深度寄存器和静态乱序发射导致 VECTOR/SCALAR 地址 delta 高度分散；核内成功不能覆盖核外。</td>
+              <td>只对通过固定门槛的地址字段做消融。</td>
+            </tr>
+            <tr>
+              <td>普通值字典压缩地址/寄存器</td>
+              <td>跨 workload 固定值表在变量字段上比 RAW 更大；逐 workload 字典破坏通用性。</td>
+              <td>控制 opcode 可按 ISA 固定编码，但不称为学习字典。</td>
+            </tr>
+            <tr>
+              <td>10.02% 字段混合作为方案结果</td>
+              <td>每条 Trace、每字段自由选择 RAW/DICT/DELTA、表大小和索引位宽，属于 oracle。</td>
+              <td>仅作为不可实现的压缩潜力下界。</td>
+            </tr>
+            <tr>
+              <td>gap / gap 字典作为主线</td>
+              <td>固定 gap 加权 22.26%；gap 字典加权 20.80%，净收益不足以覆盖字典、索引和计数器。</td>
+              <td>Baseline/消融。</td>
+            </tr>
+            <tr>
+              <td>mask 模板压缩</td>
+              <td>功能 mask 只有 32 种，EOP 独立；模板相对固定 5-bit 平均仅省约 0.91 bit/cycle。</td>
+              <td>消融，不进入主格式。</td>
+            </tr>
+            <tr>
+              <td>64-bit/cycle 作为主 SRAM 口</td>
+              <td>带 3-bit 标签后仅 61 bit/cycle 有效，小于 LayerNorm X64 平均 61.5 bit/cycle，长期不可持续。</td>
+              <td>低带宽反例和面积对照。</td>
+            </tr>
+            <tr>
+              <td>修改调度器以提高压缩率</td>
+              <td>会改变原论文逐周期调度结果，并与压缩感知调度先行工作重叠。</td>
+              <td>不做；本文是调度后无损后处理。</td>
+            </tr>
+            <tr>
+              <td>逐 workload Tailored ISA</td>
+              <td>与“Fully Reconfigurable and Programmable”目标冲突，且硬件无法复用。</td>
+              <td>理论上界，不实现。</td>
+            </tr>
+            <tr>
+              <td>直接增加循环 ISA / 旋转寄存器</td>
+              <td>Cydra 5、IA-64 等已有；需要改 ISA、调度器和寄存器堆，超出四个月。</td>
+              <td>作为新芯片设计的理想上界对照。</td>
+            </tr>
+            <tr>
+              <td>Huffman/算术/LZW 等通用熵解码</td>
+              <td>变长边界、顺序依赖和吞吐难以满足固定一拍供给，硬件复杂。</td>
+              <td>只作理论压缩率参考。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="later">
+      <h2>11. 可能有帮助、但下一步再考虑加入的点</h2>
+      <h3>11.1 固定 1–2 bit 地址 delta + RAW escape</h3>
+      <p>只考虑以下字段：</p>
+      <ul>
+        <li>LOAD/STORE：28-bit mem_addr、8-bit gpr_addr；</li>
+        <li>SFU：8-bit dst/src gpr 地址；</li>
+        <li>VECTOR/SCALAR 寄存器保持 RAW。</li>
+      </ul>
+      <p>所有 workload 必须使用同一组硬连线 delta，不允许训练不同字典。未命中时保存完整地址：</p>
+      <div class="formula">若 escape 占用 b-bit 码字：
+可编码的常用 delta 数量最多为 2^b − 1
+
+2-bit：3 个 delta + 1 个 escape
+1-bit：1 个 delta + 1 个 escape</div>
+      <p>硬件需要 28-bit/8-bit 地址模加法器、历史状态寄存器和 escape MUX。必须证明容量收益大于计算资源开销。</p>
+
+      <h3>11.2 规则 workload 的周期 fast path</h3>
+      <p>GELU、Softplus、LogSoftmax、LogSumExp 的部分大 X Trace 有较高周期核覆盖，可作为多模式格式中的可选段；Softmax/LayerNorm 直接回落固定包 RAW。</p>
+
+      <h3>11.3 mask 驱动的门控</h3>
+      <p>利用已经存在的 5-bit mask 阻止 NOP 槽驱动 crossbar、槽控制端口和功能单元输入，作为动态功耗配套贡献。必须用 SAIF/VCD 实测。</p>
+
+      <h3>11.4 等价编码降低翻转</h3>
+      <p>在周期行为一致但不要求输出每个无关位逐 bit 相同的后期阶段，可规范化无效控制位或选择低翻转等价编码。必须先有 bit-exact 基础版本和形式化等价边界。</p>
+
+      <h3>11.5 R/tile 协同评估</h3>
+      <p>不修改给定 R 下的调度；只把压缩后的物理 IMEM 容量加入设计空间，重画 R=2/4/8/16/32 的存储—性能曲线。</p>
+    </section>
+
+    <section id="alternatives">
+      <h2>12. 其他可能的思路及取舍</h2>
+      <div class="table-wrap">
+        <table class="wrap">
+          <thead><tr><th>思路</th><th>潜在优点</th><th>代价/风险</th><th>建议</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>允许槽指令跨包，按位连续打包</td>
+              <td>接近 21.74% 理想容量，128-bit包也不再浪费 42/34-bit尾部。</td>
+              <td>需要跨包拼接、可变位移和更宽 Reservoir；多槽并行恢复更复杂。</td>
+              <td>作为256固定包的敏感性对照，不作为第一版。</td>
+            </tr>
+            <tr>
+              <td>Calendar 单独小 SRAM</td>
+              <td>每周期直接得到 mask，payload 包无需 Calendar ID。</td>
+              <td>增加一个物理宏/读端口；5-bit 窄 SRAM 可能严重取整浪费。</td>
+              <td>必须用 memory compiler 决定，不能凭逻辑位数否决。</td>
+            </tr>
+            <tr>
+              <td>不等宽、不等深的五槽物理 Bank</td>
+              <td>无需 tagged packet 路由，槽提取最直接。</td>
+              <td>接近 Li；多个窄宏、地址器和最小深宽碎片可能很大。</td>
+              <td>作为最重要物理 baseline。</td>
+            </tr>
+            <tr>
+              <td>256-bit口每拍读取两个128-bit包</td>
+              <td>可同时补充两个流，避免单256包一次最多写一个流。</td>
+              <td>两路 ID/demux，存储仍为27.33%。</td>
+              <td>参数化 RTL 的第三个设计点。</td>
+            </tr>
+            <tr>
+              <td>混合包：一个包携带多个流段</td>
+              <td>可进一步消除单流包尾空洞。</td>
+              <td>需要多段目录、多个写目的和多写口，容易退化为复杂变长解码。</td>
+              <td>只有256单流包物理收益不足时再研究。</td>
+            </tr>
+            <tr>
+              <td>块级而非全函数交织</td>
+              <td>限制 FIFO、支持函数内部入口和局部恢复。</td>
+              <td>每块重复头和尾部填充，降低压缩率。</td>
+              <td>扫描块长，形成随机访问—容量 Pareto。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="evaluation">
+      <h2>13. 评估方法与 Go/No-Go 条件</h2>
+      <h3>13.1 必须报告的四层指标</h3>
+      <div class="grid-2">
+        <div class="card"><h3>编码层</h3><p>原始位数、包数、包内利用率、头/标签/尾部填充、最终文件字节数。</p></div>
+        <div class="card"><h3>供给层</h3><p>每周期读包、预取周期、各 Reservoir/FIFO 峰值、下溢、解包写入数。</p></div>
+        <div class="card"><h3>物理层</h3><p>SRAM 宏深宽/端口/数量、FIFO介质、面积、1 GHz时序、每包读能耗。</p></div>
+        <div class="card"><h3>系统层</h3><p>总核心面积/功耗、函数常驻数、R/tile—周期—IMEM曲线、周期行为一致性。</p></div>
+      </div>
+
+      <h3>13.2 完整 Baseline 矩阵</h3>
+      <ul class="checklist">
+        <li>原始 184-bit、同深度单宽 SRAM。</li>
+        <li>Li 外部补齐、Li 片上逻辑、Candidate A 实际六 Bank 宏；A 必须包含 mask SRAM、五槽 SRAM、计数器和固定流水寄存器。</li>
+        <li>5-bit mask + bit-tight RAW 理想下界。</li>
+        <li>Stop-bit/可变 bundle。</li>
+        <li>128-bit固定包、256-bit固定包、双128包/256口。</li>
+        <li>允许跨包的连续位流上界。</li>
+        <li>后期消融：delta、周期 fast path、mask门控。</li>
+      </ul>
+
+      <h3>13.3 四周生死门</h3>
+      <div class="decision"><span class="tag good">A基线</span><span>直接分槽在真实 1–2 拍 SRAM 下逐周期逐 bit roundtrip，且完成实际宏映射与粗综合。</span></div>
+      <div class="decision"><span class="tag good">B格式</span><span>128/256 wire-format 在全部 Trace 上roundtrip，有限 FIFO 和包写入吞吐下无下溢。</span></div>
+      <div class="decision"><span class="tag good">公平成本</span><span>A与B均计算实际SRAM宏、地址/控制、寄存器、FIFO、demux及读能耗，不混用逻辑位数和物理面积。</span></div>
+      <div class="decision"><span class="tag good">物理</span><span>仅当B总面积/能耗显著优于A且恢复逻辑达到1 GHz，Bank Folding才通过。</span></div>
+      <div class="decision"><span class="tag warn">查新</span><span>确认 VLIW stream buffer、静态 prefetch 和多流 packet scheduling 未完整覆盖本文组合。</span></div>
+      <div class="decision"><span class="tag bad">No-Go</span><span>若A优于B，或B仅退化为“mask+payload+FIFO”，立即否决Bank Folding；A保留为Baseline，重新验证统一语义字段编码、有限块格式或其他选题。</span></div>
+    </section>
+
+    <section id="schedule">
+      <h2>14. 工作安排（单人 14 周）</h2>
+      <div class="table-wrap">
+        <table class="wrap">
+          <thead><tr><th>阶段</th><th>时间</th><th>工作内容</th><th>交付物/闸门</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>固定格式与基线</td><td>第1–2周</td>
+              <td>先实现Candidate A的六个SRAM映像、五计数器和固定延迟cycle model；再实现128/256 Candidate B编码器、解码器和函数头；全部逐bit往返。</td>
+              <td>A/B格式说明、12+ Trace自动回归、A的无FIFO周期恢复证据。</td>
+            </tr>
+            <tr>
+              <td>有限FIFO供给</td><td>第3周</td>
+              <td>仅对Candidate B完成包期限、同流顺序、交织算法、有限Reservoir/FIFO、多写吞吐和预取；A保持无深FIFO。</td>
+              <td>B的每Trace最小预取、FIFO位数和可行包序。</td>
+            </tr>
+            <tr>
+              <td>物理可行性闸门</td><td>第4周</td>
+              <td>映射A的六个窄宏与B的128/256宽宏，统一计延迟、端口和宏取整；粗综合计数器/重组器及demux/FIFO。</td>
+              <td>A/B总物理成本；导师决定Bank Folding Go/No-Go或转向新创新点。</td>
+            </tr>
+            <tr>
+              <td>参数化RTL</td><td>第5–7周</td>
+              <td>Compressed IMEM接口、packet reader、ID demux、Reservoir/FIFO、Calendar与184-bit重组；128/256参数化。</td>
+              <td>周期级RTL对拍、无下溢断言。</td>
+            </tr>
+            <tr>
+              <td>系统集成</td><td>第8周</td>
+              <td>接入原FRV-SFU-VLIW前端；函数加载、启动预取、EOP；运行六类函数。</td>
+              <td>数值、周期和逐bit指令一致。</td>
+            </tr>
+            <tr>
+              <td>综合与功耗</td><td>第9–10周</td>
+              <td>28nm/1GHz；1×128、1×256、2×128/256口、Li多Bank；SAIF/VCD读能耗和路由功耗。</td>
+              <td>面积、主频、功耗、SRAM+前端总成本Pareto。</td>
+            </tr>
+            <tr>
+              <td>扩展实验</td><td>第11–12周</td>
+              <td>扩充Y与R/tile；有限块长；FIFO敏感性；可选delta和周期fast path消融。</td>
+              <td>通用性、最坏情况和系统折中图。</td>
+            </tr>
+            <tr>
+              <td>论文写作</td><td>第13–14周</td>
+              <td>方法、正确性、相关工作、物理结果、局限；主动回答“Li+FIFO”质疑。</td>
+              <td>投稿稿件与可复现实验包。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>第4周前禁止并行扩张的工作</h3>
+      <ul>
+        <li>不实现通用字段字典、复杂熵解码和全局周期核。</li>
+        <li>不在有限 FIFO 与 SRAM 宏结果出来前加入 delta、门控或等价低翻转编码。</li>
+        <li>不同时推进多个不兼容主格式；128/256必须来自同一个参数化格式。</li>
+      </ul>
+    </section>
+
+    <section id="files">
+      <h2>15. 数据、代码与文档位置</h2>
+      <div class="table-wrap">
+        <table class="wrap">
+          <thead><tr><th>内容</th><th>位置</th><th>作用</th></tr></thead>
+          <tbody>
+            <tr><td>本导师评估稿</td><td><code>plan/vliw_compression_overall_design_advisor_review_2026-09-01.html</code></td><td>最新整体方案入口。</td></tr>
+            <tr><td>最新 handoff</td><td><a href="vliw_instruction_compression_handoff_2026-09-01.html"><code>plan/vliw_instruction_compression_handoff_2026-09-01.html</code></a></td><td>全部早期Trace、文献、否定结论和文件索引。</td></tr>
+            <tr><td>方向终审</td><td><a href="vliw_deadline_decoupled_direction_review_2026-08-31.html"><code>plan/vliw_deadline_decoupled_direction_review_2026-08-31.html</code></a></td><td>供给期限、硬件方向和工作安排的前一版本。</td></tr>
+            <tr><td>通用稀疏计划</td><td><a href="general_sparse_vliw_instruction_compression_research_2026-08-26.html"><code>plan/general_sparse_vliw_instruction_compression_research_2026-08-26.html</code></a></td><td>最初的双流、无停顿供给和Baseline框架。</td></tr>
+            <tr><td>周期核深度计划</td><td><a href="vliw_instruction_compression_paper4_deepdive_2026-08-26.html"><code>plan/vliw_instruction_compression_paper4_deepdive_2026-08-26.html</code></a></td><td>周期核旧方向和相关工作；主结论已被新Trace否定。</td></tr>
+            <tr><td>Trace生成器</td><td><a href="../schedule_v17.py"><code>schedule_v17.py</code></a></td><td>VLIW指令真值与静态调度来源。</td></tr>
+            <tr><td>现有分析器</td><td><a href="../analyze_compression.py"><code>analyze_compression.py</code></a></td><td>12条Trace、压缩模型、周期/字段/带宽统计。</td></tr>
+            <tr><td>总结果</td><td><a href="../analysis_output_6x2/compression_analysis.json"><code>analysis_output_6x2/compression_analysis.json</code></a></td><td>全部嵌套统计和压缩位数。</td></tr>
+            <tr><td>主摘要</td><td><a href="../analysis_output_6x2/summary_matrix.csv"><code>analysis_output_6x2/summary_matrix.csv</code></a></td><td>12个case的关键指标。</td></tr>
+            <tr><td>完整Trace</td><td><code>analysis_output_6x2/*_best_trace.csv</code></td><td>逐周期六槽值和184-bit word。</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <strong>导师需要作出的近期决策</strong>
+        是否同意用四周先建立“直接分槽、无深 FIFO”的 Candidate A 完整物理基线，再完成
+        “固定包 + 有限 FIFO + 单/少 Bank”的 Candidate B，并按总 SRAM 宏、缓冲、逻辑、能耗和时序进行公平 Go/No-Go。
+        只有 B 显著优于 A 时，才暂定核心创新为“供给期限排序固定包编码与物理 Bank 时间折叠”；
+        若 A 更优，则明确承认当前候选创新不成立，保留 A 为 Baseline 并尽快转向统一语义字段编码、
+        有界块压缩或重新选题，而不是继续叠加 FIFO 与字典。
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>
