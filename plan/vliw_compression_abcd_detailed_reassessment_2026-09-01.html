@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VLIW 压缩 Candidate A/B/C/D：逐实验、逐 SRAM 与方向重判</title>
+<style>
+:root{--ink:#172033;--muted:#5c667a;--line:#d9dfeb;--blue:#2457a7;--pale:#f5f8fc;--good:#13734b;--warn:#9a5b00;--bad:#a72b32;--violet:#6642a5}
+*{box-sizing:border-box}body{margin:0;background:#eef2f7;color:var(--ink);font:15px/1.68 system-ui,-apple-system,"Segoe UI","Noto Sans SC",sans-serif}
+main{max-width:1180px;margin:28px auto;background:#fff;padding:42px 48px 64px;box-shadow:0 8px 30px #1b2b4420}
+h1{font-size:30px;line-height:1.25;margin:0 0 8px}h2{margin:42px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--line);font-size:23px}h3{margin:26px 0 8px;font-size:18px}h4{margin:18px 0 6px}p{margin:8px 0 12px}.sub{color:var(--muted);font-size:14px}.lead{font-size:17px}
+.verdict{border-left:6px solid var(--bad);background:#fff5f5;padding:18px 22px;margin:22px 0}.decision{border-left:6px solid var(--blue);background:#f2f7ff;padding:16px 20px;margin:18px 0}.note{background:#fff9e9;border:1px solid #ead5a4;padding:13px 16px;margin:14px 0}.ok{color:var(--good)}.no{color:var(--bad)}.maybe{color:var(--warn)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:16px 0}.card{border:1px solid var(--line);border-radius:8px;padding:15px;background:var(--pale)}.card strong.big{font-size:24px;display:block;margin:3px 0}
+.table{overflow:auto;margin:12px 0 20px}table{border-collapse:collapse;width:100%;min-width:760px;font-size:13.5px}th,td{border:1px solid var(--line);padding:8px 9px;vertical-align:top}th{background:#eaf0f8;text-align:left;white-space:nowrap}td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.good{background:#effaf4}.bad{background:#fff1f2}.warn{background:#fff8e8}.mono,code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}code{background:#edf1f6;padding:1px 4px;border-radius:3px}pre{background:#101827;color:#e6edf7;padding:15px 17px;border-radius:7px;overflow:auto;line-height:1.5}.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin:14px 0}.flow div{flex:1;min-width:150px;border:1px solid #b9c8dd;background:#f4f8ff;padding:11px;text-align:center}.arrow{align-self:center;color:var(--blue);font-size:22px;flex:0!important;min-width:18px!important;border:0!important;background:none!important}
+ul,ol{margin:7px 0 14px;padding-left:23px}li{margin:4px 0}.tag{display:inline-block;padding:1px 7px;border-radius:99px;font-size:12px;font-weight:700;color:#fff;background:var(--blue)}.tag.g{background:var(--good)}.tag.w{background:var(--warn)}.tag.r{background:var(--bad)}.small{font-size:12.5px;color:var(--muted)}a{color:var(--blue)}
+@media(max-width:760px){main{margin:0;padding:24px 16px}h1{font-size:25px}}
+</style>
+</head>
+<body><main>
+<h1>VLIW 压缩 Candidate A/B/C/D：逐实验、逐 SRAM 与方向重判</h1>
+<p class="sub">日期：2026-09-01　|　数据：仓库 12 条 best trace，重点复算 Softmax X32 / LayerNorm X32 / GELU X32　|　结论级别：早期研究判断，不是流片 sign-off</p>
+
+<div class="verdict">
+  <strong>结论先行：</strong>Candidate D 不是“只对 mem_addr 做 delta”，而是对 LOAD/STORE 的 <code>mem_addr[27:0]</code> 与 <code>gpr_addr[7:0]</code> 分字段差分，同时保留 6-bit 原控制字段、定宽主流和完整指令例外流。但当前实验证明，它仍然主要依赖本平台内存槽的规则地址，尚不足以成为一般性 VLIW 压缩论文的核心创新。<br>
+  更关键的是：按三个代表程序分别定制 SRAM 时，D 含已建模增量逻辑后，相对 A 在 <strong>GELU X32 节省 10.1%</strong>，却在 <strong>LayerNorm X32 增加 13.5%</strong>、在 <strong>Softmax X32 增加 35.1%</strong>。全 12 trace 的“最大深度统一配置”得到约 8.77% 面积节省，并不代表逐程序都获益。当前不建议把 D 单独立项为第四篇论文。
+</div>
+
+<div class="cards">
+  <div class="card"><span class="tag">A</span><strong class="big">物理 Pareto 基线</strong>简单、定宽、直接逐周期恢复；接近 Li 式纵向压缩，不能当新创新。</div>
+  <div class="card"><span class="tag r">B</span><strong class="big">淘汰</strong>单 SRAM 的小幅宏面积收益被 256-bit 包缓存、FIFO 和分发覆盖。</div>
+  <div class="card"><span class="tag r">C</span><strong class="big">逻辑上界</strong>位数最低，但约 1.08 万 GE 的变长抽取器使物理总面积明显失败。</div>
+  <div class="card"><span class="tag w">D</span><strong class="big">局部技术</strong>固定字段预测本身硬件友好，但当前净收益小、跨工作负载不稳、一般性不足。</div>
+</div>
+
+<h2>1. 本轮到底做了什么实验</h2>
+<ol>
+  <li>调用现有真实编码器/解码器重新生成 A/B/C/D 数据；不是按概率估计长度。每个候选最后都按原 calendar 恢复五个槽，并逐周期逐 bit 与原 CSV 对拍。</li>
+  <li>对三个代表测例逐个列出逻辑 SRAM 宏的数量、字宽、字深，并把每个宏独立送入 HP CACTI 7（32 nm scratch-RAM 配置）。CACTI 对过小组织无合法解时，按 2 的幂增加物理深度直到得到合法宏；JSON 同时保留逻辑容量和 CACTI 实际分配容量。</li>
+  <li>逻辑面积采用已有 Yosys/ABC 门数，并以公开 SAED32/28 <code>NAND2X1=2.54144 μm²</code>粗换算。A 的公共计数器/对齐逻辑尚未综合；B 只有包寄存器上界；C 是未含完整控制器的下界；D 是两套 LOAD/STORE 恢复器的早期估计。</li>
+  <li>新增 opcode-context 差分实验：不增加主码字段，直接用指令中已有的 4-bit <code>optype</code>选择“上一条同 opcode 操作”，检验 D 能否推广到 VECTOR/SCALAR/SFU。全部 12 trace 均完成精确 roundtrip。</li>
+</ol>
+<div class="note"><strong>面积口径必须注意：</strong>下面三个测例的面积是“若硬件只按这一条程序所需深度定制”的比较，用于观察候选的工作负载敏感性。一个可运行全部程序的通用核，应对每个 Bank 取所有程序中的最大深度；不能把三个逐程序面积相加或取平均当成最终核面积。</div>
+
+<h2>2. Candidate A：Calendar + 五条原生纵向槽流</h2>
+<h3>2.1 编码实验</h3>
+<p>原始 VLIW 每周期 184 bit，由 LOAD 42、STORE 42、VECTOR 34、SCALAR 31、SFU 31 和 CONTROL 4 组成。A 对每个非末周期写一个 5-bit mask；mask 的第 <em>s</em> 位说明该周期槽 <em>s</em> 是否有效。每个槽只顺序保存非零操作，NOP 不进入 payload。总周期数和程序参数存入 256-bit 头，EOP 由“最后周期”隐式生成。</p>
+<pre>A_bits = 256 + 5×(T−1)
+       + 42×Nload + 42×Nstore + 34×Nvector + 31×Nscalar + 31×Nsfu</pre>
+<h3>2.2 恢复实验和硬件</h3>
+<div class="flow"><div>Calendar SRAM<br>读 mask[t]</div><div class="arrow">→</div><div>mask=1 的槽<br>读本槽 SRAM</div><div class="arrow">→</div><div>五个槽计数器<br>条件 +1</div><div class="arrow">→</div><div>NOP mux 重组<br>184-bit VLIW</div></div>
+<ul>
+  <li>架构固定为 <strong>6 个逻辑 SRAM Bank</strong>：Calendar + 五个槽。某个专用程序完全不用某槽时，可不实例化该空宏；通用核仍要保留。</li>
+  <li>同步 SRAM 的读延迟通过整体流水对齐吸收。五个槽有独立 Bank，所以同周期五槽同时有效也无需 FIFO。</li>
+  <li>主要非 SRAM 开销：五个地址计数器、mask 延迟寄存器、五路 NOP/有效指令 mux、程序头寄存器。它们是其他方案也大多需要的公共基线，当前尚无单独门数。</li>
+  <li>优点是没有变长边界、没有例外、没有包 demux；缺点是没有利用槽内字段相关性，而且六个小宏有外围/取整开销。</li>
+</ul>
+
+<h2>3. Candidate B：单 256-bit 包 SRAM + 截止周期供给</h2>
+<h3>3.1 编码与供给实验</h3>
+<p>B 先生成与 A 相同的六条逻辑流，再把同一逻辑流的记录装入固定 256-bit 包。每包用 3 bit 标识流类型，余下 253 bit 可装 50 个 calendar mask、6 个 LOAD/STORE、7 个 VECTOR 或 8 个 SCALAR/SFU。不同流不能混在同一包内，因此会有尾部填充。</p>
+<p>每个包的 deadline 是包内第一条记录最早被消费的原始周期。软件从后向前安排“每周期最多返回一个包”，并模拟六条逻辑队列；允许程序开始前预取，但在执行周期 <em>t</em> 只按 calendar 弹出原 trace 在 <em>t</em> 所需的记录。三个代表测例都无下溢，启动预取均为 1 个返回周期。</p>
+<h3>3.2 硬件</h3>
+<ul>
+  <li>架构只有 <strong>1 个 256-bit 物理程序 SRAM</strong>，但并没有消除六条逻辑队列。</li>
+  <li>主要额外开销：256-bit 返回寄存器、3-bit tag 解码、宽 demux、六条 FIFO/Reservoir、每流计数/valid、日历 pop 控制以及多事件拆包写入。</li>
+  <li>“峰值在途包×256”只是把所有在途包都放 DFF 的保守上界，不是最终实现面积；真正 RTL 可能用原生宽 FIFO 降低，但仍需多写口、保留寄存器和路由。因此本报告不伪造 B 的精确总面积。</li>
+</ul>
+<p><strong>为什么失败：</strong>在全 12 trace 的最大配置中，单包 SRAM 为 0.044985 mm²，只比 A 的六 Bank SRAM 0.048107 mm²小 6.49%；尚未加入任何 FIFO 和 demux。三个逐程序比较中，B 的 SRAM 甚至在 LayerNorm/Softmax 已经大于 A。B 不再进入主线。</p>
+
+<h2>4. Candidate C：16-event 语义块 + RAW/CONST/STRIDE/DELTA</h2>
+<h3>4.1 编码实验</h3>
+<p>C 保留 5-bit calendar，但把每个槽的有效指令拆成“控制字段”和“操作数字段”。每 16 个 active event 独立选一种模式：</p>
+<ul>
+  <li><strong>RAW：</strong>逐条保存 operand；</li>
+  <li><strong>CONST：</strong>整个块只保存一个 operand；</li>
+  <li><strong>STRIDE：</strong>保存 base 和一个全宽 stride；</li>
+  <li><strong>DELTA：</strong>保存 base，再用块内可选的小差分位宽保存后续值。</li>
+</ul>
+<p>每块头固定 16 bit：2-bit mode、4-bit 条数减一、3-bit delta-width code、7-bit reserved。控制字段使用由全部 12 trace 一次性建立的静态 ISA profile，未命中则写 literal control；每个 token 仅允许 4-bit 边界，每块补齐到 64 bit。三个代表程序没有各自训练字典。</p>
+<h3>4.2 恢复硬件</h3>
+<p>每个非空槽用 64-bit SRAM。恢复端需要每槽 128-bit token window/双行寄存器、bit cursor、跨行 barrel-style extraction、模式状态、profile ROM、escape 解析、base/stride/delta 加法器和块边界控制。现有简化 RTL约 <strong>10,800 GE ≈ 0.027448 mm²</strong>，而且尚未含完整 header/controller/profile ROM 和布线，所以这是下界。</p>
+<p>C 的意义是证明 A 后面仍有<strong>信息冗余</strong>，而不是证明这种冗余值得在每拍恢复前端中提取。全套逻辑位数 16.211%，优于 A 的 21.812%；但 SRAM+解码逻辑的物理面积比 A 更差。</p>
+
+<h2>5. Candidate D：Calendar-Synchronized Patched Field Delta</h2>
+<h3>5.1 它并非只做 mem_addr delta</h3>
+<pre>LOAD/STORE main record = 19 bit, 每条 active event 固定宽度
+[18:13] literal control = mem_fmt[1:0] + gpr_fmt[1:0] + optype[1:0]
+[12]    escape
+[11:6]  signed delta(mem_addr[27:0]), 6 bit
+[5:0]   signed delta(gpr_addr[7:0]),  6 bit
+
+escape=1 时：主码仍保存 literal control；旁路流保存完整 42-bit 原生操作。</pre>
+<p>两个字段分别在自身位宽上计算最短有符号模差分，范围均为 −32…31。第一条操作或任何一个字段不适配时使用例外；前一条已恢复指令的两个字段分别作为状态。VECTOR/SCALAR/SFU 在当前 D 中仍使用 A 的原生纵向流。</p>
+<h3>5.2 恢复实验和硬件</h3>
+<div class="flow"><div>P0<br>calendar</div><div class="arrow">→</div><div>P1<br>读 19-bit main</div><div class="arrow">→</div><div>P2<br>escape 判定<br>或两字段模加</div><div class="arrow">→</div><div>P3<br>例外/预测 mux</div><div class="arrow">→</div><div>统一延迟 Issue</div></div>
+<ul>
+  <li>两个预测槽各有 28+8 bit previous state、两个加法通路、escape mux；连续例外由独立 side bank 每拍接收，因此不改变周期间距。</li>
+  <li>当前三条代表 trace 的 LOAD 和 STORE 都只有第一条为例外。报告假定两条初始 42-bit 记录占用 256-bit 程序头中的 84 bit，因此不额外实例化 exception SRAM；若程序头没有这些空位，或未来 trace 有中途 miss，必须增加最多两个 42-bit side SRAM。</li>
+  <li>两套恢复器的简化 RTL：AND 154、OR 104、XOR 138、MUX 72、NOT 23、DFF 112，约 <strong>1330 GE ≈ 0.003380 mm²</strong>。未含真实工艺缓冲、CTS、异常计数器和动态功耗。</li>
+  <li>架构上最多为 8 个逻辑 Bank：calendar、五个 main、LOAD/STORE 两个 exception；这三个测例因为初始例外入 header，实际非空宏数与 A 相同。</li>
+</ul>
+
+<h2>6. 三个代表测例：SRAM 宽度、深度、开销和面积</h2>
+<p class="small">记法 <code>宽度×逻辑深度</code>。面积为逐宏 CACTI 面积之和；CACTI 内部已进行最小容量/合法组织取整。A 的“总计”暂为 SRAM-only；C/D 加的是已知增量逻辑；B 的 DFF 数只是包寄存器保守上界，不是完整总面积。</p>
+
+<h3>6.1 GELU X32（1560 周期；事件 L/S/V/Sc/SFU = 384/384/0/0/384）</h3>
+<div class="table"><table><thead><tr><th>候选</th><th>非空 SRAM 及逻辑深宽</th><th>各宏 CACTI 面积 mm²</th><th>SRAM 合计</th><th>主要非 SRAM 开销</th><th>当前可计算合计 / 相对 A</th></tr></thead><tbody>
+<tr><td>A</td><td>4 个：Calendar 5×1559；LOAD 42×384；STORE 42×384；SFU 31×384</td><td>0.003360 + 0.005569 + 0.005569 + 0.004055</td><td class="num">0.018553</td><td>5 个条件计数器与 NOP mux（公共、未综合）</td><td class="num">0.018553 / 基线</td></tr>
+<tr><td>B</td><td>1 个：Packet 256×208</td><td>0.017971</td><td class="num">0.017971</td><td>峰值 4 在途包、830-bit 原生 payload 队列；若 1024 bit 全用 DFF，仅 DFF 上界约 0.011190 mm²</td><td class="num warn">SRAM +“全包 DFF 上界”=0.029161；不是总面积，不能据此给精确相对值</td></tr>
+<tr><td>C</td><td>4 个：Calendar 5×1559；LOAD 64×72；STORE 64×72；SFU 64×48</td><td>0.003360 + 0.002705 + 0.002705 + 0.001279</td><td class="num">0.010049</td><td>五槽架构中三套有效变长抽取器；统一 RTL 下界按 10.8k GE 计</td><td class="num bad">0.037496 / +102.1%</td></tr>
+<tr><td>D</td><td>4 个：Calendar 5×1559；LOAD-main 19×384；STORE-main 19×384；SFU 31×384</td><td>0.003360 + 0.002945 + 0.002945 + 0.004055</td><td class="num">0.013305</td><td>两套固定字段恢复器 0.003380 mm²</td><td class="num good">0.016685 / −10.1%</td></tr>
+</tbody></table></div>
+
+<h3>6.2 LayerNorm X32（771 周期；事件 = 102/96/672/256/64）</h3>
+<div class="table"><table><thead><tr><th>候选</th><th>非空 SRAM 及逻辑深宽</th><th>各宏 CACTI 面积 mm²</th><th>SRAM 合计</th><th>主要非 SRAM 开销</th><th>当前可计算合计 / 相对 A</th></tr></thead><tbody>
+<tr><td>A</td><td>6 个：Calendar 5×770；LOAD 42×102；STORE 42×96；VECTOR 34×672；SCALAR 31×256；SFU 31×64</td><td>0.001286 + 0.001392 + 0.001392 + 0.007969 + 0.002425 + 0.000594</td><td class="num">0.015058</td><td>公共计数器与 mux</td><td class="num">0.015058 / 基线</td></tr>
+<tr><td>B</td><td>1 个：Packet 256×185</td><td>0.017971</td><td class="num bad">0.017971</td><td>峰值 6 在途包、1098-bit 原生队列；1536-bit DFF 上界约 0.016786 mm²</td><td class="num bad">SRAM 已 +19.3%；无需等待 FIFO 估算即可淘汰</td></tr>
+<tr><td>C</td><td>6 个：Calendar 5×770；L 64×33；S 64×30；V 64×336；Sc 64×128；SFU 64×32</td><td>0.001286 + 0.001279 + 0.000867 + 0.007723 + 0.002705 + 0.000867</td><td class="num">0.014727</td><td>10.8k GE 解码器下界 0.027448 mm²</td><td class="num bad">0.042175 / +180.1%</td></tr>
+<tr><td>D</td><td>6 个：Calendar 5×770；L-main 19×102；S-main 19×96；V 34×672；Sc 31×256；SFU 31×64</td><td>0.001286 + 0.000716 + 0.000716 + 0.007969 + 0.002425 + 0.000594</td><td class="num good">0.013706</td><td>两套恢复器 0.003380 mm²</td><td class="num bad">0.017086 / +13.5%</td></tr>
+</tbody></table></div>
+
+<h3>6.3 Softmax X32（515 周期；事件 = 64/64/256/64/96）</h3>
+<div class="table"><table><thead><tr><th>候选</th><th>非空 SRAM 及逻辑深宽</th><th>各宏 CACTI 面积 mm²</th><th>SRAM 合计</th><th>主要非 SRAM 开销</th><th>当前可计算合计 / 相对 A</th></tr></thead><tbody>
+<tr><td>A</td><td>6 个：Calendar 5×514；LOAD 42×64；STORE 42×64；VECTOR 34×256；SCALAR 31×64；SFU 31×96</td><td>0.001286 + 0.000822 + 0.000822 + 0.002658 + 0.000594 + 0.001052</td><td class="num">0.007234</td><td>公共计数器与 mux</td><td class="num">0.007234 / 基线</td></tr>
+<tr><td>B</td><td>1 个：Packet 256×90</td><td>0.011475</td><td class="num bad">0.011475</td><td>峰值 5 在途包、912-bit 原生队列；1280-bit DFF 上界约 0.013988 mm²</td><td class="num bad">SRAM 已 +58.6%；无需等待 FIFO 估算即可淘汰</td></tr>
+<tr><td>C</td><td>6 个：Calendar 5×514；L 64×20；S 64×20；V 64×128；Sc 64×20；SFU 64×48</td><td>0.001286 + 0.000867 + 0.000867 + 0.002705 + 0.000867 + 0.001279</td><td class="num bad">0.007871</td><td>10.8k GE 解码器下界 0.027448 mm²</td><td class="num bad">0.035319 / +388.2%</td></tr>
+<tr><td>D</td><td>6 个：Calendar 5×514；L-main 19×64；S-main 19×64；V 34×256；Sc 31×64；SFU 31×96</td><td>0.001286 + 0.000403 + 0.000403 + 0.002658 + 0.000594 + 0.001052</td><td class="num good">0.006396</td><td>两套恢复器 0.003380 mm²</td><td class="num bad">0.009776 / +35.1%</td></tr>
+</tbody></table></div>
+
+<h3>6.4 为什么“全套最大配置”与逐程序结论不同</h3>
+<div class="table"><table><thead><tr><th>候选</th><th>12 trace 各 Bank 最大深度的 SRAM</th><th>已建模逻辑</th><th>粗总面积</th><th>相对 A</th></tr></thead><tbody>
+<tr><td>A</td><td>0.0481067 mm²</td><td>公共逻辑未计</td><td>0.0481067+</td><td>基线</td></tr>
+<tr><td>B-256</td><td>0.0449851</td><td>FIFO/demux 未计</td><td>未知，必然高于 0.0449851</td><td>不足以证明胜出</td></tr>
+<tr><td>C-4b</td><td>0.0379305</td><td>≥0.0274476</td><td>≥0.0653781</td><td class="bad">≥+35.9%</td></tr>
+<tr><td>D L/S</td><td>0.0405061</td><td>≈0.0033801</td><td>≈0.0438862</td><td class="warn">约 −8.77%</td></tr>
+</tbody></table></div>
+<p>最大配置下，A 的 LOAD/STORE Bank 由很长的程序决定，D 对这些深 Bank 的缩窄能摊薄固定恢复器面积；Softmax/LayerNorm 单程序的 L/S Bank 很浅，恢复器固定成本反而大于 SRAM 节省。这正是“逻辑压缩比”不能替代“实际物理面积”的例子。</p>
+
+<h2>7. D 能否挖掘出比“内存地址 delta”更一般的优势</h2>
+<h3>7.1 已确认的一般性机制</h3>
+<ul>
+  <li><strong>Calendar 与 value predictor 解耦：</strong>calendar 保证事件发生周期，字段预测器只处理同槽 active-event 序列；所以预测成功率不会影响 issue 周期。</li>
+  <li><strong>定宽正常流 + 原生例外流：</strong>正常路径可直接寻址，无 variable-bit cursor；连续例外也能通过独立端口保持一条/拍。这比 C 的变长块更硬件友好。</li>
+  <li><strong>字段级而非整指令 delta：</strong>不同位宽字段分别模加，控制字段原样保存，格式不依赖 workload-trained 字典。</li>
+</ul>
+<p>这些原则确实可用于其他静态 VLIW/CGRA 指令流，但它们目前只是一个<strong>通用设计模式</strong>；真正取得收益的数据相关性仍集中在本平台的 LOAD/STORE 地址。</p>
+
+<h3>7.2 新增 opcode-context 实验：逻辑上有效，物理上仍失败</h3>
+<p>为了避免只看相邻槽事件，本轮用主码中已有的 <code>optype</code>选择 previous context：例如 VECTOR opcode=ADD 的 dst/src delta 只相对上一条 ADD，而不受中间 MUL/SUB 干扰。无需额外 context bits，但每个 opcode 都要保存一组 previous operands。</p>
+<div class="table"><table><thead><tr><th>槽</th><th>固定 q</th><th>12 trace 原生位数</th><th>opcode-context 编码位数</th><th>编码/原生</th><th>例外数</th><th>判断</th></tr></thead><tbody>
+<tr><td>LOAD</td><td>6</td><td class="num">133,560</td><td class="num">60,924</td><td class="num">45.6%</td><td class="num">12</td><td>原 D；仅一个主要 opcode</td></tr>
+<tr><td>STORE</td><td>6</td><td class="num">120,960</td><td class="num">55,224</td><td class="num">45.7%</td><td class="num">12</td><td>原 D</td></tr>
+<tr><td>VECTOR</td><td>4</td><td class="num">251,328</td><td class="num">226,014</td><td class="num">89.9%</td><td class="num">1,647</td><td class="warn">只省 10.1% payload</td></tr>
+<tr><td>SCALAR</td><td>6</td><td class="num">92,256</td><td class="num">87,420</td><td class="num">94.8%</td><td class="num">324</td><td class="bad">只省 5.2%</td></tr>
+<tr><td>SFU</td><td>4</td><td class="num">116,064</td><td class="num">90,132</td><td class="num">77.7%</td><td class="num">492</td><td class="warn">位数有效，仍需第三恢复器/例外 Bank</td></tr>
+</tbody></table></div>
+<p>全套逻辑比率可从 D 的 18.1276%降至 <strong>16.6345%</strong>，看似接近 C 的 16.2110%。但密集 16-context 实现仅 previous operand 状态就要 <strong>1224 DFF bit</strong>，DFF-only 下界约 5263 GE / 0.01338 mm²；即使只实例化样本出现的 7/5/5 个 opcode，也需 480 bit，DFF-only 已约 2064 GE / 0.00525 mm²，尚未计 valid、opcode 映射、三套新增加法器/mux 和例外 SRAM。它获得的额外 SRAM 节省无法偿还这些状态。因此 opcode-context 是“还有相关性”的证据，不是可行主方案。</p>
+
+<h3>7.3 D 相对 A 还能保留什么价值</h3>
+<ul>
+  <li><strong>作为设计时可选的 slot codec：</strong>对具有长、规则内存流的 VLIW，可在综合时把该槽从 A 的 RAW vertical 换成 fixed-delta；对短流或不规则槽回退 A。这里的重点应是“物理成本驱动的自动选择”，不是宣称 delta 本身新颖。</li>
+  <li><strong>作为容量敏感性工具：</strong>当程序常驻数/展开因子使 L/S Bank 很深时，D 才可能跨过固定逻辑成本的 break-even；这一点可与第三篇的 R/tile 选择联动。</li>
+  <li><strong>作为 C 的硬件化边界：</strong>D 说明牺牲一部分压缩率换固定边界可以大幅降低解码器；适合作为论文中的设计空间点或消融。</li>
+</ul>
+<p><strong>不能声称的优势：</strong>D 不是新的通用 delta 算法，不保证每个 VLIW workload 都优于 A，也没有目前证据证明总能耗或总面积稳定下降。</p>
+
+<h2>8. 回顾此前 plan 的所有主要点：实验或理论判定</h2>
+<div class="table"><table><thead><tr><th>此前方向</th><th>证据/实验</th><th>本轮判定</th></tr></thead><tbody>
+<tr><td>5-bit mask + 原生纵向 payload</td><td>A：全套 21.8117%；无 FIFO，六 Bank 直接恢复</td><td><span class="tag g">保留为物理基线</span>，但接近 Li 2020，不能当论文创新</td></tr>
+<tr><td>mask 模板</td><td>4-bit template+escape 平均约 4.09 bit/cycle，而原 mask 5 bit/cycle</td><td>总压缩只改善约 0.5 个百分点，还要模板表/解码；不足</td></tr>
+<tr><td>固定 gap / gap 字典</td><td>分别约 22.26% / 20.80%；跨函数间隔不稳定</td><td>固定 gap 劣于 A；字典仅小幅优于 A且增状态，不作主线</td></tr>
+<tr><td>单/少 Bank deadline packet</td><td>B-256 全套 22.7851%，SRAM 只省 6.49%；逐程序经常更差</td><td><span class="tag r">淘汰</span>，FIFO/demux 没有物理回报</td></tr>
+<tr><td>RAW/CONST/STRIDE/DELTA 块</td><td>C-4b 16.2110%，但 ≥10.8k GE</td><td>保留软件上界，硬件主线淘汰</td></tr>
+<tr><td>字段 oracle / 每 workload 选 codec</td><td>软件上界可到约 10.02%</td><td>依赖逐字段/逐 workload 选择，不是统一低成本格式</td></tr>
+<tr><td>固定 LOAD/STORE field delta</td><td>D 18.1276%；最大配置面积估计 −8.77%，SRAM-only 读能 −5.67%</td><td>局部可行，尚不够论文；能耗还没计解码</td></tr>
+<tr><td>SFU delta</td><td>逻辑比率再降 0.47 个百分点，主+例外 SRAM 几乎等于原生 SFU Bank</td><td>第三恢复器后必然更差；淘汰</td></tr>
+<tr><td>opcode/context predictor</td><td>本轮新增：逻辑 16.6345%，但 context DFF-only ≥0.00525–0.01338 mm²</td><td>相关性存在，物理失败</td></tr>
+<tr><td>严格周期核/循环再卷</td><td>Softmax、LayerNorm 的严格结构核覆盖不足 4%；其他 workload 也不统一</td><td>不能做通用主格式；且接近 modulo schedule/loop buffer 既有工作</td></tr>
+<tr><td>旋转寄存器/仿射地址生成</td><td>VECTOR/SCALAR delta 分散，静态乱序破坏单一递推</td><td>若改 ISA/调度器则已不是纯压缩前端；需重新定义问题</td></tr>
+<tr><td>Huffman/LZW/Tunstall/算术编码</td><td>变长边界、多符号/拍、缓冲和解码路径</td><td>适合外存/i-cache，不适合压缩驻留、周期精确的一拍 issue 前端</td></tr>
+<tr><td>CSR/CSC/BCSR/bit-plane/RLE</td><td>calendar 已是二维稀疏坐标；额外索引或多平面读取</td><td>没有胜过 A 的索引成本/供给优势</td></tr>
+<tr><td>decompression cache</td><td>运行前或 cache miss 后重新展开</td><td>违背“压缩态驻留并读取”的问题目标</td></tr>
+<tr><td>checkpoint/LAT</td><td>当前第三篇 trace 为直线程序，无分支/随机入口</td><td>当前没有需求；未来支持跳转才需要</td></tr>
+<tr><td>mask 驱动读/分发门控 D3</td><td>A 已天然知道每周期有效槽</td><td>可做能耗优化，但不是压缩新颖性；需门级功耗证明</td></tr>
+<tr><td>R/tile/展开因子协同 D4</td><td>压缩改变可常驻程序容量与 Bank break-even</td><td><span class="tag w">仍有潜力</span>，但会改变调度/周期结果，必须升级成新的软硬件协同问题</td></tr>
+<tr><td>等价编码降低翻转</td><td>不减少存储容量，只可能降动态功耗</td><td>可作能耗消融，不能救活压缩论文</td></tr>
+</tbody></table></div>
+
+<h2>9. 不到 10% 的潜在优化是否值得做</h2>
+<div class="verdict"><strong>作为一篇独立小论文：当前不值得。</strong>“8.77%”还是 CACTI + generic GE 的早期结果；两条代表 workload 的逐程序面积反而恶化；总能耗目前只有 SRAM-only 的 5.67%下降，加入解码器可能归零；机制又主要由本平台规则 L/S 地址产生。它达不到足以抵抗审稿人“只是 A 上加 delta”的证据强度。</div>
+<p>可以把 D 保留为 <strong>1–2 周 kill test</strong>，但不应直接投入 3–4 个月完整实现。继续进入主线至少要同时满足：</p>
+<ul>
+  <li>真实工艺库 + SRAM compiler 或一致的 PPA 流程中，总 instruction-front-end 面积相对 A 至少下降 15%；</li>
+  <li>计入解码器、时钟和路由后，总取指/恢复动态能耗至少下降 15%；</li>
+  <li>1 GHz 或目标频率无停顿，连续例外、inactive bubble、程序切换全部 cycle-exact；</li>
+  <li>除本项目 12/28 条 trace 外，至少加入一组独立 VLIW/CGRA/static-accelerator 指令流仍有稳定收益。</li>
+</ul>
+<p>当前数据四项均未满足，所以正确的科学判断不是继续包装 8.77%，而是<strong>承认 D 只是一项局部优化</strong>。</p>
+
+<h2>10. 是否应承认普通纵向压缩已经最优</h2>
+<p><strong>不能说“信息论最优”。</strong>C 的 16.211%和 field oracle 的约 10.02%已经证明 A 后面还有可压缩信息。更准确的表述是：</p>
+<div class="decision"><strong>在当前约束下——压缩态片上常驻、五类异构槽、每周期精确恢复、稳态一拍一条、统一格式、很小解码器——Candidate A 已接近当前 trace 与 32 nm 估算中的物理 Pareto 前沿。</strong>后续压缩率收益会迅速换成 SRAM 取整、例外 Bank、状态寄存器或变长抽取逻辑，尚未找到稳定超越 A 的通用 codec。</div>
+<p>这是一个有价值的否定性结论，但单独写“我们试了很多，A 最好”通常不足以构成第四篇论文。若继续 VLIW 方向，必须调整问题定义。</p>
+
+<h2>11. 推荐的问题重定义与下一步</h2>
+<h3>11.1 首选：物理成本驱动的稀疏 VLIW 指令供给综合</h3>
+<p>把论文问题从“发明一个永远优于 A 的 codec”改成：</p>
+<div class="decision"><strong>给定静态 VLIW ISA、调度 trace、目标 SRAM 编译器和吞吐约束，如何在设计时为每个槽自动选择 RAW vertical、fixed field predictor 或不压缩，并共同确定 Bank 宽深、例外容量和流水级，使总面积/能耗最小且周期精确？</strong></div>
+<p>这里 A 是默认最优点，D 是某些长内存槽的可选原语，C 是不可实现的软件上界。生成器在<strong>硬件设计/综合时</strong>选择并删除不用的 codec，不是在每个 workload 运行时携带所有解码器，因此避免“通用菜单硬件全付费”。真正可能的创新应是物理成本模型、break-even 推导、自动生成 RTL/SRAM 配置和跨 ISA 验证，而不是 delta 本身。</p>
+<p><strong>风险：</strong>必须加入独立静态 VLIW/CGRA trace，否则仍会被认为是为第三篇 ISA 定制；还要证明自动选择比固定 A 有显著平均收益。若无法获得独立 trace，这条路不宜投稿。</p>
+
+<h3>11.2 更强但工作量更高：instruction-capacity-aware scheduling / R-tile 协同</h3>
+<p>第三篇已经在 R/tile、展开和执行周期之间做选择。新问题可以把“压缩后真实 SRAM 宏面积/容量”加入调度目标：不是保持原论文每一周期完全不变，而是重新生成一个功能等价但在性能—指令容量—取指能耗上更优的 schedule。压缩可能允许更大展开、更少分块或更多函数常驻；即使 A 已是最佳 codec，也可能产生系统级收益。</p>
+<p>这比“再省 A 的 8%”更可能形成论文，但它与 compression-aware scheduling / modulo scheduling 的已有工作更接近，必须重新做文献边界，而且会改变当前“逐周期对拍原 trace”的硬约束。它是明确的<strong>问题重定义</strong>，不是 D 的延伸补丁。</p>
+
+<h3>11.3 Go/No-Go 安排</h3>
+<ol>
+  <li><strong>第 1 周：</strong>完成 A 与 D 的同一套 cycle RTL、真实 SRAM latency wrapper、切换/例外测试；拿到可信增量逻辑与功耗，不再只用 GE。</li>
+  <li><strong>第 2 周：</strong>在 Softmax/LayerNorm/GELU 上做 Bank 深度 sweep，画出 D 相对 A 的 break-even 曲线；若目标工艺总收益仍 &lt;15%，正式停止“D 独立 codec”路线。</li>
+  <li><strong>第 3–4 周：</strong>选择“设计时 codec synthesis”或“容量感知 scheduling”之一做最小闭环；同时获取至少一套独立 trace。没有独立 trace 时直接 No-Go。</li>
+  <li><strong>第 4 周决策：</strong>只有在独立数据上出现可重复的 ≥15% 总面积/能耗或明确系统 Pareto 改善，才投入余下 8–10 周论文实现。</li>
+</ol>
+
+<h2>12. 可复现实验文件</h2>
+<ul>
+  <li><code>experiments/representative_candidate_sram_study.py</code>：本轮三个 X32 测例逐宏组织与 CACTI 调用。</li>
+  <li><code>results/representative_candidate_sram_study.json</code>：每个宏的逻辑宽深、CACTI 分配容量、面积、延迟、能耗及候选总计。</li>
+  <li><code>experiments/opcode_context_delta_study.py</code>：新增 opcode-context 固定差分的真实 encode/decode/roundtrip。</li>
+  <li><code>results/opcode_context_delta_study.json</code>：12 trace 的逐槽编码、例外数、上下文状态下界。</li>
+  <li><code>experiments/vliw_sparse_codec_study.py</code>：A/B/C/D 主编码与 cycle-exact roundtrip。</li>
+  <li><code>results/vliw_cacti_32nm.json</code>、<code>results/vliw_hardware_cost_estimate.json</code>：全套最大配置的既有物理估算。</li>
+</ul>
+<pre>/usr/bin/python3.11 experiments/representative_candidate_sram_study.py \
+  --cacti-root /tmp/cacti-vliw \
+  --output results/representative_candidate_sram_study.json
+
+/usr/bin/python3.11 experiments/opcode_context_delta_study.py \
+  --output results/opcode_context_delta_study.json</pre>
+
+<h2>13. 公开模型与数据边界</h2>
+<ul>
+  <li><a href="https://github.com/HewlettPackard/cacti">HP CACTI 官方仓库</a>：SRAM 宏面积、访问时间、泄漏和单次读取能耗的分析模型。</li>
+  <li><a href="https://users.ece.utexas.edu/~mcdermot/vlsi1/VLSI2_SP_2017/project_spring_17/docs/stdcell_lvt.pdf">SAED 32/28 nm 标准单元文档</a>：NAND2X1 公开面积量级。</li>
+  <li><a href="https://users.ece.cmu.edu/~omutlu/pub/bdi-compression_pact12.pdf">Base-Delta-Immediate, PACT 2012</a>：低动态范围和并行 base+delta 解码的思想来源。</li>
+  <li><a href="https://ir.cwi.nl/pub/10892">PForDelta 相关工作</a>：定宽正常值与例外流的思想边界。</li>
+</ul>
+<p class="small">CACTI 不是目标 foundry SRAM compiler；GE×NAND2 面积也不是 place-and-route。所有面积数字只适合方向筛选，不适合论文最终 PPA 表或流片判断。最终报告必须补真实 liberty/memory compiler、综合、STA、功耗和布线裕量。</p>
+
+<div class="verdict"><strong>最终建议给导师的一句话：</strong>普通纵向压缩 A 不是信息论最优，但在当前“压缩驻留 + 周期精确 + 一拍一条 + 小解码器”约束下已接近物理最优；D 的固定字段预测只在长规则内存流上过 break-even，现有不到 10%的全套粗面积优势且在两个代表程序上反向，不足以独立成文。继续 VLIW 方向必须把核心问题升级为“物理成本驱动的指令供给综合”或“压缩容量感知调度”，否则应及时停止该路线。</div>
+
+</main></body></html>

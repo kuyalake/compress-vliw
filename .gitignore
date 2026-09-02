@@ -1,0 +1,12 @@
+.DS_Store
+__pycache__/
+*.pyc
+.python-deps/
+
+# Reproducible per-run scheduler artifacts; keep compact summaries and winners.
+analysis_output_issue2_152/*_x*/
+analysis_output_issue2_174_priority/*_x*/
+analysis_output_issue5_174_priority/*_x*/
+analysis_output_priority_window_174/issue2/
+analysis_output_priority_window_174/issue5/
+analysis_output_issue124_four_lane_174/sweep/

@@ -1,0 +1,515 @@
+{
+  "model": {
+    "tool": "HP CACTI plus gate-equivalent logic screening",
+    "technology_nm": 32,
+    "frequency_ghz": 1.0,
+    "program_pool": [
+      "gelu_x64",
+      "softmax_x64",
+      "layernorm_x64"
+    ],
+    "warning": "SRAM values are CACTI screening estimates. Logic power is a measured-toggle range, not post-layout signoff.",
+    "read_gating_assumption": "Only lanes carrying valid events are read. Unselected groups and the unused lane of a single-event cycle remain disabled."
+  },
+  "macros": {
+    "config_6x8192": {
+      "logical_width": 6,
+      "logical_depth": 8192,
+      "physical_depth": 8192,
+      "logical_bits": 49152,
+      "allocated_word_bits": 8,
+      "allocated_bits": 65536,
+      "access_time_ns": 0.235371,
+      "cycle_time_ns": 0.191374,
+      "read_energy_nj": 0.00288734,
+      "write_energy_nj": 0.00107193,
+      "leakage_mw": 1.74309,
+      "height_mm": 0.173168,
+      "width_mm": 0.0818519,
+      "area_mm2": 0.0141741298192
+    },
+    "config_8x8192_sensitivity": {
+      "logical_width": 8,
+      "logical_depth": 8192,
+      "physical_depth": 8192,
+      "logical_bits": 65536,
+      "allocated_word_bits": 8,
+      "allocated_bits": 65536,
+      "access_time_ns": 0.235613,
+      "cycle_time_ns": 0.191688,
+      "read_energy_nj": 0.00324472,
+      "write_energy_nj": 0.00127169,
+      "leakage_mw": 1.74179,
+      "height_mm": 0.138438,
+      "width_mm": 0.108266,
+      "area_mm2": 0.014988128508000001
+    },
+    "payload_34x1024": {
+      "logical_width": 34,
+      "logical_depth": 1024,
+      "physical_depth": 1024,
+      "logical_bits": 34816,
+      "allocated_word_bits": 40,
+      "allocated_bits": 40960,
+      "access_time_ns": 0.213095,
+      "cycle_time_ns": 0.167779,
+      "read_energy_nj": 0.00213448,
+      "write_energy_nj": 0.00220594,
+      "leakage_mw": 1.13896,
+      "height_mm": 0.156283,
+      "width_mm": 0.0589962,
+      "area_mm2": 0.0092201031246
+    },
+    "payload_34x2048": {
+      "logical_width": 34,
+      "logical_depth": 2048,
+      "physical_depth": 2048,
+      "logical_bits": 69632,
+      "allocated_word_bits": 40,
+      "allocated_bits": 81920,
+      "access_time_ns": 0.232461,
+      "cycle_time_ns": 0.206752,
+      "read_energy_nj": 0.00407735,
+      "write_energy_nj": 0.00279496,
+      "leakage_mw": 2.11528,
+      "height_mm": 0.157435,
+      "width_mm": 0.113903,
+      "area_mm2": 0.017932318805
+    }
+  },
+  "four_lane_general": {
+    "name": "four_lane_general_symmetric",
+    "organization": {
+      "config": [
+        6,
+        8192,
+        1
+      ],
+      "payload_depths": [
+        2048,
+        2048,
+        2048,
+        2048
+      ],
+      "payload_event_reads": [
+        1442,
+        1442,
+        1441,
+        1441
+      ]
+    },
+    "logical_bits": 327680,
+    "cacti_allocated_bits": 393216,
+    "sram_area_mm2": 0.08590340503919999,
+    "logic_area_mm2": 0.0030395622400000003,
+    "total_area_mm2": 0.0889429672792,
+    "sram_leakage_mw": 10.20421,
+    "program_read_energy_nj": 39.318186600000004,
+    "program_read_energy_pj_per_event": 6.818970967741936,
+    "average_sram_dynamic_power_mw_at_1ghz": 7.1814039452054805,
+    "logic_dynamic_power_mw_range": [
+      0.07731024657534248,
+      0.3092409863013699
+    ],
+    "logic_leakage_power_mw_range": [
+      0.001196,
+      0.02392
+    ],
+    "total_active_power_mw_range": [
+      17.464120191780825,
+      17.71877493150685
+    ],
+    "logic": {
+      "categories_ge": {
+        "decoder_and_enable": 140.0,
+        "pair_mux": 204.0,
+        "two_to_five_router": 510.0,
+        "counters": 342.0
+      },
+      "total_ge": 1196.0,
+      "area_mm2": 0.0030395622400000003,
+      "measured_activity": {
+        "cycles": 5475,
+        "raw_toggles": {
+          "config": 14034,
+          "bank_enables": 11054,
+          "pair_mux_output": 93950,
+          "router_output": 92476,
+          "counters": 22435
+        },
+        "activity_factors": {
+          "decoder_and_enable": 0.45822831050228313,
+          "pair_mux": 0.25235025517056137,
+          "two_to_five_router": 0.09935643298415256,
+          "counters": 0.07188977008731876
+        },
+        "counter_bits": 57
+      },
+      "effective_switched_ge_per_cycle": 190.889497716895,
+      "assumptions": {
+        "voltage_v": 0.9,
+        "frequency_ghz": 1.0,
+        "effective_capacitance_ff_per_ge_range": [
+          0.5,
+          2.0
+        ],
+        "leakage_nw_per_ge_range": [
+          1.0,
+          20.0
+        ],
+        "warning": "Screening range only; replace with synthesized netlist, standard-cell library, and SAIF/VCD power analysis."
+      },
+      "dynamic_power_mw_range": [
+        0.07731024657534248,
+        0.3092409863013699
+      ],
+      "leakage_power_mw_range": [
+        0.001196,
+        0.02392
+      ]
+    }
+  },
+  "four_lane_pool_fitted": {
+    "name": "four_lane_pool_fitted",
+    "organization": {
+      "config": [
+        6,
+        8192,
+        1
+      ],
+      "payload_depths": [
+        2048,
+        2048,
+        1024,
+        1024
+      ],
+      "payload_event_reads": [
+        2048,
+        2048,
+        835,
+        835
+      ]
+    },
+    "logical_bits": 258048,
+    "cacti_allocated_bits": 311296,
+    "sram_area_mm2": 0.0684789736784,
+    "logic_area_mm2": 0.00300906496,
+    "total_area_mm2": 0.0714880386384,
+    "sram_leakage_mw": 8.25157,
+    "program_read_energy_nj": 36.073593699999996,
+    "program_read_energy_pj_per_event": 6.256259746791536,
+    "average_sram_dynamic_power_mw_at_1ghz": 6.588784237442922,
+    "logic_dynamic_power_mw_range": [
+      0.0699668383561644,
+      0.2798673534246576
+    ],
+    "logic_leakage_power_mw_range": [
+      0.001184,
+      0.02368
+    ],
+    "total_active_power_mw_range": [
+      14.911505075799084,
+      15.143901590867578
+    ],
+    "logic": {
+      "categories_ge": {
+        "decoder_and_enable": 140.0,
+        "pair_mux": 204.0,
+        "two_to_five_router": 510.0,
+        "counters": 330.0
+      },
+      "total_ge": 1184.0,
+      "area_mm2": 0.00300906496,
+      "measured_activity": {
+        "cycles": 5475,
+        "raw_toggles": {
+          "config": 11934,
+          "bank_enables": 6070,
+          "pair_mux_output": 93950,
+          "router_output": 92476,
+          "counters": 22419
+        },
+        "activity_factors": {
+          "decoder_and_enable": 0.3288401826484018,
+          "pair_mux": 0.25235025517056137,
+          "two_to_five_router": 0.09935643298415256,
+          "counters": 0.07445080946450809
+        },
+        "counter_bits": 55
+      },
+      "effective_switched_ge_per_cycle": 172.75762557077627,
+      "assumptions": {
+        "voltage_v": 0.9,
+        "frequency_ghz": 1.0,
+        "effective_capacitance_ff_per_ge_range": [
+          0.5,
+          2.0
+        ],
+        "leakage_nw_per_ge_range": [
+          1.0,
+          20.0
+        ],
+        "warning": "Screening range only; replace with synthesized netlist, standard-cell library, and SAIF/VCD power analysis."
+      },
+      "dynamic_power_mw_range": [
+        0.0699668383561644,
+        0.2798673534246576
+      ],
+      "leakage_power_mw_range": [
+        0.001184,
+        0.02368
+      ]
+    }
+  },
+  "physical_8bit_config_port_sensitivity": {
+    "general": {
+      "name": "four_lane_general_physical_8bit_config_port",
+      "organization": {
+        "config": [
+          6,
+          8192,
+          1
+        ],
+        "payload_depths": [
+          2048,
+          2048,
+          2048,
+          2048
+        ],
+        "payload_event_reads": [
+          1442,
+          1442,
+          1441,
+          1441
+        ]
+      },
+      "logical_bits": 327680,
+      "cacti_allocated_bits": 393216,
+      "sram_area_mm2": 0.086717403728,
+      "logic_area_mm2": 0.0030395622400000003,
+      "total_area_mm2": 0.08975696596800001,
+      "sram_leakage_mw": 10.20291,
+      "program_read_energy_nj": 41.2748421,
+      "program_read_energy_pj_per_event": 7.158314620187305,
+      "average_sram_dynamic_power_mw_at_1ghz": 7.53878394520548,
+      "logic_dynamic_power_mw_range": [
+        0.07731024657534248,
+        0.3092409863013699
+      ],
+      "logic_leakage_power_mw_range": [
+        0.001196,
+        0.02392
+      ],
+      "total_active_power_mw_range": [
+        17.820200191780824,
+        18.07485493150685
+      ],
+      "logic": {
+        "categories_ge": {
+          "decoder_and_enable": 140.0,
+          "pair_mux": 204.0,
+          "two_to_five_router": 510.0,
+          "counters": 342.0
+        },
+        "total_ge": 1196.0,
+        "area_mm2": 0.0030395622400000003,
+        "measured_activity": {
+          "cycles": 5475,
+          "raw_toggles": {
+            "config": 14034,
+            "bank_enables": 11054,
+            "pair_mux_output": 93950,
+            "router_output": 92476,
+            "counters": 22435
+          },
+          "activity_factors": {
+            "decoder_and_enable": 0.45822831050228313,
+            "pair_mux": 0.25235025517056137,
+            "two_to_five_router": 0.09935643298415256,
+            "counters": 0.07188977008731876
+          },
+          "counter_bits": 57
+        },
+        "effective_switched_ge_per_cycle": 190.889497716895,
+        "assumptions": {
+          "voltage_v": 0.9,
+          "frequency_ghz": 1.0,
+          "effective_capacitance_ff_per_ge_range": [
+            0.5,
+            2.0
+          ],
+          "leakage_nw_per_ge_range": [
+            1.0,
+            20.0
+          ],
+          "warning": "Screening range only; replace with synthesized netlist, standard-cell library, and SAIF/VCD power analysis."
+        },
+        "dynamic_power_mw_range": [
+          0.07731024657534248,
+          0.3092409863013699
+        ],
+        "leakage_power_mw_range": [
+          0.001196,
+          0.02392
+        ]
+      }
+    },
+    "pool_fitted": {
+      "name": "four_lane_pool_fitted_physical_8bit_config_port",
+      "organization": {
+        "config": [
+          6,
+          8192,
+          1
+        ],
+        "payload_depths": [
+          2048,
+          2048,
+          1024,
+          1024
+        ],
+        "payload_event_reads": [
+          2048,
+          2048,
+          835,
+          835
+        ]
+      },
+      "logical_bits": 258048,
+      "cacti_allocated_bits": 311296,
+      "sram_area_mm2": 0.06929297236720001,
+      "logic_area_mm2": 0.00300906496,
+      "total_area_mm2": 0.07230203732720002,
+      "sram_leakage_mw": 8.25027,
+      "program_read_energy_nj": 38.0302492,
+      "program_read_energy_pj_per_event": 6.595603399236905,
+      "average_sram_dynamic_power_mw_at_1ghz": 6.946164237442923,
+      "logic_dynamic_power_mw_range": [
+        0.0699668383561644,
+        0.2798673534246576
+      ],
+      "logic_leakage_power_mw_range": [
+        0.001184,
+        0.02368
+      ],
+      "total_active_power_mw_range": [
+        15.267585075799087,
+        15.49998159086758
+      ],
+      "logic": {
+        "categories_ge": {
+          "decoder_and_enable": 140.0,
+          "pair_mux": 204.0,
+          "two_to_five_router": 510.0,
+          "counters": 330.0
+        },
+        "total_ge": 1184.0,
+        "area_mm2": 0.00300906496,
+        "measured_activity": {
+          "cycles": 5475,
+          "raw_toggles": {
+            "config": 11934,
+            "bank_enables": 6070,
+            "pair_mux_output": 93950,
+            "router_output": 92476,
+            "counters": 22419
+          },
+          "activity_factors": {
+            "decoder_and_enable": 0.3288401826484018,
+            "pair_mux": 0.25235025517056137,
+            "two_to_five_router": 0.09935643298415256,
+            "counters": 0.07445080946450809
+          },
+          "counter_bits": 55
+        },
+        "effective_switched_ge_per_cycle": 172.75762557077627,
+        "assumptions": {
+          "voltage_v": 0.9,
+          "frequency_ghz": 1.0,
+          "effective_capacitance_ff_per_ge_range": [
+            0.5,
+            2.0
+          ],
+          "leakage_nw_per_ge_range": [
+            1.0,
+            20.0
+          ],
+          "warning": "Screening range only; replace with synthesized netlist, standard-cell library, and SAIF/VCD power analysis."
+        },
+        "dynamic_power_mw_range": [
+          0.0699668383561644,
+          0.2798673534246576
+        ],
+        "leakage_power_mw_range": [
+          0.001184,
+          0.02368
+        ]
+      }
+    },
+    "purpose": "Conservative sensitivity when the SRAM compiler exposes the whole allocated byte instead of a six-bit read port."
+  },
+  "references": {
+    "candidate_a_symmetric": {
+      "sram_area_mm2": 0.105116335129,
+      "estimated_total_area_mm2": 0.106305729049,
+      "program_read_energy_nj": 43.60010629,
+      "sram_only_active_power_mw": 20.29789824500275
+    },
+    "candidate_a_compact": {
+      "sram_area_mm2": 0.0964041194486,
+      "estimated_total_area_mm2": 0.0975782647286,
+      "program_read_energy_nj": 42.35666949,
+      "sram_only_active_power_mw": 19.093550223730055
+    },
+    "two_lane_general_symmetric": {
+      "sram_area_mm2": 0.08336277245,
+      "estimated_total_area_mm2": 0.08547725052999999,
+      "program_read_energy_nj": 56.03527563,
+      "sram_only_active_power_mw": 20.31891353972603
+    },
+    "two_lane_pool_fitted": {
+      "sram_area_mm2": 0.067341075582,
+      "estimated_total_area_mm2": 0.069440305022,
+      "program_read_energy_nj": 52.30718643,
+      "sram_only_active_power_mw": 17.574124005479455
+    }
+  },
+  "comparisons": {
+    "general_vs_a_symmetric": {
+      "sram_area_change": -0.18277777727145517,
+      "program_read_energy_change": -0.09820892778378576,
+      "estimated_total_area_change": -0.16332856117093097,
+      "total_power_range_change_vs_reference_sram_only": [
+        -0.1396094324159688,
+        -0.12706356502357907
+      ]
+    },
+    "general_vs_two_lane_general": {
+      "sram_area_change": 0.03047682454088041,
+      "program_read_energy_change": -0.2983315213863257,
+      "estimated_total_area_change": 0.040545486988770696,
+      "total_power_range_change_vs_reference_sram_only": [
+        -0.14049931077090927,
+        -0.12796641922490504
+      ]
+    },
+    "fitted_vs_a_compact": {
+      "sram_area_change": -0.2896675570496644,
+      "program_read_energy_change": -0.14833734251658715,
+      "estimated_total_area_change": -0.26737743454206975,
+      "total_power_range_change_vs_reference_sram_only": [
+        -0.2190292061417366,
+        -0.20685773921466588
+      ]
+    },
+    "fitted_vs_two_lane_fitted": {
+      "sram_area_change": 0.016897533735029224,
+      "program_read_energy_change": -0.310351097773622,
+      "estimated_total_area_change": 0.02948912185439334,
+      "total_power_range_change_vs_reference_sram_only": [
+        -0.15150791748426207,
+        -0.1382841280654532
+      ]
+    }
+  }
+}

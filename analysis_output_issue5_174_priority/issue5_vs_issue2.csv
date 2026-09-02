@@ -1,0 +1,13 @@
+case,mode,priority_strategy,cycles,issue2_mode,issue2_priority_strategy,issue2_cycles,issue2_cycle_change_vs_optimized_issue5
+softmax_x32,2,critical_path,508,2,critical_path,506,-0.003937007874015741
+softmax_x64,1,critical_path,936,1,critical_age,939,0.0032051282051281937
+layernorm_x32,0,latency,737,0,index,812,0.10176390773405708
+layernorm_x64,0,index,1450,0,index,1516,0.04551724137931035
+gelu_x32,2,index,1560,2,index,1560,0.0
+gelu_x64,2,index,3096,2,index,3096,0.0
+logsoftmax_x32,2,shortest_latency,1805,1,latency,1889,0.04653739612188357
+logsoftmax_x64,2,shortest_latency,3493,2,latency,3699,0.05897509304322934
+softplus_x32,2,index,1342,2,index,1342,0.0
+softplus_x64,2,index,2684,2,index,2684,0.0
+logsumexp_x32,2,shortest_latency,848,2,latency,868,0.02358490566037741
+logsumexp_x64,2,shortest_latency,1581,2,latency,1644,0.03984819734345346

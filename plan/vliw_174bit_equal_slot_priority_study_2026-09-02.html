@@ -1,0 +1,1222 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>174-bit等宽VLIW、双Lane调度与可替换代码池：完整研究记录</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg:#f4f6f9; --panel:#fff; --text:#202936; --muted:#616d7a;
+      --line:#d8e0e8; --accent:#155eef; --good:#137a4b; --warn:#9a6700; --bad:#b42318;
+    }
+    @media (prefers-color-scheme:dark) {
+      :root {
+        --bg:#11151a; --panel:#181e25; --text:#e9edf2; --muted:#aab3be;
+        --line:#303945; --accent:#78a9ff; --good:#58c78f; --warn:#e3b341; --bad:#ff7b72;
+      }
+    }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body {
+      margin:0; background:var(--bg); color:var(--text);
+      font:15px/1.68 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    .layout { width:min(1260px,calc(100% - 28px)); margin:20px auto 72px; }
+    nav, header, section {
+      background:var(--panel); border:1px solid var(--line); border-radius:12px;
+      padding:24px; margin:14px 0;
+    }
+    nav ol { columns:2; margin:8px 0 0; }
+    nav a { color:var(--accent); text-decoration:none; }
+    h1 { margin:0 0 8px; font-size:28px; line-height:1.28; }
+    h2 { margin:0 0 12px; font-size:21px; }
+    h3 { margin:22px 0 8px; font-size:17px; }
+    h4 { margin:16px 0 6px; font-size:15px; }
+    p { margin:8px 0; }
+    li { margin:5px 0; }
+    code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .muted, small { color:var(--muted); }
+    .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+    .grid-2 { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+    .card { border:1px solid var(--line); border-radius:9px; padding:15px; }
+    .stat b { display:block; font-size:23px; margin-top:3px; }
+    .good { color:var(--good); } .warn { color:var(--warn); } .bad { color:var(--bad); }
+    .callout {
+      margin:14px 0; padding:14px 16px; border-left:4px solid var(--accent);
+      background:color-mix(in srgb,var(--accent) 7%,var(--panel));
+    }
+    .callout.good { border-left-color:var(--good); color:var(--text); }
+    .callout.warn { border-left-color:var(--warn); color:var(--text); }
+    .callout.bad { border-left-color:var(--bad); color:var(--text); }
+    pre, .formula {
+      white-space:pre-wrap; overflow-wrap:anywhere;
+      background:color-mix(in srgb,var(--text) 5%,var(--panel));
+      border:1px solid var(--line); border-radius:8px; padding:14px;
+      font:14px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;
+    }
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th,td { border-bottom:1px solid var(--line); padding:9px 10px; text-align:right; vertical-align:top; }
+    th:first-child,td:first-child { text-align:left; }
+    th { color:var(--muted); font-weight:650; }
+    .left th,.left td { text-align:left; }
+    .tag {
+      display:inline-block; border:1px solid var(--line); border-radius:999px;
+      padding:2px 8px; margin-right:5px; font-size:12px;
+    }
+    @media (max-width:850px) {
+      .grid-4,.grid-2 { grid-template-columns:1fr 1fr; }
+      nav ol { columns:1; }
+    }
+    @media (max-width:560px) { .grid-4,.grid-2 { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <header>
+    <h1>174-bit等宽VLIW、双Lane调度与可替换代码池</h1>
+    <p class="muted">从A/B/C/D详细重判之后的全部讨论、实验、口径修正与当前方案</p>
+    <div class="grid-4">
+      <div class="card stat">公平周期代价<b class="warn">+2.03%</b><small>最坏LogSoftmax X64：+5.58%</small></div>
+      <div class="card stat">对称工作点容量<b class="good">−17.89%</b><small>389,120 → 319,488 bit</small></div>
+      <div class="card stat">对称工作点面积<b class="good">−19.67%</b><small>CACTI SRAM + 424 GE增量</small></div>
+      <div class="card stat">对称工作点读能量<b class="bad">+28.52%</b><small>43.60 → 56.04 nJ</small></div>
+    </div>
+    <div class="callout warn">
+      <strong>时间边界与最终口径：</strong>
+      本文直接接续<a href="vliw_compression_abcd_detailed_reassessment_2026-09-01.html">A/B/C/D详细重判文档</a>。
+      中间生成的<code>vliw_152bit_issue2_joint_scheduling_reassessment_2026-09-02.html</code>已作废；
+      其中仍有价值的152-bit过渡实验、第一轮双发射结果和低翻转讨论已完整吸收到本文，不再要求读者先阅读该文件。
+      讨论中先后出现“跨12条指令轨迹取每条流的最大值”“六函数各用独立SRAM”“三函数共享可替换代码池”三种物理模型；
+      前两者均已明确作废。当前唯一有效模型是：片上统一保存GELU、Softmax、LayerNorm X64，
+      并允许未来程序替换；A使用五个对称34×2048槽Bank，双Lane使用两个34×4096 Bank。
+    </div>
+    <div class="callout good">
+      <strong>2026-09-02先行工作目标函数复现实验更新：</strong>
+      Kultala式FU优先级评分和固定T调度后整理的容量目标检查已完成。两者在本机上均无法降低<code>5T+34N</code>；
+      但实验发现“Lane越平衡越省SRAM”并不成立。当前三函数池若把单操作周期集中到一条Lane，
+      所需深度由<code>2883+2883</code>变为<code>4026+1740</code>，物理取整由
+      <code>4096+4096</code>降为<code>4096+2048</code>。这是池级深度边界感知映射的候选新增结果，
+      其程序替换适用范围仍需单独验证。
+    </div>
+    <div class="callout good">
+      <strong>自适应四Lane更新：</strong>
+      从1/2/4容量设想出发，采用无独立mode字段的0–4操作mask后，12条轨迹总周期与优化五槽基线完全相同；
+      5-bit mask加2-bit循环相位可逐bit恢复。
+      三函数池4×2048工作点总估计面积0.092430 mm²、活动功耗18.280–18.612 mW；
+      相对A-symmetric面积下降13.05%，相对2×4096双Lane面积增加8.13%但SRAM读能量下降22.17%。
+    </div>
+  </header>
+
+  <nav>
+    <strong>目录</strong>
+    <ol>
+      <li><a href="#terms">阅读前先看：术语和缩写</a></li>
+      <li><a href="#inherited">A/B/C/D基准文档的起点</a></li>
+      <li><a href="#timeline">本轮讨论与决策演进</a></li>
+      <li><a href="#isa174">152→174-bit等宽ISA</a></li>
+      <li><a href="#schemes">所有方案的清晰定义</a></li>
+      <li><a href="#priority">优先级与最佳节点对实验</a></li>
+      <li><a href="#performance">公平性能结果</a></li>
+      <li><a href="#encoding">双Lane编码格式</a></li>
+      <li><a href="#correctness">逐周期恢复与硬件</a></li>
+      <li><a href="#pool">三函数可替换代码池</a></li>
+      <li><a href="#capacity">容量比较</a></li>
+      <li><a href="#ppa">CACTI与逻辑面积</a></li>
+      <li><a href="#energy">读能量为何升高</a></li>
+      <li><a href="#toggle">低翻转讨论</a></li>
+      <li><a href="#invalid">已作废模型与否定结论</a></li>
+      <li><a href="#innovation">当前论文故事与风险</a></li>
+      <li><a href="#prior-art">与Kultala 2016的关键对比</a></li>
+      <li><a href="#four-lane">四Lane对照实验</a></li>
+      <li><a href="#adaptive-124">自适应四Lane（源自1/2/4设想）</a></li>
+      <li><a href="#next">下一步工作</a></li>
+      <li><a href="#files">代码、数据与复现</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section id="terms">
+      <h2>阅读前先看：本文术语和缩写是什么意思</h2>
+      <p>
+        本文保留少量英文，是为了能与代码变量和已有论文对应。第一次阅读时可先看本节；
+        后文中的“Bank”“Lane”等词都只取下面定义，不含其他隐含意思。
+      </p>
+      <div class="table-wrap">
+        <table class="left">
+          <thead><tr><th>术语</th><th>本文中的通俗含义</th></tr></thead>
+          <tbody>
+            <tr><td>VLIW</td><td>超长指令字。一条指令同时包含多个功能槽，规定这一拍哪些功能单元执行什么操作。</td></tr>
+            <tr><td>槽（slot）</td><td>VLIW中固定分给某类功能单元的位置。本文有LOAD、STORE、VECTOR、SCALAR、SFU五个功能槽。</td></tr>
+            <tr><td>LOAD / STORE</td><td>分别把数据从片上数据存储器读入计算通路、以及把结果写回数据存储器。</td></tr>
+            <tr><td>VECTOR / VE</td><td>向量计算槽/向量执行单元，一条操作同时处理一组数据。</td></tr>
+            <tr><td>SCALAR</td><td>标量计算槽，一条操作处理单个普通数值或控制量。</td></tr>
+            <tr><td>SFU</td><td>特殊函数单元，用于指数、倒数等普通加减乘之外的非线性操作。</td></tr>
+            <tr><td>GPR</td><td>通用寄存器（General-Purpose Register），保存普通中间数值或地址。</td></tr>
+            <tr><td>mem_addr</td><td>LOAD/STORE操作中的片上存储地址字段，指出要访问哪一行向量数据。</td></tr>
+            <tr><td>发射宽度（issue width）</td><td>一拍最多能同时启动多少个有效操作。“2-wide”或“双发射”就是一拍最多两个。</td></tr>
+            <tr><td>Lane（物理通道）</td><td>保存并输出有效操作的共享34-bit通道。它不是新的功能单元；Lane中的操作还要按配置码送回五类功能槽之一。</td></tr>
+            <tr><td>Bank（独立存储块）</td><td>一块可独立寻址和读取的SRAM。五槽方案有五块操作Bank，双Lane方案只有两块共享操作Bank。</td></tr>
+            <tr><td>SRAM</td><td>片上静态随机存储器，本文用来常驻保存压缩后的程序指令。</td></tr>
+            <tr><td>Configuration / Calendar</td><td>每拍的5-bit配置记录，说明本拍哪些Lane有效、分别送往哪个功能槽，以及程序是否结束。</td></tr>
+            <tr><td>mask（有效位图）</td><td>用若干bit直接标记哪些功能槽有效。例如五位中的第3位为1，表示对应槽本拍有操作。</td></tr>
+            <tr><td>payload（操作内容）</td><td>真正的34-bit有效操作内容，包括操作码、寄存器和地址等；不包含“送往哪个槽”的配置信息。</td></tr>
+            <tr><td>NOP</td><td>空操作。该槽本拍什么也不执行，通常用操作码为0表示。</td></tr>
+            <tr><td>EOP</td><td>程序结束标志（End Of Program），通知取指电路不再继续读取本函数。</td></tr>
+            <tr><td>Trace（指令轨迹）</td><td>调度器生成的一整条逐周期指令记录；每一行对应一个执行周期。</td></tr>
+            <tr><td>workload（测试任务）</td><td>被编译和测试的函数及输入规模，例如GELU X64或Softmax X32。</td></tr>
+            <tr><td>X32 / X64</td><td>同一函数分别使用X=32或X=64的输入/分块规模，不表示32-bit或64-bit数据类型。</td></tr>
+            <tr><td>mode（调度模式）</td><td>原调度器针对功能单元虚拟化等资源配置提供的候选设置；实验会为每个任务比较不同mode。</td></tr>
+            <tr><td>schedule（调度结果）</td><td>编译器决定每个操作在哪一拍、哪个功能槽执行后形成的逐周期安排。</td></tr>
+            <tr><td>DAG</td><td>有向无环依赖图。节点是操作，边表示一个操作必须等待另一个操作产生结果。</td></tr>
+            <tr><td>依赖/资源冲突</td><td>依赖是后一个操作必须等待前一个结果；资源冲突是同一拍有多个操作争用同一个功能单元、端口或存储Bank。</td></tr>
+            <tr><td>active state</td><td>调度器正在跟踪的尚未完成或仍占用资源的数据/操作状态；过早发射可能让它们存活更久。</td></tr>
+            <tr><td>编码—解码往返验证（roundtrip）</td><td>先把原数据编码，再解码回来，逐项核对是否完全一致。它证明软件格式正确，不等于RTL硬件已经验证。</td></tr>
+            <tr><td>bit-exact</td><td>逐bit完全相同，包括所有有效字段和要求为零的无效字段。</td></tr>
+            <tr><td>行为等价</td><td>每拍真正执行的操作及结果相同；不影响执行的无效字段允许保持旧值以降低翻转。</td></tr>
+            <tr><td>编码/解码格式（codec）</td><td>规定指令如何缩短保存、又如何恢复的规则。后文不再用“codec路线”代替这一完整含义。</td></tr>
+            <tr><td>RAW / DICT / DELTA</td><td>三种保存字段的方法：RAW原值直存；DICT用字典编号代替常见值；DELTA保存与前值的差。</td></tr>
+            <tr><td>CONST / STRIDE</td><td>CONST表示一组值恒定；STRIDE表示按固定步长变化，可用起点和步长恢复。</td></tr>
+            <tr><td>oracle（软件理想上界）</td><td>软件事后查看完整数据，为每个字段挑最省位数的方法。真实硬件事前不知道答案，因此该结果只代表理论参考。</td></tr>
+            <tr><td>exception / RAW escape</td><td>预测或差分无法表示某个值时，额外保存一次完整原值的补救记录。</td></tr>
+            <tr><td>template（指令模板）</td><td>预先规定哪些槽可以省略的指令格式。匹配不同模板时，已有工作的一条指令可有不同长度。</td></tr>
+            <tr><td>fallback（保底完整格式）</td><td>短模板装不下时，退回可以容纳所有槽的完整宽指令，程序仍然可以执行，只是占空间更大。</td></tr>
+            <tr><td>post-pass（调度后优化）</td><td>主调度完成后再运行的一次整理，不从头生成整个schedule。</td></tr>
+            <tr><td>slack（可移动余量）</td><td>在不违反前后依赖、也不延长程序的条件下，一个操作最早和最晚执行周期之间的空间。</td></tr>
+            <tr><td>priority / importance（优先级）</td><td>多个操作同拍都可以发射时，调度器用来决定先选谁的分数。</td></tr>
+            <tr><td>critical path / fanout / age</td><td>分别表示最长依赖路径、一个节点能解锁多少后继、节点已经等待多久，都是构造优先级的候选指标。</td></tr>
+            <tr><td>bottom-level</td><td>从当前节点走到程序末尾的估计最长剩余延迟，用来近似该节点是否位于关键依赖路径。</td></tr>
+            <tr><td>latency（延迟）</td><td>一个操作发射后，要经过多少拍才能产生可供后续操作使用的结果。</td></tr>
+            <tr><td>pair-aware</td><td>不只给单个节点打分，还估计两个节点放在同一拍是否合适。</td></tr>
+            <tr><td>beam search（有限候选搜索）</td><td>每一步只保留少量最有希望的调度方案继续尝试，在质量与软件运行时间之间折中。</td></tr>
+            <tr><td>Bank folding（存储块折叠）</td><td>让多条逻辑操作流共用更少的物理SRAM Bank。本文是五条功能槽流共用两个Lane Bank。</td></tr>
+            <tr><td>代码池（code pool）</td><td>一块统一容量的片上指令存储区域，可同时装入多个函数，也允许以后卸载旧函数、换入新函数。</td></tr>
+            <tr><td>base / length / descriptor</td><td>程序描述符中的起始地址、有效长度和其他元数据，用于找到某个函数在代码池中的位置。</td></tr>
+            <tr><td>header（头部元数据）</td><td>放在程序开头、不是功能操作本身的信息，例如各流长度、起始地址和版本。</td></tr>
+            <tr><td>padding（填充浪费）</td><td>为了让Bank深度或程序块形状整齐而保留、但没有存放有效操作的空间。</td></tr>
+            <tr><td>2次幂取整</td><td>所需深度不是1024、2048、4096等常见规格时，向上配置到可实现容量，产生额外空余空间。</td></tr>
+            <tr><td>sub-bank（子存储块）</td><td>把一个深Bank拆成几个较浅、可分别关闭的Bank，以降低单次读取能耗，但会增加外围电路。</td></tr>
+            <tr><td>FIFO / Reservoir</td><td>先进先出队列/暂存池，用来提前缓存未来操作。当前双Lane方案不需要它们。</td></tr>
+            <tr><td>demux / router</td><td>分流器/路由器。根据配置码把一条Lane输出送到五个功能槽中的指定位置。</td></tr>
+            <tr><td>scoreboard / interlock</td><td>运行时检查依赖或资源未就绪并暂停发射的硬件。本文目标是由静态调度避免需要这种动态纠错。</td></tr>
+            <tr><td>RTL</td><td>寄存器传输级硬件代码，例如Verilog；比Python格式模拟更接近真实电路。</td></tr>
+            <tr><td>STA</td><td>静态时序分析，用来检查电路在目标时钟频率下能否按时完成信号传播。</td></tr>
+            <tr><td>SAIF / VCD</td><td>记录硬件信号翻转活动的文件，用于估算动态功耗。</td></tr>
+            <tr><td>CACTI</td><td>公开的存储器估算工具，根据Bank宽度、深度和工艺粗估SRAM面积、延迟和能量；不是代工厂最终数据。</td></tr>
+            <tr><td>SRAM宏（memory macro）</td><td>按固定字宽、字深实现的一整块存储器硬件，例如34×4096表示4096行、每行34 bit。</td></tr>
+            <tr><td>foundry SRAM compiler</td><td>芯片代工厂提供的存储器生成工具；它给出的目标工艺面积和时序比CACTI粗估更可信。</td></tr>
+            <tr><td>GE</td><td>门等效数量，把逻辑规模折算成若干个基本逻辑门，仅用于早期粗估。</td></tr>
+            <tr><td>PPA</td><td>性能、功耗、面积三项硬件指标的合称。</td></tr>
+            <tr><td>Pareto点</td><td>无法在不牺牲其他指标的情况下继续改善某一指标的折中方案；例如更小面积但更高能耗。</td></tr>
+            <tr><td>EDA</td><td>电子设计自动化，即自动搜索硬件结构、生成电路并评估实现结果的一类工具流程。</td></tr>
+            <tr><td>消融实验</td><td>逐个关闭或替换方案组成部分，确认最终收益究竟来自哪一项，而不是只报告总结果。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="inherited">
+      <h2>1. A/B/C/D详细重判给出的直接起点</h2>
+      <p>
+        基准文档对四类候选完成了真实编码/解码、编码后再解码并逐周期核对、SRAM物理组织粗估和逻辑规模粗估。
+        本文不是从“已经选定双Lane”开始，而是从以下结论继续寻找可在四个月内完成的新问题。
+      </p>
+      <div class="table-wrap">
+        <table class="left">
+          <thead><tr><th>候选</th><th>机制</th><th>基准文档结论</th><th>对本文的影响</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Candidate A</td>
+              <td>每拍保存5-bit槽有效记录，五类槽各自把原始34-bit有效操作依次存入独立SRAM；有效位控制各自读指针。</td>
+              <td>定宽、无需补救记录、无需缓存队列，已接近面积—能耗折中前沿；但接近Li式纵向删除NOP，创新不足。</td>
+              <td>保留为所有新方案必须击败的强基线。</td>
+            </tr>
+            <tr>
+              <td>Candidate B</td>
+              <td>把各类记录装入固定256-bit数据包，包头用3 bit标明流类型；用六条先进先出队列提前缓存。</td>
+              <td>全部SRAM只比A小约6.49%，尚未加入队列和分流电路；逐程序Softmax/LayerNorm甚至已经更差。</td>
+              <td>“用数据包和队列把六个Bank合成一个Bank”的方案淘汰；后续双Lane明确不使用队列。</td>
+            </tr>
+            <tr>
+              <td>Candidate C</td>
+              <td>每16个有效操作为一组，在原值直存、常数、固定步长、相邻差值之间选最短表示，并从变长比特流中提取。</td>
+              <td>逻辑容量可到16.211%，但简化恢复器已约1.08万个基本门等效，加入逻辑后的总面积反而更大。</td>
+              <td>只证明A之后仍有信息冗余；不作为硬件格式。</td>
+            </tr>
+            <tr>
+              <td>Candidate D</td>
+              <td>LOAD/STORE的存储地址和通用寄存器地址优先保存相邻差值；表示不了时另存完整原值。</td>
+              <td>最大配置粗面积约−8.77%，但GELU X32为−10.1%，LayerNorm X32为+13.5%，Softmax X32为+35.1%。</td>
+              <td>只保留为后期局部地址优化，不作为通用核心。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>1.1 为什么不继续只寻找传统编码/解码压缩格式</h3>
+      <ul>
+        <li>软件事后为每条指令轨迹、每个字段自由挑选“原值、字典编号或相邻差值”的理想结果约为10.02%，但真实固定硬件无法事先知道每个字段该选哪一种。</li>
+        <li>普通值字典无法跨不同非线性测试任务稳定复用；静态乱序发射也会打乱简单的地址差值规律。</li>
+        <li>间隔字典、有效槽组合模板和重复周期片段的额外收益，不足以覆盖字典编号、历史状态和解码电路成本。</li>
+        <li>A并非理论上再也不能压缩，但在“压缩格式直接驻留片上、每拍持续供给、所有任务使用同一格式、解码器很小”的约束下，传统编码/解码方法已很难稳定超过A。</li>
+      </ul>
+      <h3>1.2 基准文档给出的两个问题重定义</h3>
+      <div class="grid-2">
+        <div class="card">
+          <h3>11.1 物理成本驱动供给综合</h3>
+          <p>设计时共同搜索编码方法、SRAM宽度和深度、完整原值补救区容量及流水级数。后续讨论认为它更像自动硬件设计工具研究，还需要外部VLIW/CGRA指令数据和自动生成硬件代码，四个月风险较高，因此未选为主线。</p>
+        </div>
+        <div class="card">
+          <h3>11.2 容量感知调度/R-tile协同</h3>
+          <p>允许重新生成一个功能结果相同的逐周期调度，把执行周期、指令容量和取指存储器成本共同考虑。本文的“每拍最多两个操作+两个共享物理通道”正是沿这条路线形成。</p>
+        </div>
+      </div>
+      <h3>1.3 152-bit过渡阶段（中间文档已作废，但结果保留）</h3>
+      <p>
+        首先把mem_addr从28 bit缩到12 bit，使LOAD/STORE从42 bit降到26 bit，形成
+        26/26/34/31/31+4=152 bit的过渡ISA。随后进行第一轮index-first双发射调度：
+      </p>
+      <ul>
+        <li>相对旧五槽调度总周期增加1.66%，证明每拍最多双发射在这些指令轨迹上有现实性能潜力。</li>
+        <li>双34-bit Lane因26/31→34 bit补宽，逻辑容量比A增加9.49%。</li>
+        <li>旧“对12条指令轨迹的每条流分别取最大深度”存储器估算中，分段SRAM面积−6.41%，加入约337个基本门等效的逻辑后仅−4.80%。</li>
+        <li>旧模型累计读能量+21.41%，说明减少Bank数量不保证降低动态能耗。</li>
+      </ul>
+      <p>这些结果直接触发了后续等宽174-bit ISA、复杂importance、强五槽调度基线和可替换代码池讨论。</p>
+    </section>
+
+    <section id="timeline">
+      <h2>2. 本轮讨论与决策演进</h2>
+      <div class="table-wrap">
+        <table class="left">
+          <thead><tr><th>阶段</th><th>决定/发现</th><th>影响</th></tr></thead>
+          <tbody>
+            <tr><td>Importance质疑</td><td>当前调度器仅按节点index排序，没有真正考虑latency或criticality。</td><td>扩展13种双发射策略并建立公平五槽策略参考。</td></tr>
+            <tr><td>异构补宽分析</td><td>旧双Lane比A多68,700 bit，几乎全部来自26/31→34 bit填充。</td><td>说明“有效操作数量更多”不是主要原因。</td></tr>
+            <tr><td>非对称Lane候选</td><td>曾考虑34+31-bit Lane，可减少补宽，但用户决定架构统一为五个34-bit槽。</td><td>该候选保留为历史讨论，不进入当前主线。</td></tr>
+            <tr><td>174-bit决定</td><td>五个功能槽统一34 bit，CONTROL保持4 bit。</td><td>新未压缩指令宽度固定为174 bit。</td></tr>
+            <tr><td>公平调度修正</td><td>部分双槽启发式甚至快于旧五槽，说明旧五槽也必须使用同一启发式集合优化。</td><td>最终比较改为“最佳五槽 vs 最佳双槽”。</td></tr>
+            <tr><td>物理模型第一次修正</td><td>“对全部测试任务的每类流分别取最大深度，然后只实现这一套存储”不符合片上程序组织。</td><td>旧−16.04%面积结果作废。</td></tr>
+            <tr><td>物理模型第二次修正</td><td>曾按六函数各自独立指令SRAM计算，得到面积仅−4.66%。</td><td>该模型随后被“统一可替换代码池”取代。</td></tr>
+            <tr><td>最终代码池</td><td>只考虑GELU、Softmax、LayerNorm X64，同时驻留并允许新程序替换。</td><td>形成A-symmetric与双Lane的固定深宽比较。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="isa174">
+      <h2>3. 从152 bit改为174 bit的等宽ISA</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>历史152-bit格式</h3>
+          <pre>LOAD       26
+STORE      26
+VECTOR     34
+SCALAR     31
+SFU        31
+CONTROL     4
+=          152 bit</pre>
+        </div>
+        <div class="card">
+          <h3>当前174-bit格式</h3>
+          <pre>LOAD       34
+STORE      34
+VECTOR     34
+SCALAR     34
+SFU        34
+CONTROL     4
+=          174 bit</pre>
+        </div>
+      </div>
+      <p>
+        LOAD/STORE将12-bit mem_addr扩展为20 bit，使其达到34 bit；SCALAR/SFU使用34-bit槽容器。
+        等宽槽可简化取指接口、路由、解码和SRAM宏比较，也消除了双Lane对窄槽的额外填充损失。
+      </p>
+      <div class="callout warn">
+        <strong>必须向审稿人解释20-bit mem_addr：</strong>
+        若一个地址直接对应256×16-bit向量行，则2<sup>20</sup>行等价于512 MiB，不应声称全部一次性物理实现为片上SRAM。
+        更合理的语义是“12-bit本地行地址 + 8-bit bank/tile/region”，或明确它是架构地址空间。
+        174-bit是正式ISA决定，不能仅以“外界不知道实现”为依据。
+      </div>
+    </section>
+
+    <section id="schemes">
+      <h2>4. 所有方案的清晰定义</h2>
+      <h3>4.1 未压缩174-bit横向VLIW</h3>
+      <p>每周期完整保存五个34-bit功能槽与4-bit CONTROL，无论槽是否有效都占据174 bit。</p>
+
+      <h3>4.2 Candidate A：5-bit Configuration + 五条纵向槽流</h3>
+      <p>
+        Configuration每周期给出五槽有效mask；EOP可由长度隐式产生。每个34-bit槽流只保存该槽的有效操作。
+        每个槽有独立读指针，mask=1时读取并递增，mask=0时保持。
+      </p>
+      <div class="formula">A logical bits =
+header + 5×configuration cycles
++ 34×(Nload+Nstore+Nvector+Nscalar+Nsfu)</div>
+
+      <h3>4.3 A-trace-fitted / A-compact</h3>
+      <p>
+        五个槽Bank分别按照当前三条已知Trace的总事件数紧凑定容。它容量小，但SCALAR等Bank可能只需要1024深，
+        无法保证未来替换程序具有不同槽分布时仍可装入；每个函数还需要五组独立base/length和五Bank空间管理。
+        它保留为容量优先的下界，不作为最终固定硬件主基线。
+      </p>
+
+      <h3>4.4 A-simple-rectangular</h3>
+      <p>
+        每个函数在五个槽Bank中使用相同payload base，函数块高度取该函数最高槽列，其余槽补齐。
+        程序替换最简单，但padding最大。当前三函数相加后每个Bank需4096深。
+      </p>
+
+      <h3>4.5 A-symmetric：当前主Baseline</h3>
+      <p>
+        为支持未来程序替换，五个34-bit槽Bank都固定为2048深。它不依赖当前SCALAR只需1024的偶然统计，
+        并定义产品级容量契约：任一槽类型在整个代码池中的事件总数不得超过2048。
+      </p>
+
+      <h3>4.6 双Lane固定横向格式</h3>
+      <div class="formula">5-bit Configuration + 34-bit Lane0 + 34-bit Lane1
+= 73 bit/cycle</div>
+      <p>每周期固定占73 bit，空Lane也占位。硬件简单，但没有纵向去除空Lane，因而不作为最终格式。</p>
+
+      <h3>4.7 双Lane纵向格式：当前方案</h3>
+      <p>
+        Configuration逐周期保存，Lane 0/1只保存有效事件。每周期最多两个功能操作；
+        单操作放入较短Lane以平衡深度。当前三函数代码池中两条Lane均配置为34×4096。
+      </p>
+
+      <h3>4.8 34+31-bit非对称Lane</h3>
+      <p>
+        由于只有VECTOR需要34 bit，曾提出一条34-bit全功能Lane和一条31-bit非VECTOR Lane。
+        它可以降低旧152-bit ISA下的填充和读能量，但与“所有功能槽统一34 bit”的新架构决定冲突，当前不继续。
+      </p>
+    </section>
+
+    <section id="priority">
+      <h2>5. 如何决定一拍内优先发射哪些操作</h2>
+      <h3>5.1 为什么不能只优先选择长延迟操作</h3>
+      <p>
+        长延迟操作提前发射有机会隐藏等待时间，但只有它位于决定总周期数的最长依赖路径上时才有价值；
+        过早发射LOAD可能让更多未完成数据同时存活，SFU/向量操作可能长期占用共享资源，
+        STORE则可能释放正在使用的向量。因此只看操作自身延迟并不足以作出选择。
+      </p>
+      <h3>5.2 实现的策略</h3>
+      <p>下表第一列保留实验脚本使用的英文策略名，第二列给出其实际选择规则；读者不需要了解代码即可理解。</p>
+      <div class="table-wrap">
+        <table class="left">
+          <thead><tr><th>策略</th><th>定义</th><th>观察</th></tr></thead>
+          <tbody>
+            <tr><td>index</td><td>保持DAG构造顺序。</td><td>稳定，对GELU/Softplus最好。</td></tr>
+            <tr><td>shortest-latency</td><td>短延迟节点优先。</td><td>五槽LogSoftmax/LogSumExp较好。</td></tr>
+            <tr><td>latency</td><td>长延迟节点优先。</td><td>双槽LogSoftmax/LogSumExp较好。</td></tr>
+            <tr><td>critical-path</td><td>优先选择“从该节点到程序末尾的估计最长剩余延迟”更大的节点。</td><td>Softmax有效，全局使用会恶化。</td></tr>
+            <tr><td>critical-fanout/age</td><td>加入后继数和等待年龄。</td><td>未解决全局关键路径的资源失配。</td></tr>
+            <tr><td>window8/16</td><td>只取原顺序最靠前的8或16个候选，再按延迟或关键路径分数重新排序。</td><td>保留原调度的局部顺序，最稳健。</td></tr>
+            <tr><td>pair-critical</td><td>全局寻找不同slot类型的高关键度节点对。</td><td>明显失败。</td></tr>
+            <tr><td>pair-window8/16</td><td>只在有限index窗口内选择不同slot类型节点对。</td><td>更稳定，LogSoftmax X64胜出。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        共运行364个双发射组合和336个五槽组合，总计700次。当前“节点对感知”策略只先检查两个节点属于不同槽类型，
+        随后仍由原调度器检查通用寄存器Bank、写回端口、向量/特殊函数单元占用和未完成状态；
+        如果第二个节点最终因资源冲突无法发射，算法不会撤销第一个选择并尝试另一对，因此还不是完整的最优节点对搜索。
+      </p>
+    </section>
+
+    <section id="performance">
+      <h2>6. 公平性能结果</h2>
+      <div class="callout warn">
+        初始比较曾使用“按节点原编号优先”的旧五槽周期。发现某些双槽经验规则甚至快于该基准后，
+        比较方法改为：对每个测试任务，五槽和双槽都分别选择自身最好的调度模式和优先级策略，
+        避免把调度算法本身的改进错误计入双Lane硬件收益。
+      </div>
+      <h3>6.1 双槽全局单策略</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>策略</th><th>12例最佳mode总周期</th><th>相对逐workload策略选择</th></tr></thead>
+          <tbody>
+            <tr><td>index</td><td>20,752</td><td>+1.89%</td></tr>
+            <tr><td>latency</td><td>20,709</td><td>+1.68%</td></tr>
+            <tr class="good"><td>window8-latency</td><td>20,504</td><td>+0.67%</td></tr>
+            <tr><td>pair-window8</td><td>20,568</td><td>+0.99%</td></tr>
+            <tr><td>pair-window16</td><td>20,625</td><td>+1.27%</td></tr>
+            <tr><td>critical-path</td><td>21,659</td><td>+6.34%</td></tr>
+            <tr><td>pair-critical</td><td>21,664</td><td>+6.37%</td></tr>
+            <tr><td>逐workload选择</td><td>20,367</td><td>基准</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>6.2 最佳五槽与最佳双槽</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Case</th><th>五槽周期</th><th>双槽周期</th><th>代价</th><th>双槽策略</th></tr></thead>
+          <tbody>
+            <tr><td>GELU X32</td><td>1,560</td><td>1,560</td><td>0.00%</td><td>index</td></tr>
+            <tr><td>GELU X64</td><td>3,096</td><td>3,096</td><td>0.00%</td><td>index</td></tr>
+            <tr><td>LayerNorm X32</td><td>737</td><td>751</td><td>+1.90%</td><td>window8-latency</td></tr>
+            <tr><td>LayerNorm X64</td><td>1,424</td><td>1,440</td><td>+1.12%</td><td>window8-latency</td></tr>
+            <tr><td>LogSoftmax X32</td><td>1,805</td><td>1,889</td><td>+4.65%</td><td>latency</td></tr>
+            <tr><td>LogSoftmax X64</td><td>3,493</td><td>3,688</td><td>+5.58%</td><td>pair-window16</td></tr>
+            <tr><td>LogSumExp X32</td><td>839</td><td>868</td><td>+3.46%</td><td>latency</td></tr>
+            <tr><td>LogSumExp X64</td><td>1,551</td><td>1,604</td><td>+3.42%</td><td>window16-critical</td></tr>
+            <tr><td>Softmax X32</td><td>495</td><td>506</td><td>+2.22%</td><td>critical-path</td></tr>
+            <tr><td>Softmax X64</td><td>936</td><td>939</td><td>+0.32%</td><td>critical-path</td></tr>
+            <tr><td>Softplus X32</td><td>1,342</td><td>1,342</td><td>0.00%</td><td>index</td></tr>
+            <tr><td>Softplus X64</td><td>2,684</td><td>2,684</td><td>0.00%</td><td>index</td></tr>
+            <tr><td><strong>总计</strong></td><td><strong>19,962</strong></td><td><strong>20,367</strong></td><td><strong>+2.03%</strong></td><td>逐workload选择</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>有效操作数量没有增加：</strong>
+        A与双Lane都将每个有效DAG操作保存一次。双发射增加的是周期数和每周期5-bit Configuration，
+        不是payload事件数。对全部12条最佳调度，A为788,670 bit，双Lane为790,755 bit，
+        双Lane只多2,085 bit（+0.264%）；因此旧方案失败的主因曾是异构补宽，而不是“纯有效指令槽总数更多”。
+      </div>
+    </section>
+
+    <section id="encoding">
+      <h2>7. 双Lane编码格式</h2>
+      <h3>7.1 5-bit码本为什么刚好</h3>
+      <div class="formula">两Lane都无效：1
+单Lane有效：5种slot × 2个Lane = 10
+双Lane有效且slot类型不同：5×4 = 20
+正常状态总计：31
+EOP：1
+总计：32 = 2^5</div>
+      <p>
+        Configuration同时编码Lane valid、Lane到功能槽的映射和EOP。两条Lane不会映射到同一功能槽。
+        `(None,None)`表示正常空周期，码31保留给EOP。
+      </p>
+      <h3>7.2 Lane构造</h3>
+      <ol>
+        <li>逐周期读取最多两个有效功能槽。</li>
+        <li>双操作按合法映射分别写Lane 0/1。</li>
+        <li>单操作写入当前较短Lane，使最终深度尽量平衡。</li>
+        <li>空周期只写Configuration，不写Lane。</li>
+        <li>解码时按Configuration使能对应Lane指针并路由回五槽。</li>
+      </ol>
+    </section>
+
+    <section id="correctness">
+      <h2>8. 能否逐周期精确恢复，以及需要哪些硬件</h2>
+      <div class="callout good">
+        <strong>可以恢复的对象：</strong>
+        双Lane能够逐周期、逐bit恢复“重新调度后每拍最多双发射的五槽指令轨迹”。它不能恢复原来某周期含3–5个操作的旧五槽轨迹，
+        因为重新调度已经改变了发射周期。当前12条最终轨迹的软件编码—解码往返检查全部通过。
+      </div>
+      <h3>8.1 核心硬件</h3>
+      <ul>
+        <li>Configuration SRAM：5×8192。</li>
+        <li>Lane 0/1 SRAM：各34×4096。</li>
+        <li>13-bit Configuration PC和两个12-bit Lane指针。</li>
+        <li>5-bit组合译码器，生成两个Lane valid、slot select和EOP。</li>
+        <li>两路34-bit到五个34-bit槽的路由网络。</li>
+        <li>五槽输出寄存器、NOP生成与OP门控。</li>
+      </ul>
+      <p>
+        不需要先进先出缓存队列、时间间隔字典、差值恢复加法器、固定数据包重组或变长比特解析。运行时没有动态调度；
+        所有节点选择均在编译期完成，硬件只执行固定码本译码、顺序读和定宽路由。
+      </p>
+      <h3>8.2 每周期恢复过程</h3>
+      <div class="formula">读取Config[t]
+→ 解码Lane0/Lane1是否有效及目标slot
+→ 有效Lane读取payload[ptr]
+→ 路由到LOAD/STORE/VECTOR/SCALAR/SFU
+→ 有效Lane指针+1，无效Lane保持
+→ 未选槽输出NOP
+→ EOP结束</div>
+      <p>
+        Lane流按原周期顺序追加事件；指针只在该Lane有效时递增，因此第t周期读出的事件与编码时第t周期压入的事件一一对应。
+        同步SRAM可使用Config读取、Lane读取、路由输出的固定流水；流水只增加固定启动延迟，吞吐仍为一恢复周期/拍，无FIFO。
+      </p>
+      <h3>8.3 Bit-exact与低翻转的区别</h3>
+      <ul>
+        <li><strong>bit-exact模式：</strong>无效槽34 bit全部输出零，可与新调度逐bit一致。</li>
+        <li><strong>行为等价低翻转模式：</strong>无效槽payload保持前值，只把OP清零；执行行为逐周期一致，但无关字段不再逐bit相同。</li>
+      </ul>
+    </section>
+
+    <section id="pool">
+      <h2>9. 三函数可替换代码池的实际深度</h2>
+      <p>最终主场景只考虑GELU、Softmax、LayerNorm X64同时驻留，并允许未来程序替换。</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>函数</th><th>五槽周期</th><th>双槽周期</th><th>有效操作数</th><th>Lane0深度</th><th>Lane1深度</th></tr></thead>
+          <tbody>
+            <tr><td>GELU X64</td><td>3,096</td><td>3,096</td><td>2,304</td><td>1,152</td><td>1,152</td></tr>
+            <tr><td>Softmax X64</td><td>936</td><td>939</td><td>1,088</td><td>544</td><td>544</td></tr>
+            <tr><td>LayerNorm X64</td><td>1,424</td><td>1,440</td><td>2,374</td><td>1,187</td><td>1,187</td></tr>
+            <tr><td>合计</td><td>5,456</td><td>5,475</td><td>5,766</td><td>2,883</td><td>2,883</td></tr>
+            <tr><td>平衡方案物理上取整</td><td>8,192</td><td>8,192</td><td>—</td><td>4,096</td><td>4,096</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        每个函数描述符至少包含config base/length与payload base/height。两个Lane使用相同payload base；
+        替换程序时分配一个矩形Lane块、写入Config和两列payload，再原子更新描述符。
+      </p>
+      <h3>9.1 深度边界感知的非平衡映射</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>函数</th><th>双操作周期</th><th>单操作周期</th><th>单操作全放Lane0后Lane0</th><th>Lane1</th></tr></thead>
+          <tbody>
+            <tr><td>GELU X64</td><td>378</td><td>1,548</td><td>1,926</td><td>378</td></tr>
+            <tr><td>Softmax X64</td><td>400</td><td>288</td><td>688</td><td>400</td></tr>
+            <tr><td>LayerNorm X64</td><td>962</td><td>450</td><td>1,412</td><td>962</td></tr>
+            <tr><td><strong>池合计</strong></td><td>1,740</td><td>2,286</td><td><strong>4,026</strong></td><td><strong>1,740</strong></td></tr>
+            <tr><td><strong>物理上取整</strong></td><td>—</td><td>—</td><td><strong>4,096</strong></td><td><strong>2,048</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        每个双操作周期必然向两条Lane各写一个事件；单操作周期可由5-bit配置码选择任一Lane。
+        穷举2,287种单操作分配数量后，当前池的最小取整容量为6,144个payload项；把所有单操作放入Lane0是最简单的最优解之一。
+        软件编码—解码对三条程序均逐bit相同。该方案需要描述符分别保存两条Lane的base/length，不能再假定两个payload base相同。
+      </p>
+      <div class="callout warn">
+        这是按当前三函数池边界配置的<strong>pool-fitted</strong>方案：它把Lane1缩到2048，因此未来替换程序的双操作周期总数必须不超过2048。
+        平衡的2×4096版本具有更宽松的替换契约。投稿时应把两者作为“容量优先”和“替换余量优先”两个工作点，而不能只报告较小方案。
+      </div>
+    </section>
+
+    <section id="capacity">
+      <h2>10. 四种存储容量的公平比较</h2>
+      <h3>10.1 未压缩基线</h3>
+      <div class="formula">174 × next_pow2(3096+936+1424)
+= 174 × 8192
+= 1,425,408 bit</div>
+      <h3>10.2 压缩方案</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>方案</th><th>Payload组织</th><th>总容量</th><th>占174-bit原始池</th><th>相对平衡双Lane</th></tr></thead>
+          <tbody>
+            <tr><td>A-simple-rectangular</td><td>5×34×4096</td><td>737,280 bit</td><td>51.72%</td><td>−56.67%</td></tr>
+            <tr><td>A-trace-fitted compact</td><td>五Bank按当前三函数分别取整</td><td>354,304 bit</td><td>24.86%</td><td>−9.83%</td></tr>
+            <tr><td><strong>A-symmetric主基线</strong></td><td>5×34×2048</td><td>389,120 bit</td><td>27.30%</td><td><strong>−17.89%</strong></td></tr>
+            <tr><td><strong>平衡双Lane</strong></td><td>2×34×4096</td><td>319,488 bit</td><td>22.41%</td><td>基准</td></tr>
+            <tr><td><strong>深度感知双Lane</strong></td><td>34×4096 + 34×2048</td><td>249,856 bit</td><td>17.53%</td><td class="good">−21.79%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        A-trace-fitted容量更小，但SCALAR只配置1024深，是按当前程序分布定制，不能提供五种slot对称的未来替换契约。
+        A-symmetric因此是当前主要物理Baseline；A-simple用来展示公共base矩形布局的直接纵向代价；
+        A-trace-fitted仍应作为强容量下界报告。深度感知双Lane同样按当前程序池定制，因此既要与A-symmetric比较，
+        也必须与A-trace-fitted公平比较：其逻辑容量仍低29.48%，而不是只依赖较弱的对称A。
+      </p>
+      <div class="callout warn">
+        2048/4096仍是有限产品规格，不是“无限通用”。A要求代码池中每类slot总事件≤2048；
+        平衡双Lane要求每条Lane总事件≤4096；深度感知版本要求深/浅Lane分别≤4096/2048；
+        两者都要求新函数能够调度为最多双发射。
+      </div>
+      <div class="callout good">
+        <strong>已确认的两个正式双Lane工作点：</strong>
+        <code>2×4096</code>作为通用替换主方案，与A-symmetric主比较；
+        <code>4096+2048</code>作为当前三函数池定制的容量优先方案，与A-compact主比较。
+        两组结果必须同时保留，不能用池定制方案代替通用替换结论。
+      </div>
+    </section>
+
+    <section id="ppa">
+      <h2>11. CACTI SRAM与逻辑面积重算</h2>
+      <p>
+        使用同一CACTI节点、scratch RAM、每宏一个read-write port；5-bit物理按8 bit分配，34-bit按40 bit分配。
+        该模型只用于比较方案之间的大致趋势，不代表芯片代工厂存储器生成工具给出的最终结果。
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>指标</th><th>A-symmetric</th><th>A-compact</th><th>平衡双Lane</th><th>深度感知双Lane</th></tr></thead>
+          <tbody>
+            <tr><td>宏组织</td><td>5×8192 + 5个34×2048</td><td>5×8192 + 4个34×2048 + 1个34×1024</td><td>5×8192 + 2个34×4096</td><td>5×8192 + 34×4096 + 34×2048</td></tr>
+            <tr><td>宏数量</td><td>6</td><td>6</td><td>3</td><td>3</td></tr>
+            <tr><td>逻辑容量</td><td>389,120 bit</td><td>354,304 bit</td><td>319,488 bit</td><td class="good">249,856 bit</td></tr>
+            <tr><td>CACTI分配容量</td><td>475,136 bit</td><td>434,176 bit</td><td>393,216 bit</td><td class="good">311,296 bit</td></tr>
+            <tr><td>SRAM面积</td><td>0.105116 mm²</td><td>0.096404 mm²</td><td>0.083363 mm²</td><td class="good">0.067341 mm²</td></tr>
+            <tr><td>SRAM泄漏</td><td>12.302 mW</td><td>11.326 mW</td><td>10.084 mW</td><td class="good">8.020 mW</td></tr>
+            <tr><td>最大访问时间</td><td>0.232 ns</td><td>0.232 ns</td><td>0.319 ns</td><td>0.319 ns；均满足1 ns</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>11.1 相对逻辑粗估</h3>
+      <div class="formula">双Lane新增：
+2-to-5路由 = 170 bit × 3 GE = 510 GE
+5-bit配置译码 = 100 GE
+
+计数器：
+A = 13 + 5×11 = 68 bit
+B = 13 + 2×12 = 37 bit
+节省 = 31×6 = 186 GE
+
+净增量 = 510 + 100 − 186 = 424 GE
+面积 ≈ 0.001078 mm²
+
+深度感知B的计数器 = 13 + 12 + 11 = 36 bit
+净增量 = 418 GE
+面积 ≈ 0.001062 mm²</div>
+      <p>
+        加入粗增量逻辑后，双Lane为0.084440 mm²，相对A的0.105116 mm²仍下降19.67%。
+        深度感知双Lane为0.068403 mm²，相对A-symmetric下降34.93%，相对A-compact下降29.05%。
+        两者共有的输出寄存器、OP门控和函数选择逻辑从差值中排除；函数描述符、不同深度Lane的布线与真实时序仍需RTL综合。
+      </p>
+    </section>
+
+    <section id="energy">
+      <h2>12. 为什么面积下降但读能量增加</h2>
+      <p>
+        A的每次payload读取访问34×2048宏；双Lane访问34×4096宏。更深SRAM具有更长字线/位线和更大的译码电容，
+        因此减少宏数量和静态面积并不等于每次动态读取更便宜。
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>指标</th><th>A-symmetric</th><th>A-compact</th><th>平衡双Lane</th><th>深度感知双Lane</th></tr></thead>
+          <tbody>
+            <tr><td>Configuration单次读取</td><td>0.003684 nJ</td><td>0.003684 nJ</td><td>0.003684 nJ</td><td>0.003684 nJ</td></tr>
+            <tr><td>Payload单次读取</td><td>0.004077 nJ</td><td>0.002134–0.004077 nJ</td><td>0.006220 nJ</td><td>0.004077–0.006220 nJ</td></tr>
+            <tr><td>三程序Config读取次数</td><td>5,453</td><td>5,453</td><td>5,475</td><td>5,475</td></tr>
+            <tr><td>Payload事件读取次数</td><td>5,766</td><td>5,766</td><td>5,766</td><td>5,766</td></tr>
+            <tr><td>三程序累计读取能量</td><td>43.600 nJ</td><td>42.357 nJ</td><td class="bad">56.035 nJ</td><td class="warn">52.307 nJ</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        深度感知映射比平衡双Lane降低6.65%三程序读能量，因为1,740个Lane1事件改从2048深宏读取；
+        但相对A-symmetric仍增加19.97%，相对更强的A-compact增加23.49%。
+        能耗增加的主因不是双槽多出的19个周期，而是4,026个事件仍从4096深Lane宏读取。
+        可尝试把4096行深的Lane拆成几块可以分别关闭的浅子Bank；但分块越多，外围电路面积和SRAM块数量越接近A，
+        因此必须寻找面积与读取能耗之间合适的折中点。
+      </p>
+    </section>
+
+    <section id="toggle">
+      <h2>13. 无效槽保持前值的低翻转讨论</h2>
+      <p>
+        无效槽可以保持上一次payload，仅把OP清零，从而避免地址和操作数字段反复在有效值与零之间切换。
+        它不要求把历史payload重复写入SRAM，只需要五个带使能输出寄存器。
+      </p>
+      <div class="formula">selected[s] = 1：payload_reg[s] ← new payload
+selected[s] = 0：payload_reg[s]保持，output_op[s] ← 0</div>
+      <p>
+        该优化保持逐周期执行行为，但不保持无效字段逐bit相同。更重要的是A也可以使用相同机制，
+        因此它是正交低功耗优化，不能独占计为双Lane收益。最终功耗应让A和双Lane都启用相同保持策略后生成SAIF/VCD。
+      </p>
+    </section>
+
+    <section id="invalid">
+      <h2>14. 已作废模型、失败策略与不能夸大的结论</h2>
+      <div class="table-wrap">
+        <table class="left">
+          <thead><tr><th>项目</th><th>结论</th><th>原因</th></tr></thead>
+          <tbody>
+            <tr><td>256-bit数据包 + 先进先出队列</td><td>淘汰</td><td>SRAM收益不足以覆盖暂存队列、分流器与多流控制；双Lane不是该方案的延续。</td></tr>
+            <tr><td>每16个事件选择原值/常数/步长/差值</td><td>硬件主线淘汰</td><td>16.211%逻辑容量不能抵消约1.08万个基本门等效的变长恢复器；只作软件理论参考。</td></tr>
+            <tr><td>固定LOAD/STORE地址差值</td><td>降为后期小优化</td><td>不同测试任务上的收益不稳，需要完整原值补救记录、历史状态和多bit定点加法器。</td></tr>
+            <tr><td>通用稳定周期核/仿射回绕</td><td>淘汰</td><td>Softmax、LayerNorm严格结构核覆盖不足，且与loop buffer/modulo scheduling先行工作接近。</td></tr>
+            <tr><td>gap字典与mask模板作为核心</td><td>淘汰</td><td>字典、索引和状态抵消收益；5-bit功能mask模板平均只省约0.91 bit/cycle。</td></tr>
+            <tr><td>普通值字典/为每个任务单独选择压缩格式</td><td>淘汰</td><td>不满足通用非线性函数与固定硬件使用同一格式的要求。</td></tr>
+            <tr><td>11.1物理成本驱动的编码电路自动生成</td><td>暂不作为主线</td><td>偏电子设计自动化，需要其他指令集的轨迹、真实编译器和硬件代码自动生成，四个月内风险过高。</td></tr>
+            <tr><td>152-bit作为后续基准</td><td>作废</td><td>当前正式决定为五个34-bit槽+4-bit CONTROL=174 bit。</td></tr>
+            <tr><td>双Lane相对A多9.49%</td><td>历史结果</td><td>来自26/31-bit槽补到34 bit；等宽ISA后不再适用。</td></tr>
+            <tr><td>跨12条Trace各流取最大、只实现一套存储</td><td>作废</td><td>不符合最终可替换代码池组织。</td></tr>
+            <tr><td>六函数各自独立SRAM、面积−4.66%</td><td>作废</td><td>被三函数共享可替换代码池取代。</td></tr>
+            <tr><td>把“按当前轨迹紧配Bank”的A作为唯一基线</td><td>不成立</td><td>按当前槽分布定制深度，不保证未来替换通用性；仅代表可能达到的最小容量参考。</td></tr>
+            <tr><td>只比较A-simple得到−56.67%</td><td>不充分</td><td>A-compact/A-symmetric必须同时报告，避免人为选择高padding基线。</td></tr>
+            <tr><td>只优先选择长延迟操作</td><td>不通用</td><td>LayerNorm/Softplus等会因为资源占用和未完成状态存活时间而恶化。</td></tr>
+            <tr><td>只按最长依赖路径或节点对打分</td><td>失败</td><td>总周期比每个测试任务分别选策略高约6.3%；打分时没有真正试占所有硬件资源。</td></tr>
+            <tr><td>压缩率22.313%低于22.706%即可胜A</td><td>错误</td><td>两者调度周期不同，必须比较绝对压缩位数和固定池容量。</td></tr>
+            <tr><td>读Bank更少必然能耗更低</td><td>错误</td><td>4096深Lane的单次读能量比2048深槽Bank高52.55%。</td></tr>
+            <tr><td>Lane越平衡，物理容量一定越小</td><td>错误</td><td>平衡最小化最大逻辑深度，但两个2883都取整到4096；当前池的4026+1740只需4096+2048。</td></tr>
+            <tr><td>软件编码后能正确解码，就等于硬件已经证明</td><td>错误</td><td>软件只证明格式映射正确；同步SRAM流水、时序与门级行为仍需硬件代码逐周期核对。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="innovation">
+      <h2>15. 能够形成论文的核心创新、价值、标题与已有工作边界</h2>
+      <h3>15.1 推荐标题</h3>
+      <div class="callout good">
+        <strong>英文首选：</strong>
+        Two-Lane Scheduling with Bank-Depth-Aware Mapping for Replaceable Heterogeneous VLIW Code Pools
+        <br>
+        <strong>中文：</strong>
+        面向可替换异构VLIW代码池的双Lane调度与Bank深度感知映射
+      </div>
+      <p>
+        标题刻意不使用宽泛的“压缩感知调度”或“模板VLIW”，因为这两点已有直接先行工作；
+        标题把可辩护差异集中在<strong>每拍最多两个操作的硬件限制、物理SRAM深度、可替换程序存储区和确定性逐拍供给</strong>。
+      </p>
+      <h3>15.2 一句话核心创新</h3>
+      <div class="callout good">
+        <strong>候选核心：</strong>
+        不再为五类互不等价的功能槽各配置一条物理指令Bank，而是在编译期施加“每拍最多两个原子操作”的硬供给约束，
+        将五条逻辑槽流折叠到两条同宽共享Lane；编译目标进一步面向多程序代码池的实际SRAM深度、Lane事件分配和2次幂取整，
+        以固定5-bit配置和简单2-to-5路由实现无FIFO、无变长抽取、无需运行时互锁的逐拍确定性发射。
+      </div>
+      <p>
+        这里“无需运行时互锁”指依赖、固定操作延迟、功能单元占用和片上资源冲突全部由编译器排定；
+        硬件在正常片上执行条件下每拍接受下一条新schedule的VLIW。它不表示要保持旧五槽Trace的周期位置，
+        也不表示异常、复位或外部非确定事件永远不能暂停流水线。
+      </p>
+      <h3>15.3 论文价值</h3>
+      <ul>
+        <li><strong>物理价值：</strong>不只统计“删除空操作后还剩多少bit”，而是计算这些bit实际应放进几块、多宽、多深的SRAM；对称2×4096工作点相对五个对称槽Bank的粗总面积为−19.67%，池级深度感知4096+2048工作点为−34.93%。</li>
+        <li><strong>性能价值：</strong>硬件虽然每拍最多发射两个操作，周期数却没有按五槽变两槽的最坏比例放大；12条指令轨迹公平比较平均仅+2.03%，最坏+5.58%。</li>
+        <li><strong>确定性价值：</strong>没有运行时调度器、依赖检查表、先进先出缓存下溢或变长数据边界；恢复端只需固定配置译码和把两个输入送到五个输出的路由器。</li>
+        <li><strong>可替换价值：</strong>两个共享操作Bank比五个按功能类型分裂的Bank更容易容纳槽分布不同的新函数；研究目标是固定总容量下有多少新程序能够成功装入，以及浪费多少零散空间。</li>
+        <li><strong>研究价值：</strong>说明即使有效操作携带的信息量相同，SRAM块数、深度向上取整和多个程序的摆放方法仍会造成显著面积差异。</li>
+      </ul>
+      <p class="bad">
+        <strong>代价必须正面报告：</strong>平衡双Lane三程序累计SRAM读能量为+28.52%，深度感知版本仍为+19.97%；因此本文首先是面积/容量论文，
+        不是“面积、性能、能耗全部更优”的论文。把深Bank拆成可分别关闭的浅子Bank，必须作为后续面积—能耗折中实验。
+      </p>
+      <h3>15.4 当前已完成贡献与投稿前必须补齐的贡献</h3>
+      <h4>已经有实验支持</h4>
+      <ol>
+        <li>建立174-bit等宽五槽ISA和明确的可替换代码池容量契约。</li>
+        <li>提出每拍最多两个操作的调度，并在有限候选范围内根据优先级和节点配对关系选择操作。</li>
+        <li>提出31种正常映射+EOP的完整5-bit配置码本，以及两条34-bit纵向Lane。</li>
+        <li>在12条指令轨迹上验证平均2.03%、最坏5.58%的公平周期代价；全部12条均能在编码后逐bit正确解码回来。</li>
+        <li>在三函数可替换池中，平衡双Lane相对A-symmetric降低17.89%逻辑容量和约19.67%粗总面积。</li>
+        <li>完成Kultala式目标函数级复现实验，并发现池级非平衡Lane映射可把物理深度从4096+4096降到4096+2048；该变体相对A-symmetric粗总面积下降34.93%，相对A-compact下降29.05%。</li>
+      </ol>
+      <h4>若要支撑上述标题，仍必须实现</h4>
+      <ol>
+        <li>把调度目标从“为每个测试任务挑周期最短的经验规则”升级为直接计算SRAM深度成本，而非调度结束后才估算SRAM。</li>
+        <li>共同决定操作写入Lane0还是Lane1、程序在代码池中的位置、所需最大深度和2次幂取整；并逐项关闭这些优化，说明相对普通双发射列表调度的收益来源。</li>
+        <li>使用同一工艺实现五个对称槽Bank和双Lane的硬件代码、真实SRAM接口、时序检查和门级功耗评估。</li>
+        <li>增加更多函数和输入尺寸，证明固定策略或小规模自动搜索可以替代逐条指令轨迹人工选择。</li>
+      </ol>
+
+      <h3 id="prior-art">15.5 与Kultala等2016已有工作的关键对比</h3>
+      <p>
+        本地论文：<a href="../paper/Improving%20Code%20Density%20with%20Variable%20Length%20Encoding%20Aware%20Instruction%20Scheduling.pdf">
+        <em>Improving Code Density with Variable Length Encoding Aware Instruction Scheduling</em></a>，
+        Journal of Signal Processing Systems 84(3), 2016, DOI
+        <a href="https://doi.org/10.1007/s11265-015-1081-6">10.1007/s11265-015-1081-6</a>。
+        该工作确实也是编译期生成逐周期合法的新schedule，而不是依靠运行时硬件修复依赖冲突；
+        因此本文不能用“静态调度”或“压缩感知调度”本身主张新颖性。
+      </p>
+      <div class="table-wrap">
+        <table class="left">
+          <thead><tr><th>维度</th><th>Kultala 2016</th><th>本文候选</th><th>可辩护边界</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>处理器与调度对象</td>
+              <td>3-issue/96-bit和4-issue/128-bit TTA-type VLIW；可独立移动operand/result transport。</td>
+              <td>五类固定异构34-bit原子操作槽，操作字段必须整体发射。</td>
+              <td>TTA move-level算法不能原样移植，但静态调度思想仍是先行工作。</td>
+            </tr>
+            <tr>
+              <td>FU选择空间</td>
+              <td>同一操作可绑定多个FU；根据各FU在多少template中可隐式为NOP进行prioritization。</td>
+              <td>LOAD/STORE/VECTOR/SCALAR/SFU通常不可互换，且所有≤2槽组合统一可编码。</td>
+              <td>其FU-prioritization在固定异构槽上没有选择空间或得到相同分数。</td>
+            </tr>
+            <tr>
+              <td>Template约束</td>
+              <td>短指令模板不匹配时仍可退回完整96/128-bit格式；槽组合只影响指令长度，不影响这拍能否发射。</td>
+              <td>超过两个操作不是“改用长格式”，而是双Lane硬件不能在该拍发射。</td>
+              <td>本文首先是硬供给资源约束调度，而不是已有schedule上的短格式选择。</td>
+            </tr>
+            <tr>
+              <td>编码成本</td>
+              <td>每拍可选32/48/96 bit或40/72/128 bit；目标近似为所有周期所选指令模板宽度之和。</td>
+              <td>每拍配置宽度固定，payload为两个共享34-bit事件流；没有逐拍长/短template收益。</td>
+              <td>它的空操作整理器在周期数T不变时，不会直接降低本文所有34-bit有效操作内容的总位数。</td>
+            </tr>
+            <tr>
+              <td>主调度后的再次整理</td>
+              <td>根据依赖计算操作最早和最晚可移动周期，在该余量内跨周期搬移，使更多周期匹配短模板，同时保证基本块不变长。</td>
+              <td>固定T下跨周期搬移本身不省理想容量；必须减少T或使Lane需求跨越SRAM深度量化边界才有物理收益。实验还证明，简单追求平衡可能适得其反。</td>
+              <td>本文需要新的物理Bank成本函数，不能把其post-pass简单改名。</td>
+            </tr>
+            <tr>
+              <td>物理存储模型</td>
+              <td>评价总编码bit数与instruction memory，未优化五Bank到两Bank的池化深度和多程序替换碎片。</td>
+              <td>目标直接包含Bank数量、各Lane最大深度、2次幂取整和多程序可替换池。</td>
+              <td>这是最有希望形成独立贡献的核心差异，必须用真实宏和装入实验验证。</td>
+            </tr>
+            <tr>
+              <td>运行时模型</td>
+              <td>新schedule由cycle-based scheduler保证依赖和资源合法；不是保持旧Trace。</td>
+              <td>同样生成新的逐拍合法schedule；正常片上执行每拍发射，不依赖动态scheduler。</td>
+              <td>这里是共同点，不应列为本文独有贡献。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout good">
+        <strong>先行工作目标函数级复现已完成：</strong>
+        12条最终合法schedule全部重新解析；FU评分退化、固定T容量不变量和物理深度分解均由脚本自动检查，
+        结果保存在<code>kultala_prior_art_reproduction.json/.csv</code>。
+      </div>
+      <div class="callout warn">
+        <strong>复现边界：</strong>
+        当前脚本没有实现Kultala原文完整的ASAP/ALAP节点搬移和全部寄存器Bank、功能单元占用、Mask FIFO资源重放。
+        原因是现有调度器只把节点发射周期打印到日志，没有导出结构化的node-to-cycle映射，内部资源检查也不能在调度后直接复用。
+        因而当前证据足以证明其<strong>编码目标</strong>在固定T、N下不可能改善，但若论文使用“完整算法复现”措辞，
+        仍需增加issue-map接口并实现合法性重放。
+      </div>
+      <h4>复现实验A：FU优先级为何没有作用</h4>
+      <ul>
+        <li>16种逻辑功能mask中，每一类slot均在11种mask内为隐式NOP、在5种内出现，五类得分完全相同。</li>
+        <li>31种Lane有序配置码中，每一类slot均在21种配置内为隐式NOP、在10种内出现，五类得分仍完全相同。</li>
+        <li>LOAD/STORE/VECTOR/SCALAR/SFU各自只有一个合法目标槽；统计到的可替代FU事件数为0。</li>
+      </ul>
+      <h4>复现实验B：固定T的slack post-pass为何是0收益</h4>
+      <p>
+        对任一操作跨周期移动，源周期减少34 bit、目标周期增加34 bit；配置行数T不变，所以代价变化恒为0。
+        脚本在12条schedule上得到总目标值<code>787,683 → 787,683 bit</code>，严格改善移动数和接受移动数均为0。
+        这里没有声称“节点在依赖上完全不能移动”，而是更强且更准确地说明：即使存在可移动余量，
+        Kultala的短模板收益机制也无法降低本格式的固定行配置加事件流目标。
+      </p>
+      <h4>复现实验C：现有调度是否已产生Bank-depth-aware收益</h4>
+      <ul>
+        <li>三函数X64的6,591种已有策略/模式组合，周期和为5,475–6,100，但Config均取整到8192；物理容量结果只有1种。</li>
+        <li>事件总数N与平衡编码下的Lane深度不随调度策略改变，因此现有priority sweep没有跨越新的payload深度边界。</li>
+        <li>新增收益来自编译期Lane映射：把单操作事件集中到一条Lane后，4026/1740跨入4096/2048边界，逐bit roundtrip仍正确。</li>
+        <li><strong>边界：</strong>这证明的是“池级深度感知Lane映射”，不是“Bank-depth-aware DAG调度已经成功”。后者只有在调度能改变T、双操作周期数或程序装入边界时才可能增加收益。</li>
+      </ul>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>三函数池方案</th><th>逻辑容量</th><th>CACTI SRAM面积</th><th>含增量逻辑面积</th><th>三程序读能量</th></tr></thead>
+          <tbody>
+            <tr><td>A-symmetric</td><td>389,120 bit</td><td>0.105116 mm²</td><td>0.105116 mm²</td><td>43.600 nJ</td></tr>
+            <tr><td>A-compact</td><td>354,304 bit</td><td>0.096404 mm²</td><td>0.096404 mm²</td><td>42.357 nJ</td></tr>
+            <tr><td>平衡双Lane</td><td>319,488 bit</td><td>0.083363 mm²</td><td>0.084440 mm²</td><td>56.035 nJ</td></tr>
+            <tr><td><strong>深度感知双Lane</strong></td><td><strong>249,856 bit</strong></td><td><strong>0.067341 mm²</strong></td><td><strong>0.068403 mm²</strong></td><td>52.307 nJ</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="four-lane">15.6 四Lane对照实验：同样最多双发射，换用四个浅操作Bank</h3>
+      <h4>15.6.1 这不是把发射宽度改成4</h4>
+      <p>
+        每周期仍最多两个有效功能操作，因此DAG依赖、资源冲突和总周期数完全沿用已验证的双发射schedule。
+        “四Lane”仅表示把有效操作存进四条较浅的34-bit物理事件流；它是新的存储映射和供给组织，不是4-issue VLIW。
+        三条X64程序的周期数仍为5,475行、有效事件仍为5,766个。
+      </p>
+      <h4>15.6.2 最简硬件：四Lane固定成两组</h4>
+      <div class="formula">Group 0 = (Lane0, Lane1)
+Group 1 = (Lane2, Lane3)
+
+6-bit Config：
+bit[5]   = 本周期选择哪一组
+bit[4:0] = 沿用原31种“局部Lane0/1 → 五类slot”映射
+6'b111111 = EOP
+6'b011111 = 保留/非法
+6'b100000 = 非规范的第二个空周期编码，保留/非法
+6'b000000 = 唯一合法空周期编码</div>
+      <p>
+        每周期只允许一个Lane组工作，因此最多读取两块payload SRAM。被选组的两个34-bit输出先经过两个
+        2:1组选择器，再进入原有2-to-5路由器。所需辅助逻辑为：6-bit配置译码、四个Lane地址计数器、
+        四路Bank使能、两个34-bit 2:1选择器和原有2-to-5路由；不需要FIFO、运行时依赖检查或4-to-5全交叉开关。
+        语义状态数为<code>1个空周期 + 4×5个单操作映射 + 2×5×4个双操作映射 = 61</code>；
+        再加1个EOP共62种状态，因此6 bit仍是最小位宽。两个组的“空周期”语义重复，必须统一使用Group 0，
+        所以code 32不能作为第二个正常空周期。
+      </p>
+      <h4>15.6.3 映射与逐周期恢复结果</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>四Lane工作点</th><th>物理配置</th><th>实际事件深度</th><th>映射方法</th><th>恢复结果</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>通用替换</strong></td>
+              <td>4×34×2048</td>
+              <td>1442 / 1442 / 1441 / 1441</td>
+              <td>每周期在两组之间选择使最大Lane深度最小的组；单操作写入当前较浅Lane。</td>
+              <td class="good">3/3程序逐周期、逐bit相同</td>
+            </tr>
+            <tr>
+              <td><strong>池定制</strong></td>
+              <td>2×34×2048 + 2×34×1024</td>
+              <td>2048 / 2048 / 835 / 835</td>
+              <td>835个双操作周期写入浅组；其余905个双操作周期和全部2286个单操作周期写入深组。</td>
+              <td class="good">3/3程序逐周期、逐bit相同</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        两种策略共完成6次程序编码—解码验证。Lane内事件仍严格保持其所属周期的先后顺序；
+        Config决定本周期读哪个组以及两个局部Lane分别送往哪个功能槽，因此恢复出的五槽174-bit行与原schedule完全一致。
+        若处理器发生全局暂停，Config PC和四个Lane指针必须同拍冻结，不能只停其中一部分。
+      </p>
+      <p>
+        设代码池中双操作周期数为D、总有效事件数为N。对称4×2048的基本接纳条件为
+        <code>D≤4096且N≤8192</code>，与通用2×4096具有相同的总事件/双操作上界；
+        池定制四Lane的条件为<code>D≤3072且N≤6144</code>，比4096+2048双Lane的
+        <code>D≤2048且N≤6144</code>更能容纳双操作周期较多的新函数。
+        “通用替换”仍表示容量契约更对称，不表示任何未来程序都必然装得下。
+      </p>
+      <h4>15.6.4 SRAM和配套逻辑面积</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>方案</th><th>SRAM面积</th><th>配套逻辑</th><th>逻辑面积</th><th>总估计面积</th><th>公平参照</th></tr></thead>
+          <tbody>
+            <tr><td>A-symmetric</td><td>0.105116 mm²</td><td>约468 GE</td><td>0.001189 mm²</td><td>0.106306 mm²</td><td>通用基线</td></tr>
+            <tr><td>双Lane 2×4096</td><td>0.083363 mm²</td><td>约832 GE</td><td>0.002114 mm²</td><td>0.085477 mm²</td><td>通用双Lane</td></tr>
+            <tr><td><strong>四Lane 4×2048</strong></td><td>0.085903 mm²</td><td>约1196 GE</td><td>0.003040 mm²</td><td><strong>0.088943 mm²</strong></td><td>比A-symmetric低16.33%；比双Lane高4.05%</td></tr>
+            <tr><td>A-compact</td><td>0.096404 mm²</td><td>约462 GE</td><td>0.001174 mm²</td><td>0.097578 mm²</td><td>池定制基线</td></tr>
+            <tr><td>双Lane 4096+2048</td><td>0.067341 mm²</td><td>约826 GE</td><td>0.002099 mm²</td><td>0.069440 mm²</td><td>池定制双Lane</td></tr>
+            <tr><td><strong>四Lane 2×2048+2×1024</strong></td><td>0.068479 mm²</td><td>约1184 GE</td><td>0.003009 mm²</td><td><strong>0.071488 mm²</strong></td><td>比A-compact低26.74%；比双Lane高2.95%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        四Lane逻辑比双Lane多两条地址计数器和两个34-bit组选择器，因此不可能保持双Lane的最小面积；
+        其价值是用约3%–4%的面积回退换取浅SRAM读能量。这里的GE面积采用与前文相同的32 nm NAND2等效口径。
+      </p>
+      <h4>15.6.5 读取能量、泄漏和1 GHz功耗</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>四Lane方案</th><th>SRAM泄漏</th><th>三程序SRAM读能量</th><th>含Config的每事件能量</th><th>逻辑动态功耗区间</th><th>含SRAM与逻辑的活动功耗区间</th></tr></thead>
+          <tbody>
+            <tr><td>4×2048</td><td>10.204 mW</td><td>39.318 nJ</td><td>6.819 pJ/event</td><td>0.077–0.309 mW</td><td><strong>17.464–17.719 mW</strong></td></tr>
+            <tr><td>2×2048+2×1024</td><td>8.252 mW</td><td>36.074 nJ</td><td>6.256 pJ/event</td><td>0.070–0.280 mW</td><td><strong>14.912–15.144 mW</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li>通用四Lane相对A-symmetric：SRAM读能量低9.82%；即使四Lane计入逻辑而A只计SRAM功耗，活动功耗仍低约12.71%–13.96%。</li>
+        <li>通用四Lane相对通用双Lane：SRAM读能量低29.83%，总代价是估计总面积高4.05%。</li>
+        <li>池定制四Lane相对A-compact：SRAM读能量低14.83%，估计总面积低26.74%。</li>
+        <li>池定制四Lane相对池定制双Lane：SRAM读能量低31.04%，估计总面积高2.95%。</li>
+      </ul>
+      <p>
+        逻辑功耗不是综合结果：脚本从真实Config、Bank使能、两个组选择器输出、2-to-5路由输出和计数器统计翻转率，
+        再使用0.9 V、1 GHz、每GE有效电容0.5–2.0 fF及泄漏1–20 nW/GE给出区间。
+        SRAM动态能量假设未选Lane具有独立读使能：未选组不读，单操作周期只读一块payload SRAM。
+        如果硬件每拍无条件读取所选组的两块SRAM，上述事件数能量模型不成立，读能量会明显增加。
+        若实际SRAM必须暴露完整8-bit配置读口，通用/池定制四Lane总面积分别变为0.089757/0.072302 mm²，
+        三程序读能量变为41.275/38.030 nJ；主要结论仍不反转。
+      </p>
+      <div class="callout good">
+        <strong>对照实验结论：</strong>
+        四Lane不是最小面积方案，但它是当前最均衡的候选：相对对应双Lane仅增加约3%–4%面积，
+        可降低约30% SRAM读取能量；同时相对对应A基线仍保留16.33%或26.74%的总面积收益。
+        是否提升为论文主方案，应由目标SRAM compiler和RTL功耗对拍决定。
+      </div>
+
+      <h3 id="adaptive-124">15.7 自适应四Lane：从1/2/4容量设想到0–4个直接mask</h3>
+      <h4>15.7.1 最可行定义：不设置独立mode字段</h4>
+      <p>
+        如果严格禁止一拍出现3个有效操作，调度器在尝试第3、第4个节点时必须支持资源状态回滚；
+        否则发出第3个节点后发现第4个不合法，就无法恢复为2操作周期。该限制会增加软件复杂度并损失性能。
+        最简硬件因此不再保存单独的1/2/4 mode，而是让5-bit mask直接表示0–4个有效操作：
+        1、2和4操作满足原设想；3操作周期也直接执行，但只开启三块payload SRAM，第四条Lane保持无效并关闭读取。
+      </p>
+      <h4>15.7.2 5-bit mask + 循环Lane相位</h4>
+      <div class="formula">Config[4:0] = 五类目标功能槽的有效mask
+00000 = 空周期
+11111 = EOP（五槽同时发射已被禁止）
+
+本周期payload按LOAD→STORE→VECTOR→SCALAR→SFU的槽号顺序排列
+physical_lane = (phase + payload_rank) mod 4
+phase_next = (phase + 有效操作数) mod 4</div>
+      <p>
+        五槽mask除11111外共有31种正常状态，正好加上EOP占满5-bit码空间。
+        2-bit phase使连续事件循环写入四条Lane，所以三函数池深度自动成为1442/1442/1441/1441。
+        对任一有效目标槽s，其物理Lane严格为
+        <code>(phase + popcount(mask中所有低于s的bit)) mod 4</code>。
+        EOP优先于popcount，禁止所有payload读取和状态更新。
+      </p>
+      <div class="callout warn">
+        <strong>流水与控制流契约：</strong>
+        状态只能在ready/valid接受事件上前进。暂停不仅要冻结Config PC、phase和四个Lane指针，
+        还必须保持流水中的valid、mask、phase、SRAM使能和输出寄存器。
+        当前实验是线性指令流；每个函数入口规定phase=0并从描述符装入四个Lane base/limit。
+        若以后加入分支或循环跳转，必须同时保存/恢复<code>{Config PC, phase, 四个payload位置}</code>。
+      </div>
+      <p>
+        程序替换的容量判断也必须按Lane进行：每个函数分别从phase=0编码后，把四个Lane长度加入池中，
+        要求每列累计不超过2048。单看总事件数<code>N≤8192</code>只是必要条件；
+        多函数分别取整、base对齐和碎片可能使某一Lane先溢出，后续装入实验必须使用四个独立深度约束。
+      </p>
+      <h4>15.7.3 调度搜索与性能</h4>
+      <p>
+        使用原174-bit调度器，把每周期最大有效槽数从2改为4；对6种函数、X=32/64、合法FUV mode和13种优先级策略
+        共运行364次，逐workload选择周期最短且复杂度最低的方案。
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>统计范围</th><th>优化五槽周期</th><th>自适应四Lane周期</th><th>双Lane周期</th><th>相对五槽</th><th>相对双Lane</th></tr></thead>
+          <tbody>
+            <tr><td>全部12条轨迹</td><td>19,962</td><td><strong>19,962</strong></td><td>20,367</td><td class="good">0.00%</td><td class="good">−1.99%</td></tr>
+            <tr><td>GELU/Softmax/LayerNorm X64池</td><td>5,456</td><td><strong>5,456</strong></td><td>5,475</td><td class="good">0.00%</td><td class="good">−0.35%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        12条轨迹逐条都达到优化五槽基线的相同周期数，不只是总和碰巧相等。
+        这说明当前测试中没有必须依赖“同一拍第5个功能操作”才能缩短关键路径的情况。
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>三函数X64池每拍有效操作数</th><th>周期数</th><th>占5,453个执行配置周期</th></tr></thead>
+          <tbody>
+            <tr><td>空周期</td><td>1,506</td><td>27.62%</td></tr>
+            <tr><td>1个有效操作</td><td>2,419</td><td>44.36%</td></tr>
+            <tr><td>2个有效操作</td><td>1,273</td><td>23.34%</td></tr>
+            <tr><td>3个有效操作</td><td>219</td><td>4.02%</td></tr>
+            <tr><td>4个有效操作</td><td>36</td><td>0.66%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="warn">
+        当前三函数池只有255个周期发射3或4个操作，占4.68%；全部12条轨迹也只有7.63%。
+        因此实验已经证明该方案不会损失现有性能，但尚未证明它在高有效槽利用率新workload上的平均收益；
+        后续必须增加卷积后处理、复杂归一化或合成高密度DAG。
+      </p>
+      <h4>15.7.4 指令生成与确定性恢复</h4>
+      <ul>
+        <li>每个选中schedule生成一条5-bit Config流和四条34-bit payload流。</li>
+        <li>四条Lane总事件数仍为N；循环相位只改变事件归属，不复制payload。</li>
+        <li>12/12条schedule全部逐周期、逐bit解码回原174-bit五槽行。</li>
+        <li>三函数池仍需4×2048 payload容量；与前一节分组四Lane具有相同总payload容量，差异在调度宽度和路由。</li>
+        <li>总逻辑容量为319,488 bit，与通用双Lane相同，比A-symmetric低17.89%，比分组四Lane的327,680 bit低2.50%；若配置SRAM都按8-bit物理字实现，最后一项容量差会消失。</li>
+      </ul>
+      <h4>15.7.5 最简辅助逻辑</h4>
+      <ul>
+        <li>5×8192 Config SRAM、四个34×2048 payload SRAM。</li>
+        <li>一个13-bit Config PC、四个11-bit Lane指针和一个2-bit phase状态。</li>
+        <li>5-bit mask译码、有效位计数及四路独立Bank读使能。</li>
+        <li>根据mask前缀计数和phase控制的“四路旋转+mask散布”结构；为避免低估，当前按等效4-to-5网络上界估算1530 GE。</li>
+        <li>总配套逻辑约2064 GE，其中译码/使能180 GE、路由1530 GE、计数器与phase 354 GE。</li>
+        <li>不需要FIFO、动态依赖判断、变长bit解析或运行时发射仲裁。</li>
+      </ul>
+      <h4>15.7.6 面积和功耗比较</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>通用工作点</th><th>周期T</th><th>总估计面积</th><th>三程序SRAM读能量</th><th>活动功耗</th><th>主要特点</th></tr></thead>
+          <tbody>
+            <tr><td>A-symmetric</td><td>5,456</td><td>0.106306 mm²</td><td>43.600 nJ</td><td>≥20.298 mW（仅SRAM）</td><td>五槽直接供给</td></tr>
+            <tr><td>双Lane 2×4096</td><td>5,475</td><td>0.085477 mm²</td><td>56.035 nJ</td><td>≥20.319 mW（仅SRAM）</td><td>面积最小，性能+0.35%</td></tr>
+            <tr><td>分组四Lane 4×2048</td><td>5,475</td><td>0.088943 mm²</td><td>39.318 nJ</td><td>17.464–17.719 mW</td><td>同双Lane调度，路由较小</td></tr>
+            <tr><td><strong>自适应四Lane 1/2/4</strong></td><td><strong>5,456</strong></td><td><strong>0.092430 mm²</strong></td><td>43.611 nJ</td><td><strong>18.280–18.612 mW</strong></td><td>恢复五槽性能，路由最大</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li>相对A-symmetric：总面积低13.05%，SRAM读能量近似相同（+0.03%）；自适应方案已计逻辑而A只计SRAM功耗时，活动功耗仍低约8.30%–9.94%。</li>
+        <li>相对通用双Lane：总面积高8.13%，SRAM读能量低22.17%，并消除全部12条轨迹的1.99%平均周期代价。</li>
+        <li>相对分组四Lane：逻辑端口CACTI直接值为面积+3.92%、读能量+10.92%、活动功耗约+4.7%–5.0%。</li>
+        <li>把两种Config都按完整8-bit SRAM读口归一后，自适应方案只大2.46%，读能量反而低0.15%；因此10.92%的差异主要是CACTI内部组织选择，不是可靠的架构结论。</li>
+      </ul>
+      <div class="callout good">
+        <strong>阶段判断：</strong>
+        若首要目标是最小面积，仍选2×4096双Lane；若允许约8%面积回退以完全恢复五槽性能并降低读能量，
+        自适应四Lane是更通用的候选。与分组四Lane之间的真实能量差必须使用同一8-bit SRAM宏和综合后路由功耗裁决。
+      </div>
+
+      <h3>15.8 最大风险</h3>
+      <ul>
+        <li>Kultala 2016已经直接研究“面向变长编码的静态VLIW调度”；本文若没有真实SRAM Bank成本目标和复现实验，会被视为只是增加了“每拍最多两个操作”限制的模板调度。</li>
+        <li>当前面积来自CACTI和GE粗估，不是目标SRAM compiler与RTL综合。</li>
+        <li>读能量在平衡/深度感知版本中分别增加28.52%/19.97%，不能宣称全面PPA更优。</li>
+        <li>每workload选择策略可能在12例上过拟合，需要更多函数与shape验证。</li>
+        <li>联合调度不再保持旧五槽Trace原周期，问题已从纯后处理压缩变成ISA/调度/代码存储协同设计。</li>
+      </ul>
+      <p>
+        当前方向已达到“继续做RTL/真实宏kill test”的门槛，但尚未达到“核心创新已经成立”的门槛。
+        最稳妥主张是容量、面积和可替换布局；能耗必须作为明确代价或后续优化目标。
+      </p>
+    </section>
+
+    <section id="next">
+      <h2>16. 下一步工作与判定标准</h2>
+      <ol>
+        <li><strong>目标SRAM compiler：</strong>获得5×8192、34×1024、34×2048、34×4096及可分Bank版本的真实面积、延迟、泄漏和读能量。</li>
+        <li><strong>参数化RTL：</strong>实现A-symmetric、双Lane、分组四Lane和自适应四Lane；重点综合5-bit mask、phase、4-to-5路由与逐Lane读使能。</li>
+        <li><strong>周期对拍：</strong>同步SRAM固定流水下逐周期比较新调度五槽输出，并验证无下溢、无同槽冲突。</li>
+        <li><strong>完整功能验证：</strong>新调度与旧五槽设计最终数值输出一致。</li>
+        <li><strong>能耗Pareto：</strong>优先对拍本轮四Lane工作点；原计划的单Lane内部拆成2048+1024子Bank方案按当前决定暂缓。</li>
+        <li><strong>调度升级：</strong>将pair-aware改为可回滚资源试发射或小宽度beam search，显式计入Bank冲突、active-state和后继解锁。</li>
+        <li><strong>Kultala适配基线：</strong><span class="good">目标函数级复现已完成</span>；若投稿需要完整算法对拍，应让调度器导出node-to-cycle映射，再实现ASAP/ALAP移动与全部资源合法性重放。</li>
+        <li><strong>物理成本入环：</strong>先把单操作事件的Lane选择、两条Lane各自深度和2次幂取整放入池布局目标；只有当DAG调度能改变T或双操作周期数时，再加入复杂调度搜索。</li>
+        <li><strong>高利用率与程序替换实验：</strong>增加每拍3/4操作占比明显更高的DAG，并模拟函数装入/移除，比较A、双Lane、分组四Lane和自适应四Lane的性能、碎片与成功装入率。</li>
+        <li><strong>继续查新：</strong>重点搜索replaceable VLIW code store、physical bank-depth-aware scheduling、bank folding和deterministic instruction supply。</li>
+      </ol>
+      <div class="grid-2">
+        <div class="card">
+          <h3 class="good">继续条件</h3>
+          <ul>
+            <li>真实SRAM+RTL面积仍下降至少15%。</li>
+            <li>平均周期损失≤3%，最坏≤6%。</li>
+            <li>更多workload上无需每条Trace人工调参。</li>
+            <li>能耗得到明显改善，或系统级面积—能耗权衡可接受。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 class="bad">停止条件</h3>
+          <ul>
+            <li>目标宏下面积收益低于10%。</li>
+            <li>路由/时钟功耗进一步放大能耗劣势。</li>
+            <li>新颖性退化为普通2-wide VLIW。</li>
+            <li>程序替换需求无法成为可信应用场景。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="files">
+      <h2>17. 代码、数据与复现位置</h2>
+      <div class="table-wrap">
+        <table class="left">
+          <thead><tr><th>内容</th><th>文件</th><th>作用</th></tr></thead>
+          <tbody>
+            <tr><td><strong>有效基准文档</strong></td><td><a href="vliw_compression_abcd_detailed_reassessment_2026-09-01.html"><code>plan/vliw_compression_abcd_detailed_reassessment_2026-09-01.html</code></a></td><td>A/B/C/D逐实验、逐SRAM重判；本文的正式起点。</td></tr>
+            <tr><td>已作废中间文档</td><td><a href="vliw_152bit_issue2_joint_scheduling_reassessment_2026-09-02.html"><code>plan/vliw_152bit_issue2_joint_scheduling_reassessment_2026-09-02.html</code></a></td><td>仅保留历史；必要内容已吸收到本文，不应再作为结论依据。</td></tr>
+            <tr><td>本文</td><td><code>plan/vliw_174bit_equal_slot_priority_study_2026-09-02.html</code></td><td>从A/B/C/D详细重判开始的完整讨论、实验与最终口径。</td></tr>
+            <tr><td>最直接已有工作</td><td><a href="../paper/Improving%20Code%20Density%20with%20Variable%20Length%20Encoding%20Aware%20Instruction%20Scheduling.pdf"><code>paper/Improving Code Density with Variable Length Encoding Aware Instruction Scheduling.pdf</code></a></td><td>Kultala等2016；variable-length template-aware静态调度对比基线。</td></tr>
+            <tr><td>174-bit调度器</td><td><a href="../schedule_v19_issue2_priority_174.py"><code>schedule_v19_issue2_priority_174.py</code></a></td><td>20-bit mem_addr、34-bit等宽槽和13种策略。</td></tr>
+            <tr><td>第一组双槽策略</td><td><a href="../experiments/issue2_priority_equal34_study.py"><code>experiments/issue2_priority_equal34_study.py</code></a></td><td>双发射策略与编码。</td></tr>
+            <tr><td>公平五槽参考</td><td><a href="../experiments/issue5_priority_reference_study.py"><code>experiments/issue5_priority_reference_study.py</code></a></td><td>同策略优化五槽基线。</td></tr>
+            <tr><td>窗口/pair扩展</td><td><a href="../experiments/priority_window_extension_study.py"><code>experiments/priority_window_extension_study.py</code></a></td><td>有界重排与pair窗口。</td></tr>
+            <tr><td>最终结果合成</td><td><a href="../experiments/synthesize_174_priority_results.py"><code>experiments/synthesize_174_priority_results.py</code></a></td><td>选择、重跑、roundtrip与汇总。</td></tr>
+            <tr><td>代码池PPA脚本</td><td><a href="../experiments/replaceable_pool_area_compare.py"><code>experiments/replaceable_pool_area_compare.py</code></a></td><td>A-symmetric与双Lane最终CACTI/GE比较。</td></tr>
+            <tr><td>Kultala复现与深度分解脚本</td><td><a href="../experiments/kultala_prior_art_reproduction.py"><code>experiments/kultala_prior_art_reproduction.py</code></a></td><td>检查FU优先级退化、固定T目标、12条schedule和池级Lane深度边界。</td></tr>
+            <tr><td>四Lane映射脚本</td><td><a href="../experiments/four_lane_mapping_study.py"><code>experiments/four_lane_mapping_study.py</code></a></td><td>生成两组四Lane映射、写出Config/Lane流并逐bit解码验证。</td></tr>
+            <tr><td>四Lane硬件比较脚本</td><td><a href="../experiments/four_lane_hardware_compare.py"><code>experiments/four_lane_hardware_compare.py</code></a></td><td>CACTI SRAM、GE逻辑、真实翻转率与1 GHz功耗区间。</td></tr>
+            <tr><td>自适应1/2/4调度与编码</td><td><a href="../experiments/issue124_adaptive_four_lane_study.py"><code>experiments/issue124_adaptive_four_lane_study.py</code></a></td><td>364次四发射调度搜索、5-bit mask、循环Lane映射和12例roundtrip。</td></tr>
+            <tr><td>自适应1/2/4硬件模型</td><td><a href="../experiments/issue124_adaptive_hardware_compare.py"><code>experiments/issue124_adaptive_hardware_compare.py</code></a></td><td>4-to-5路由、CACTI、GE逻辑、翻转率功耗及已有方案比较。</td></tr>
+            <tr><td>调度完整JSON</td><td><a href="../analysis_output_issue2_174_priority/final_priority_comparison.json"><code>analysis_output_issue2_174_priority/final_priority_comparison.json</code></a></td><td>最终12例调度、容量与roundtrip。</td></tr>
+            <tr><td>逐workload CSV</td><td><a href="../analysis_output_issue2_174_priority/final_workload_comparison.csv"><code>analysis_output_issue2_174_priority/final_workload_comparison.csv</code></a></td><td>公平五槽/双槽结果。</td></tr>
+            <tr><td>策略CSV</td><td><a href="../analysis_output_issue2_174_priority/final_strategy_comparison.csv"><code>analysis_output_issue2_174_priority/final_strategy_comparison.csv</code></a></td><td>全局策略敏感性。</td></tr>
+            <tr><td>最终代码池PPA</td><td><a href="../analysis_output_issue2_174_priority/replaceable_pool_area_compare.json"><code>analysis_output_issue2_174_priority/replaceable_pool_area_compare.json</code></a></td><td>最终深宽、CACTI、读能量和逻辑粗估。</td></tr>
+            <tr><td>Kultala复现完整结果</td><td><a href="../analysis_output_issue2_174_priority/kultala_prior_art_reproduction.json"><code>analysis_output_issue2_174_priority/kultala_prior_art_reproduction.json</code></a></td><td>FU模板计数、逐workload分解、6,591种池组合和深度感知映射结果。</td></tr>
+            <tr><td>Kultala复现简表</td><td><a href="../analysis_output_issue2_174_priority/kultala_prior_art_reproduction.csv"><code>analysis_output_issue2_174_priority/kultala_prior_art_reproduction.csv</code></a></td><td>12条轨迹的T、N、单双操作周期与Lane深度。</td></tr>
+            <tr><td>四Lane映射完整结果</td><td><a href="../analysis_output_four_lane_174/four_lane_mapping_study.json"><code>analysis_output_four_lane_174/four_lane_mapping_study.json</code></a></td><td>码本、深度、逐程序分配和roundtrip结果。</td></tr>
+            <tr><td>四Lane硬件完整结果</td><td><a href="../analysis_output_four_lane_174/four_lane_hardware_compare.json"><code>analysis_output_four_lane_174/four_lane_hardware_compare.json</code></a></td><td>SRAM宏、逻辑面积、功耗区间、8-bit配置口敏感性和公平比较。</td></tr>
+            <tr><td>自适应1/2/4调度结果</td><td><a href="../analysis_output_issue124_four_lane_174/issue124_adaptive_study.json"><code>analysis_output_issue124_four_lane_174/issue124_adaptive_study.json</code></a></td><td>364次搜索、12例winner、模式分布、Lane深度和编码结果。</td></tr>
+            <tr><td>自适应1/2/4硬件结果</td><td><a href="../analysis_output_issue124_four_lane_174/issue124_adaptive_hardware_compare.json"><code>analysis_output_issue124_four_lane_174/issue124_adaptive_hardware_compare.json</code></a></td><td>总面积、读能量、活动功耗和8-bit端口归一比较。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>复现命令</h3>
+      <pre>PYTHONPATH=.python-deps python3 experiments/issue2_priority_equal34_study.py
+PYTHONPATH=.python-deps python3 experiments/issue5_priority_reference_study.py
+PYTHONPATH=.python-deps python3 experiments/priority_window_extension_study.py
+PYTHONPATH=.python-deps python3 experiments/synthesize_174_priority_results.py
+python3 experiments/kultala_prior_art_reproduction.py
+python3 experiments/replaceable_pool_area_compare.py --cacti-root /path/to/cacti
+python3 experiments/four_lane_mapping_study.py
+python3 experiments/four_lane_hardware_compare.py --cacti-root /path/to/cacti
+PYTHONPATH=.python-deps python3 experiments/issue124_adaptive_four_lane_study.py
+python3 experiments/issue124_adaptive_hardware_compare.py --cacti-root /path/to/cacti</pre>
+      <div class="callout">
+        <strong>给新读者的一句话：</strong>
+        本轮不是简单把五槽改成双槽，而是在174-bit等宽ISA下，通过工作负载自适应调度把五个对称、可替换的槽Bank
+        折叠成两条共享Lane；平衡工作点以约2.03%的性能代价换取约19.67%的粗面积收益、读能量增加28.52%。
+        新完成的深度感知映射把粗面积收益扩大到34.93%、能量代价缩小到19.97%，但它减少了浅Lane的未来替换余量，必须继续做程序装入实验。
+        四Lane对照说明：保持相同双发射schedule时，多用两块浅Bank会比对应双Lane增加约3%–4%面积，
+        却可降低约30% SRAM读能量，并且相对A-symmetric/A-compact仍保留明确面积收益。
+        最新自适应四Lane由1/2/4设想演化为无mode字段的0–4操作mask，在12条轨迹上恢复五槽全部性能；相对A-symmetric总面积低13.05%，
+        相对双Lane面积高8.13%但读能量低22.17%，是性能优先的四Lane工作点。
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

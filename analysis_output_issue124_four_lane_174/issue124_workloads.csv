@@ -1,0 +1,13 @@
+case,mode,priority_strategy,optimized_issue5_cycles,issue124_cycles,optimized_issue2_cycles,cycle_change_vs_issue5,cycle_change_vs_issue2,events,lane_depths,capacity_mode_cycles,roundtrip_bit_exact
+gelu_x32,2,index,1560,1560,1560,0.0,0.0,1152,"[288, 288, 288, 288]","{'idle': 593, 'one_valid': 780, 'two_valid': 186, 'three_valid': 0, 'four_valid': 0}",True
+gelu_x64,2,index,3096,3096,3096,0.0,0.0,2304,"[576, 576, 576, 576]","{'idle': 1169, 'one_valid': 1548, 'two_valid': 378, 'three_valid': 0, 'four_valid': 0}",True
+layernorm_x32,0,latency,737,737,751,0.0,-0.018641810918774926,1190,"[298, 298, 297, 297]","{'idle': 20, 'one_valid': 324, 'two_valid': 320, 'three_valid': 62, 'four_valid': 10}",True
+layernorm_x64,0,window8_latency,1424,1424,1440,0.0,-0.011111111111111072,2374,"[594, 594, 593, 593]","{'idle': 40, 'one_valid': 585, 'two_valid': 632, 'three_valid': 139, 'four_valid': 27}",True
+logsoftmax_x32,2,shortest_latency,1805,1805,1889,0.0,-0.04446797247220746,2272,"[568, 568, 568, 568]","{'idle': 558, 'one_valid': 512, 'two_valid': 460, 'three_valid': 256, 'four_valid': 18}",True
+logsoftmax_x64,2,shortest_latency,3493,3493,3688,0.0,-0.05287418655097609,4544,"[1136, 1136, 1136, 1136]","{'idle': 1030, 'one_valid': 1008, 'two_valid': 852, 'three_valid': 576, 'four_valid': 26}",True
+logsumexp_x32,2,window16_critical,839,839,868,0.0,-0.033410138248847976,928,"[232, 232, 232, 232]","{'idle': 287, 'one_valid': 273, 'two_valid': 184, 'three_valid': 89, 'four_valid': 5}",True
+logsumexp_x64,2,window16_critical,1551,1551,1604,0.0,-0.03304239401496256,1856,"[464, 464, 464, 464]","{'idle': 439, 'one_valid': 553, 'two_valid': 384, 'three_valid': 161, 'four_valid': 13}",True
+softmax_x32,1,window16_critical,495,495,506,0.0,-0.021739130434782594,544,"[136, 136, 136, 136]","{'idle': 162, 'one_valid': 172, 'two_valid': 109, 'three_valid': 50, 'four_valid': 1}",True
+softmax_x64,1,critical_path,936,936,939,0.0,-0.0031948881789137795,1088,"[272, 272, 272, 272]","{'idle': 297, 'one_valid': 286, 'two_valid': 263, 'three_valid': 80, 'four_valid': 9}",True
+softplus_x32,2,index,1342,1342,1342,0.0,0.0,640,"[160, 160, 160, 160]","{'idle': 772, 'one_valid': 498, 'two_valid': 71, 'three_valid': 0, 'four_valid': 0}",True
+softplus_x64,2,index,2684,2684,2684,0.0,0.0,1280,"[320, 320, 320, 320]","{'idle': 1549, 'one_valid': 988, 'two_valid': 146, 'three_valid': 0, 'four_valid': 0}",True

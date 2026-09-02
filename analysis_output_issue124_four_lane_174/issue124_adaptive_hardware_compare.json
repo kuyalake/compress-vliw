@@ -1,0 +1,267 @@
+{
+  "model": {
+    "tool": "HP CACTI plus gate-equivalent logic screening",
+    "technology_nm": 32,
+    "frequency_ghz": 1.0,
+    "read_gating": "Exactly popcount(mask) payload lanes are read; every invalid lane is independently gated.",
+    "scope": "GELU X64 + Softmax X64 + LayerNorm X64 pool",
+    "pipeline_contract": "State advances on ready/valid acceptance; stalls also hold in-flight valid, mask, phase, enables, and output registers.",
+    "control_flow_scope": "Linear traces unless config PC, phase, and payload positions are checkpointed at every non-sequential entry."
+  },
+  "macros": {
+    "config_5x8192": {
+      "logical_width": 5,
+      "logical_depth": 8192,
+      "physical_depth": 8192,
+      "logical_bits": 40960,
+      "allocated_word_bits": 8,
+      "allocated_bits": 65536,
+      "access_time_ns": 0.221251,
+      "cycle_time_ns": 0.202539,
+      "read_energy_nj": 0.00368423,
+      "write_energy_nj": 0.00140028,
+      "leakage_mw": 1.72588,
+      "height_mm": 0.115389,
+      "width_mm": 0.133936,
+      "area_mm2": 0.015454741104
+    },
+    "config_8x8192_sensitivity": {
+      "logical_width": 8,
+      "logical_depth": 8192,
+      "physical_depth": 8192,
+      "logical_bits": 65536,
+      "allocated_word_bits": 8,
+      "allocated_bits": 65536,
+      "access_time_ns": 0.235613,
+      "cycle_time_ns": 0.191688,
+      "read_energy_nj": 0.00324472,
+      "write_energy_nj": 0.00127169,
+      "leakage_mw": 1.74179,
+      "height_mm": 0.138438,
+      "width_mm": 0.108266,
+      "area_mm2": 0.014988128508000001
+    },
+    "payload_34x2048": {
+      "logical_width": 34,
+      "logical_depth": 2048,
+      "physical_depth": 2048,
+      "logical_bits": 69632,
+      "allocated_word_bits": 40,
+      "allocated_bits": 81920,
+      "access_time_ns": 0.232461,
+      "cycle_time_ns": 0.206752,
+      "read_energy_nj": 0.00407735,
+      "write_energy_nj": 0.00279496,
+      "leakage_mw": 2.11528,
+      "height_mm": 0.157435,
+      "width_mm": 0.113903,
+      "area_mm2": 0.017932318805
+    }
+  },
+  "logic": {
+    "categories_ge": {
+      "mask_decode_and_enable": 180.0,
+      "four_to_five_router": 1530.0,
+      "counters_and_phase": 354.0
+    },
+    "total_ge": 2064.0,
+    "area_mm2": 0.005245532160000001,
+    "measured_activity": {
+      "cycles": 5456,
+      "counter_bits": 59,
+      "raw_toggles": {
+        "config": 5681,
+        "bank_enable": 10692,
+        "router_output": 91380,
+        "counter_and_phase": 27642
+      },
+      "activity_factors": {
+        "mask_decode_and_enable": 0.33343515803193224,
+        "four_to_five_router": 0.09852078661376575,
+        "counters_and_phase": 0.08587032158655997
+      }
+    },
+    "effective_switched_ge_per_cycle": 241.15322580645164,
+    "dynamic_power_mw_range": [
+      0.09766705645161292,
+      0.39066822580645166
+    ],
+    "leakage_power_mw_range": [
+      0.002064,
+      0.04128
+    ],
+    "assumptions": {
+      "voltage_v": 0.9,
+      "frequency_ghz": 1.0,
+      "effective_capacitance_ff_per_ge_range": [
+        0.5,
+        2.0
+      ],
+      "leakage_nw_per_ge_range": [
+        1.0,
+        20.0
+      ],
+      "warning": "Routing GE and power are screening estimates; replace with RTL synthesis and SAIF/VCD power."
+    }
+  },
+  "adaptive_issue124": {
+    "organization": {
+      "config": [
+        5,
+        8192,
+        1
+      ],
+      "payload": [
+        34,
+        2048,
+        4
+      ]
+    },
+    "logical_bits": 319488,
+    "cacti_allocated_bits": 393216,
+    "sram_area_mm2": 0.087184016324,
+    "logic_area_mm2": 0.005245532160000001,
+    "total_area_mm2": 0.092429548484,
+    "sram_leakage_mw": 10.187,
+    "program_read_energy_nj": 43.61115898,
+    "program_read_energy_pj_per_event": 7.56350311827957,
+    "average_sram_dynamic_power_mw_at_1ghz": 7.993247613636363,
+    "logic_dynamic_power_mw_range": [
+      0.09766705645161292,
+      0.39066822580645166
+    ],
+    "logic_leakage_power_mw_range": [
+      0.002064,
+      0.04128
+    ],
+    "total_active_power_mw_range": [
+      18.279978670087974,
+      18.612195839442812
+    ]
+  },
+  "physical_8bit_config_port_sensitivity": {
+    "organization": {
+      "config": [
+        8,
+        8192,
+        1
+      ],
+      "payload": [
+        34,
+        2048,
+        4
+      ]
+    },
+    "logical_bits": 344064,
+    "cacti_allocated_bits": 393216,
+    "sram_area_mm2": 0.086717403728,
+    "logic_area_mm2": 0.005245532160000001,
+    "total_area_mm2": 0.091962935888,
+    "sram_leakage_mw": 10.20291,
+    "program_read_energy_nj": 41.21319242,
+    "program_read_energy_pj_per_event": 7.147622688172043,
+    "average_sram_dynamic_power_mw_at_1ghz": 7.553737613636363,
+    "logic_dynamic_power_mw_range": [
+      0.09766705645161292,
+      0.39066822580645166
+    ],
+    "logic_leakage_power_mw_range": [
+      0.002064,
+      0.04128
+    ],
+    "total_active_power_mw_range": [
+      17.856378670087974,
+      18.18859583944281
+    ]
+  },
+  "performance": {
+    "pool": {
+      "cases": [
+        "gelu_x64",
+        "softmax_x64",
+        "layernorm_x64"
+      ],
+      "cycles": 5456,
+      "events": 5766,
+      "lane_depths": [
+        1442,
+        1442,
+        1441,
+        1441
+      ],
+      "capacity_mode_cycles": {
+        "idle": 1506,
+        "one_valid": 2419,
+        "two_valid": 1273,
+        "three_valid": 219,
+        "four_valid": 36
+      }
+    },
+    "aggregate_12_workloads": {
+      "issue124_cycles": 19962,
+      "optimized_issue5_cycles": 19962,
+      "optimized_issue2_cycles": 20367,
+      "cycle_change_vs_issue5": 0.0,
+      "cycle_change_vs_issue2": -0.0198851082633672,
+      "capacity_mode_cycles": {
+        "idle": 6916,
+        "one_valid": 7527,
+        "two_valid": 3985,
+        "three_valid": 1413,
+        "four_valid": 109
+      },
+      "events": 20172,
+      "roundtrip_cases": 12
+    }
+  },
+  "references": {
+    "candidate_a_symmetric": {
+      "total_area_mm2": 0.106305729049,
+      "program_read_energy_nj": 43.60010629,
+      "sram_only_active_power_mw": 20.29789824500275
+    },
+    "two_lane_general": {
+      "total_area_mm2": 0.08547725052999999,
+      "program_read_energy_nj": 56.03527563,
+      "sram_only_active_power_mw": 20.31891353972603
+    },
+    "grouped_four_lane_general": {
+      "total_area_mm2": 0.0889429672792,
+      "program_read_energy_nj": 39.318186600000004,
+      "total_active_power_mw_range": [
+        17.464120191780825,
+        17.71877493150685
+      ]
+    }
+  },
+  "comparisons": {
+    "candidate_a_symmetric": {
+      "total_area_change": -0.13053088191139717,
+      "program_read_energy_change": 0.00025350144622326987,
+      "active_power_range_change_vs_reference_sram_only": [
+        -0.0994151980938015,
+        -0.08304812573267029
+      ]
+    },
+    "two_lane_general": {
+      "total_area_change": 0.08133506764539589,
+      "program_read_energy_change": -0.22171955987218195,
+      "active_power_range_change_vs_reference_sram_only": [
+        -0.10034664824237183,
+        -0.0839965038950714
+      ]
+    },
+    "grouped_four_lane_general": {
+      "total_area_change": 0.03920018986836027,
+      "program_read_energy_change": 0.10918541141467575,
+      "active_power_range_change": [
+        0.04671626565483211,
+        0.050422273062869394
+      ]
+    },
+    "grouped_four_lane_physical8_sensitivity": {
+      "total_area_change": 0.02457714447240189,
+      "program_read_energy_change": -0.0014936381791755826
+    }
+  }
+}

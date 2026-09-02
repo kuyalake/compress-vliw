@@ -1,0 +1,1139 @@
+{
+  "all_results": [
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "index",
+      "cycles": 609
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "shortest_latency",
+      "cycles": 609
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "latency",
+      "cycles": 609
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "critical_path",
+      "cycles": 658
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "critical_fanout",
+      "cycles": 658
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "critical_age",
+      "cycles": 658
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "index",
+      "cycles": 518
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "shortest_latency",
+      "cycles": 518
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "latency",
+      "cycles": 518
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "critical_path",
+      "cycles": 530
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "critical_fanout",
+      "cycles": 530
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "critical_age",
+      "cycles": 530
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "index",
+      "cycles": 515
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "shortest_latency",
+      "cycles": 517
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "latency",
+      "cycles": 515
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "critical_path",
+      "cycles": 508
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "critical_fanout",
+      "cycles": 508
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "critical_age",
+      "cycles": 508
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "index",
+      "cycles": 1121
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "shortest_latency",
+      "cycles": 1121
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "latency",
+      "cycles": 1121
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "critical_path",
+      "cycles": 1170
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "critical_fanout",
+      "cycles": 1170
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "critical_age",
+      "cycles": 1170
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "index",
+      "cycles": 1014
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "shortest_latency",
+      "cycles": 975
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "latency",
+      "cycles": 972
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "critical_path",
+      "cycles": 936
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "critical_fanout",
+      "cycles": 936
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "critical_age",
+      "cycles": 937
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "index",
+      "cycles": 969
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "shortest_latency",
+      "cycles": 942
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "latency",
+      "cycles": 972
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "critical_path",
+      "cycles": 1010
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "critical_fanout",
+      "cycles": 1010
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "critical_age",
+      "cycles": 1010
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "index",
+      "cycles": 771
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "shortest_latency",
+      "cycles": 855
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "latency",
+      "cycles": 737
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "critical_path",
+      "cycles": 948
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "critical_fanout",
+      "cycles": 948
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "critical_age",
+      "cycles": 943
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "index",
+      "cycles": 1450
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "shortest_latency",
+      "cycles": 1540
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "latency",
+      "cycles": 1536
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "critical_path",
+      "cycles": 1670
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "critical_fanout",
+      "cycles": 1670
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "critical_age",
+      "cycles": 1648
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "index",
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "shortest_latency",
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "latency",
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "critical_path",
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "critical_fanout",
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "critical_age",
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "index",
+      "cycles": 3096
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "shortest_latency",
+      "cycles": 3096
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "latency",
+      "cycles": 3096
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "critical_path",
+      "cycles": 3096
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "critical_fanout",
+      "cycles": 3096
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "critical_age",
+      "cycles": 3096
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "index",
+      "cycles": 2189
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "shortest_latency",
+      "cycles": 2189
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "latency",
+      "cycles": 2188
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "critical_path",
+      "cycles": 2217
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "critical_fanout",
+      "cycles": 2217
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "critical_age",
+      "cycles": 2217
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "index",
+      "cycles": 1865
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "shortest_latency",
+      "cycles": 1852
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "latency",
+      "cycles": 1859
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "critical_path",
+      "cycles": 1966
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "critical_fanout",
+      "cycles": 1966
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "critical_age",
+      "cycles": 1949
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "index",
+      "cycles": 1865
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "shortest_latency",
+      "cycles": 1805
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "latency",
+      "cycles": 1859
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "critical_path",
+      "cycles": 1941
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "critical_fanout",
+      "cycles": 1941
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "critical_age",
+      "cycles": 1941
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "index",
+      "cycles": 4237
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "shortest_latency",
+      "cycles": 4237
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "latency",
+      "cycles": 4236
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "critical_path",
+      "cycles": 4265
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "critical_fanout",
+      "cycles": 4265
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "critical_age",
+      "cycles": 4265
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "index",
+      "cycles": 3649
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "shortest_latency",
+      "cycles": 3636
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "latency",
+      "cycles": 3720
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "critical_path",
+      "cycles": 3848
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "critical_fanout",
+      "cycles": 3848
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "critical_age",
+      "cycles": 3827
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "index",
+      "cycles": 3652
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "shortest_latency",
+      "cycles": 3493
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "latency",
+      "cycles": 3812
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "critical_path",
+      "cycles": 3829
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "critical_fanout",
+      "cycles": 3829
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "critical_age",
+      "cycles": 3829
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "index",
+      "cycles": 2085
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "shortest_latency",
+      "cycles": 2085
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "latency",
+      "cycles": 2120
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "critical_path",
+      "cycles": 2120
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "critical_fanout",
+      "cycles": 2120
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "critical_age",
+      "cycles": 2120
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "index",
+      "cycles": 1573
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "shortest_latency",
+      "cycles": 1573
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "latency",
+      "cycles": 1608
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "critical_path",
+      "cycles": 1608
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "critical_fanout",
+      "cycles": 1608
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "critical_age",
+      "cycles": 1608
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "index",
+      "cycles": 1342
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "shortest_latency",
+      "cycles": 1342
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "latency",
+      "cycles": 1361
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "critical_path",
+      "cycles": 1361
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "critical_fanout",
+      "cycles": 1361
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "critical_age",
+      "cycles": 1361
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "index",
+      "cycles": 4143
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "shortest_latency",
+      "cycles": 4143
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "latency",
+      "cycles": 4248
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "critical_path",
+      "cycles": 4248
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "critical_fanout",
+      "cycles": 4248
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "critical_age",
+      "cycles": 4248
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "index",
+      "cycles": 3119
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "shortest_latency",
+      "cycles": 3119
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "latency",
+      "cycles": 3224
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "critical_path",
+      "cycles": 3224
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "critical_fanout",
+      "cycles": 3224
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "critical_age",
+      "cycles": 3224
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "index",
+      "cycles": 2684
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "shortest_latency",
+      "cycles": 2684
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "latency",
+      "cycles": 2739
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "critical_path",
+      "cycles": 2739
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "critical_fanout",
+      "cycles": 2739
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "critical_age",
+      "cycles": 2739
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "index",
+      "cycles": 1140
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "shortest_latency",
+      "cycles": 1141
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "latency",
+      "cycles": 1140
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "critical_path",
+      "cycles": 1180
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "critical_fanout",
+      "cycles": 1180
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "critical_age",
+      "cycles": 1180
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "index",
+      "cycles": 884
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "shortest_latency",
+      "cycles": 884
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "latency",
+      "cycles": 884
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "critical_path",
+      "cycles": 924
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "critical_fanout",
+      "cycles": 924
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "critical_age",
+      "cycles": 924
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "index",
+      "cycles": 868
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "shortest_latency",
+      "cycles": 848
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "latency",
+      "cycles": 868
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "critical_path",
+      "cycles": 889
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "critical_fanout",
+      "cycles": 889
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "critical_age",
+      "cycles": 889
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "index",
+      "cycles": 2164
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "shortest_latency",
+      "cycles": 2168
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "latency",
+      "cycles": 2164
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "critical_path",
+      "cycles": 2204
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "critical_fanout",
+      "cycles": 2204
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "critical_age",
+      "cycles": 2204
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "index",
+      "cycles": 1652
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "shortest_latency",
+      "cycles": 1652
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "latency",
+      "cycles": 1652
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "critical_path",
+      "cycles": 1692
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "critical_fanout",
+      "cycles": 1692
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "critical_age",
+      "cycles": 1692
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "index",
+      "cycles": 1644
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "shortest_latency",
+      "cycles": 1581
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "latency",
+      "cycles": 1644
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "critical_path",
+      "cycles": 1620
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "critical_fanout",
+      "cycles": 1620
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "critical_age",
+      "cycles": 1620
+    }
+  ],
+  "workloads": [
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "critical_path",
+      "cycles": 508,
+      "issue2_mode": 2,
+      "issue2_priority_strategy": "critical_path",
+      "issue2_cycles": 506,
+      "issue2_cycle_change_vs_optimized_issue5": -0.003937007874015741
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "critical_path",
+      "cycles": 936,
+      "issue2_mode": 1,
+      "issue2_priority_strategy": "critical_age",
+      "issue2_cycles": 939,
+      "issue2_cycle_change_vs_optimized_issue5": 0.0032051282051281937
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "latency",
+      "cycles": 737,
+      "issue2_mode": 0,
+      "issue2_priority_strategy": "index",
+      "issue2_cycles": 812,
+      "issue2_cycle_change_vs_optimized_issue5": 0.10176390773405708
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "index",
+      "cycles": 1450,
+      "issue2_mode": 0,
+      "issue2_priority_strategy": "index",
+      "issue2_cycles": 1516,
+      "issue2_cycle_change_vs_optimized_issue5": 0.04551724137931035
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "index",
+      "cycles": 1560,
+      "issue2_mode": 2,
+      "issue2_priority_strategy": "index",
+      "issue2_cycles": 1560,
+      "issue2_cycle_change_vs_optimized_issue5": 0.0
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "index",
+      "cycles": 3096,
+      "issue2_mode": 2,
+      "issue2_priority_strategy": "index",
+      "issue2_cycles": 3096,
+      "issue2_cycle_change_vs_optimized_issue5": 0.0
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "shortest_latency",
+      "cycles": 1805,
+      "issue2_mode": 1,
+      "issue2_priority_strategy": "latency",
+      "issue2_cycles": 1889,
+      "issue2_cycle_change_vs_optimized_issue5": 0.04653739612188357
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "shortest_latency",
+      "cycles": 3493,
+      "issue2_mode": 2,
+      "issue2_priority_strategy": "latency",
+      "issue2_cycles": 3699,
+      "issue2_cycle_change_vs_optimized_issue5": 0.05897509304322934
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "index",
+      "cycles": 1342,
+      "issue2_mode": 2,
+      "issue2_priority_strategy": "index",
+      "issue2_cycles": 1342,
+      "issue2_cycle_change_vs_optimized_issue5": 0.0
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "index",
+      "cycles": 2684,
+      "issue2_mode": 2,
+      "issue2_priority_strategy": "index",
+      "issue2_cycles": 2684,
+      "issue2_cycle_change_vs_optimized_issue5": 0.0
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "shortest_latency",
+      "cycles": 848,
+      "issue2_mode": 2,
+      "issue2_priority_strategy": "latency",
+      "issue2_cycles": 868,
+      "issue2_cycle_change_vs_optimized_issue5": 0.02358490566037741
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "shortest_latency",
+      "cycles": 1581,
+      "issue2_mode": 2,
+      "issue2_priority_strategy": "latency",
+      "issue2_cycles": 1644,
+      "issue2_cycle_change_vs_optimized_issue5": 0.03984819734345346
+    }
+  ],
+  "aggregate": {
+    "optimized_issue5_cycles": 20040,
+    "optimized_issue2_cycles": 20555,
+    "issue2_cycle_change_vs_optimized_issue5": 0.025698602794411274
+  }
+}

@@ -1,0 +1,820 @@
+{
+  "experiment": "Kultala objective-level reproduction on fixed five-slot VLIW",
+  "scope_limit": "This proves FU-score degeneracy and the fixed-T bit-cost invariant. It does not implement Kultala's full ASAP/ALAP node-relocation pass or replay all scheduler resource constraints, because the current scheduler does not export a node-to-cycle issue map.",
+  "definitions": {
+    "T": "total stored configuration rows, including EOP",
+    "N": "total active 34-bit functional operations",
+    "ideal_bits": "5*T + 34*N, excluding the common program header"
+  },
+  "fu_prioritization": {
+    "logical_functional_mask_count": 16,
+    "logical_masks": [
+      [],
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        2
+      ],
+      [
+        3
+      ],
+      [
+        4
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        0,
+        4
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        1,
+        4
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        2,
+        4
+      ],
+      [
+        3,
+        4
+      ]
+    ],
+    "logical_mask_implicit_nop_counts": {
+      "load": 11,
+      "store": 11,
+      "vector": 11,
+      "scalar": 11,
+      "sfu": 11
+    },
+    "logical_mask_explicit_counts": {
+      "load": 5,
+      "store": 5,
+      "vector": 5,
+      "scalar": 5,
+      "sfu": 5
+    },
+    "lane_ordered_configuration_count_excluding_eop": 31,
+    "lane_ordered_implicit_nop_counts": {
+      "load": 21,
+      "store": 21,
+      "vector": 21,
+      "scalar": 21,
+      "sfu": 21
+    },
+    "lane_ordered_explicit_counts": {
+      "load": 10,
+      "store": 10,
+      "vector": 10,
+      "scalar": 10,
+      "sfu": 10
+    },
+    "distinct_priority_scores": 1,
+    "slot_binding": {
+      "load": [
+        "load"
+      ],
+      "store": [
+        "store"
+      ],
+      "vector": [
+        "vector"
+      ],
+      "scalar": [
+        "scalar"
+      ],
+      "sfu": [
+        "sfu"
+      ]
+    },
+    "events_with_alternative_functional_slot": 0,
+    "conclusion": "All five slot types receive the same template score, and each operation class has exactly one legal functional slot. Therefore Kultala-style FU prioritization has no decision to make."
+  },
+  "workloads": [
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "index",
+      "issue5_cycles": 1560,
+      "issue2_total_rows_T": 1560,
+      "issue2_execution_rows": 1559,
+      "event_count_N": 1152,
+      "ideal_bits_5T_plus_34N": 46968,
+      "extra_bits_from_issue2_cycles_vs_issue5": 0,
+      "double_event_cycles": 186,
+      "single_event_cycles": 780,
+      "empty_execution_cycles": 593,
+      "slot_counts": {
+        "load": 384,
+        "store": 384,
+        "vector": 0,
+        "scalar": 0,
+        "sfu": 384
+      },
+      "kultala_postpass": {
+        "objective_before_bits": 46968,
+        "same_T_move_delta_bits": 0,
+        "strictly_improving_moves": 0,
+        "accepted_moves": 0,
+        "objective_after_bits": 46968,
+        "dependency_unchecked_same_slot_move_upper_bound": 1282176,
+        "explanation": "The upper bound only shows that empty destinations exist before dependency/resource checks. None can reduce the fixed-row objective, so a strict code-size-improving pass rejects all of them without needing to alter the legal schedule."
+      },
+      "current_balanced_lane_depths": [
+        576,
+        576
+      ],
+      "mathematical_best_balanced_depths": [
+        576,
+        576
+      ],
+      "counterfactual_unbalanced_depths": [
+        966,
+        186
+      ],
+      "balanced_allocated_depths_pow2": [
+        1024,
+        1024
+      ],
+      "unbalanced_allocated_depths_pow2": [
+        1024,
+        256
+      ],
+      "unbalanced_mapping_roundtrip_bit_exact": true
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "index",
+      "issue5_cycles": 3096,
+      "issue2_total_rows_T": 3096,
+      "issue2_execution_rows": 3095,
+      "event_count_N": 2304,
+      "ideal_bits_5T_plus_34N": 93816,
+      "extra_bits_from_issue2_cycles_vs_issue5": 0,
+      "double_event_cycles": 378,
+      "single_event_cycles": 1548,
+      "empty_execution_cycles": 1169,
+      "slot_counts": {
+        "load": 768,
+        "store": 768,
+        "vector": 0,
+        "scalar": 0,
+        "sfu": 768
+      },
+      "kultala_postpass": {
+        "objective_before_bits": 93816,
+        "same_T_move_delta_bits": 0,
+        "strictly_improving_moves": 0,
+        "accepted_moves": 0,
+        "objective_after_bits": 93816,
+        "dependency_unchecked_same_slot_move_upper_bound": 5071104,
+        "explanation": "The upper bound only shows that empty destinations exist before dependency/resource checks. None can reduce the fixed-row objective, so a strict code-size-improving pass rejects all of them without needing to alter the legal schedule."
+      },
+      "current_balanced_lane_depths": [
+        1152,
+        1152
+      ],
+      "mathematical_best_balanced_depths": [
+        1152,
+        1152
+      ],
+      "counterfactual_unbalanced_depths": [
+        1926,
+        378
+      ],
+      "balanced_allocated_depths_pow2": [
+        2048,
+        2048
+      ],
+      "unbalanced_allocated_depths_pow2": [
+        2048,
+        512
+      ],
+      "unbalanced_mapping_roundtrip_bit_exact": true
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue5_cycles": 737,
+      "issue2_total_rows_T": 751,
+      "issue2_execution_rows": 750,
+      "event_count_N": 1190,
+      "ideal_bits_5T_plus_34N": 44215,
+      "extra_bits_from_issue2_cycles_vs_issue5": 70,
+      "double_event_cycles": 463,
+      "single_event_cycles": 264,
+      "empty_execution_cycles": 23,
+      "slot_counts": {
+        "load": 102,
+        "store": 96,
+        "vector": 672,
+        "scalar": 256,
+        "sfu": 64
+      },
+      "kultala_postpass": {
+        "objective_before_bits": 44215,
+        "same_T_move_delta_bits": 0,
+        "strictly_improving_moves": 0,
+        "accepted_moves": 0,
+        "objective_after_bits": 44215,
+        "dependency_unchecked_same_slot_move_upper_bound": 184126,
+        "explanation": "The upper bound only shows that empty destinations exist before dependency/resource checks. None can reduce the fixed-row objective, so a strict code-size-improving pass rejects all of them without needing to alter the legal schedule."
+      },
+      "current_balanced_lane_depths": [
+        595,
+        595
+      ],
+      "mathematical_best_balanced_depths": [
+        595,
+        595
+      ],
+      "counterfactual_unbalanced_depths": [
+        727,
+        463
+      ],
+      "balanced_allocated_depths_pow2": [
+        1024,
+        1024
+      ],
+      "unbalanced_allocated_depths_pow2": [
+        1024,
+        512
+      ],
+      "unbalanced_mapping_roundtrip_bit_exact": true
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue5_cycles": 1424,
+      "issue2_total_rows_T": 1440,
+      "issue2_execution_rows": 1439,
+      "event_count_N": 2374,
+      "ideal_bits_5T_plus_34N": 87916,
+      "extra_bits_from_issue2_cycles_vs_issue5": 80,
+      "double_event_cycles": 962,
+      "single_event_cycles": 450,
+      "empty_execution_cycles": 27,
+      "slot_counts": {
+        "load": 198,
+        "store": 192,
+        "vector": 1344,
+        "scalar": 512,
+        "sfu": 128
+      },
+      "kultala_postpass": {
+        "objective_before_bits": 87916,
+        "same_T_move_delta_bits": 0,
+        "strictly_improving_moves": 0,
+        "accepted_moves": 0,
+        "objective_after_bits": 87916,
+        "dependency_unchecked_same_slot_move_upper_bound": 572658,
+        "explanation": "The upper bound only shows that empty destinations exist before dependency/resource checks. None can reduce the fixed-row objective, so a strict code-size-improving pass rejects all of them without needing to alter the legal schedule."
+      },
+      "current_balanced_lane_depths": [
+        1187,
+        1187
+      ],
+      "mathematical_best_balanced_depths": [
+        1187,
+        1187
+      ],
+      "counterfactual_unbalanced_depths": [
+        1412,
+        962
+      ],
+      "balanced_allocated_depths_pow2": [
+        2048,
+        2048
+      ],
+      "unbalanced_allocated_depths_pow2": [
+        2048,
+        1024
+      ],
+      "unbalanced_mapping_roundtrip_bit_exact": true
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "latency",
+      "issue5_cycles": 1805,
+      "issue2_total_rows_T": 1889,
+      "issue2_execution_rows": 1888,
+      "event_count_N": 2272,
+      "ideal_bits_5T_plus_34N": 86693,
+      "extra_bits_from_issue2_cycles_vs_issue5": 420,
+      "double_event_cycles": 773,
+      "single_event_cycles": 726,
+      "empty_execution_cycles": 389,
+      "slot_counts": {
+        "load": 256,
+        "store": 256,
+        "vector": 1024,
+        "scalar": 448,
+        "sfu": 288
+      },
+      "kultala_postpass": {
+        "objective_before_bits": 86693,
+        "same_T_move_delta_bits": 0,
+        "strictly_improving_moves": 0,
+        "accepted_moves": 0,
+        "objective_after_bits": 86693,
+        "dependency_unchecked_same_slot_move_upper_bound": 2041408,
+        "explanation": "The upper bound only shows that empty destinations exist before dependency/resource checks. None can reduce the fixed-row objective, so a strict code-size-improving pass rejects all of them without needing to alter the legal schedule."
+      },
+      "current_balanced_lane_depths": [
+        1136,
+        1136
+      ],
+      "mathematical_best_balanced_depths": [
+        1136,
+        1136
+      ],
+      "counterfactual_unbalanced_depths": [
+        1499,
+        773
+      ],
+      "balanced_allocated_depths_pow2": [
+        2048,
+        2048
+      ],
+      "unbalanced_allocated_depths_pow2": [
+        2048,
+        1024
+      ],
+      "unbalanced_mapping_roundtrip_bit_exact": true
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue5_cycles": 3493,
+      "issue2_total_rows_T": 3688,
+      "issue2_execution_rows": 3687,
+      "event_count_N": 4544,
+      "ideal_bits_5T_plus_34N": 172936,
+      "extra_bits_from_issue2_cycles_vs_issue5": 975,
+      "double_event_cycles": 1655,
+      "single_event_cycles": 1234,
+      "empty_execution_cycles": 798,
+      "slot_counts": {
+        "load": 512,
+        "store": 512,
+        "vector": 2048,
+        "scalar": 896,
+        "sfu": 576
+      },
+      "kultala_postpass": {
+        "objective_before_bits": 172936,
+        "same_T_move_delta_bits": 0,
+        "strictly_improving_moves": 0,
+        "accepted_moves": 0,
+        "objective_after_bits": 172936,
+        "dependency_unchecked_same_slot_move_upper_bound": 7483200,
+        "explanation": "The upper bound only shows that empty destinations exist before dependency/resource checks. None can reduce the fixed-row objective, so a strict code-size-improving pass rejects all of them without needing to alter the legal schedule."
+      },
+      "current_balanced_lane_depths": [
+        2272,
+        2272
+      ],
+      "mathematical_best_balanced_depths": [
+        2272,
+        2272
+      ],
+      "counterfactual_unbalanced_depths": [
+        2889,
+        1655
+      ],
+      "balanced_allocated_depths_pow2": [
+        4096,
+        4096
+      ],
+      "unbalanced_allocated_depths_pow2": [
+        4096,
+        2048
+      ],
+      "unbalanced_mapping_roundtrip_bit_exact": true
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "latency",
+      "issue5_cycles": 839,
+      "issue2_total_rows_T": 868,
+      "issue2_execution_rows": 867,
+      "event_count_N": 928,
+      "ideal_bits_5T_plus_34N": 35892,
+      "extra_bits_from_issue2_cycles_vs_issue5": 145,
+      "double_event_cycles": 326,
+      "single_event_cycles": 276,
+      "empty_execution_cycles": 265,
+      "slot_counts": {
+        "load": 128,
+        "store": 32,
+        "vector": 384,
+        "scalar": 224,
+        "sfu": 160
+      },
+      "kultala_postpass": {
+        "objective_before_bits": 35892,
+        "same_T_move_delta_bits": 0,
+        "strictly_improving_moves": 0,
+        "accepted_moves": 0,
+        "objective_after_bits": 35892,
+        "dependency_unchecked_same_slot_move_upper_bound": 426528,
+        "explanation": "The upper bound only shows that empty destinations exist before dependency/resource checks. None can reduce the fixed-row objective, so a strict code-size-improving pass rejects all of them without needing to alter the legal schedule."
+      },
+      "current_balanced_lane_depths": [
+        464,
+        464
+      ],
+      "mathematical_best_balanced_depths": [
+        464,
+        464
+      ],
+      "counterfactual_unbalanced_depths": [
+        602,
+        326
+      ],
+      "balanced_allocated_depths_pow2": [
+        512,
+        512
+      ],
+      "unbalanced_allocated_depths_pow2": [
+        1024,
+        512
+      ],
+      "unbalanced_mapping_roundtrip_bit_exact": true
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue5_cycles": 1551,
+      "issue2_total_rows_T": 1604,
+      "issue2_execution_rows": 1603,
+      "event_count_N": 1856,
+      "ideal_bits_5T_plus_34N": 71124,
+      "extra_bits_from_issue2_cycles_vs_issue5": 265,
+      "double_event_cycles": 650,
+      "single_event_cycles": 556,
+      "empty_execution_cycles": 397,
+      "slot_counts": {
+        "load": 256,
+        "store": 64,
+        "vector": 768,
+        "scalar": 448,
+        "sfu": 320
+      },
+      "kultala_postpass": {
+        "objective_before_bits": 71124,
+        "same_T_move_delta_bits": 0,
+        "strictly_improving_moves": 0,
+        "accepted_moves": 0,
+        "objective_after_bits": 71124,
+        "dependency_unchecked_same_slot_move_upper_bound": 1457984,
+        "explanation": "The upper bound only shows that empty destinations exist before dependency/resource checks. None can reduce the fixed-row objective, so a strict code-size-improving pass rejects all of them without needing to alter the legal schedule."
+      },
+      "current_balanced_lane_depths": [
+        928,
+        928
+      ],
+      "mathematical_best_balanced_depths": [
+        928,
+        928
+      ],
+      "counterfactual_unbalanced_depths": [
+        1206,
+        650
+      ],
+      "balanced_allocated_depths_pow2": [
+        1024,
+        1024
+      ],
+      "unbalanced_allocated_depths_pow2": [
+        2048,
+        1024
+      ],
+      "unbalanced_mapping_roundtrip_bit_exact": true
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "critical_path",
+      "issue5_cycles": 495,
+      "issue2_total_rows_T": 506,
+      "issue2_execution_rows": 505,
+      "event_count_N": 544,
+      "ideal_bits_5T_plus_34N": 21026,
+      "extra_bits_from_issue2_cycles_vs_issue5": 55,
+      "double_event_cycles": 218,
+      "single_event_cycles": 108,
+      "empty_execution_cycles": 179,
+      "slot_counts": {
+        "load": 64,
+        "store": 64,
+        "vector": 256,
+        "scalar": 64,
+        "sfu": 96
+      },
+      "kultala_postpass": {
+        "objective_before_bits": 21026,
+        "same_T_move_delta_bits": 0,
+        "strictly_improving_moves": 0,
+        "accepted_moves": 0,
+        "objective_after_bits": 21026,
+        "dependency_unchecked_same_slot_move_upper_bound": 138400,
+        "explanation": "The upper bound only shows that empty destinations exist before dependency/resource checks. None can reduce the fixed-row objective, so a strict code-size-improving pass rejects all of them without needing to alter the legal schedule."
+      },
+      "current_balanced_lane_depths": [
+        272,
+        272
+      ],
+      "mathematical_best_balanced_depths": [
+        272,
+        272
+      ],
+      "counterfactual_unbalanced_depths": [
+        326,
+        218
+      ],
+      "balanced_allocated_depths_pow2": [
+        512,
+        512
+      ],
+      "unbalanced_allocated_depths_pow2": [
+        512,
+        256
+      ],
+      "unbalanced_mapping_roundtrip_bit_exact": true
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "critical_age",
+      "issue5_cycles": 936,
+      "issue2_total_rows_T": 939,
+      "issue2_execution_rows": 938,
+      "event_count_N": 1088,
+      "ideal_bits_5T_plus_34N": 41687,
+      "extra_bits_from_issue2_cycles_vs_issue5": 15,
+      "double_event_cycles": 400,
+      "single_event_cycles": 288,
+      "empty_execution_cycles": 250,
+      "slot_counts": {
+        "load": 128,
+        "store": 128,
+        "vector": 512,
+        "scalar": 128,
+        "sfu": 192
+      },
+      "kultala_postpass": {
+        "objective_before_bits": 41687,
+        "same_T_move_delta_bits": 0,
+        "strictly_improving_moves": 0,
+        "accepted_moves": 0,
+        "objective_after_bits": 41687,
+        "dependency_unchecked_same_slot_move_upper_bound": 487744,
+        "explanation": "The upper bound only shows that empty destinations exist before dependency/resource checks. None can reduce the fixed-row objective, so a strict code-size-improving pass rejects all of them without needing to alter the legal schedule."
+      },
+      "current_balanced_lane_depths": [
+        544,
+        544
+      ],
+      "mathematical_best_balanced_depths": [
+        544,
+        544
+      ],
+      "counterfactual_unbalanced_depths": [
+        688,
+        400
+      ],
+      "balanced_allocated_depths_pow2": [
+        1024,
+        1024
+      ],
+      "unbalanced_allocated_depths_pow2": [
+        1024,
+        512
+      ],
+      "unbalanced_mapping_roundtrip_bit_exact": true
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "index",
+      "issue5_cycles": 1342,
+      "issue2_total_rows_T": 1342,
+      "issue2_execution_rows": 1341,
+      "event_count_N": 640,
+      "ideal_bits_5T_plus_34N": 28470,
+      "extra_bits_from_issue2_cycles_vs_issue5": 0,
+      "double_event_cycles": 71,
+      "single_event_cycles": 498,
+      "empty_execution_cycles": 772,
+      "slot_counts": {
+        "load": 128,
+        "store": 128,
+        "vector": 128,
+        "scalar": 0,
+        "sfu": 256
+      },
+      "kultala_postpass": {
+        "objective_before_bits": 28470,
+        "same_T_move_delta_bits": 0,
+        "strictly_improving_moves": 0,
+        "accepted_moves": 0,
+        "objective_after_bits": 28470,
+        "dependency_unchecked_same_slot_move_upper_bound": 722048,
+        "explanation": "The upper bound only shows that empty destinations exist before dependency/resource checks. None can reduce the fixed-row objective, so a strict code-size-improving pass rejects all of them without needing to alter the legal schedule."
+      },
+      "current_balanced_lane_depths": [
+        320,
+        320
+      ],
+      "mathematical_best_balanced_depths": [
+        320,
+        320
+      ],
+      "counterfactual_unbalanced_depths": [
+        569,
+        71
+      ],
+      "balanced_allocated_depths_pow2": [
+        512,
+        512
+      ],
+      "unbalanced_allocated_depths_pow2": [
+        1024,
+        128
+      ],
+      "unbalanced_mapping_roundtrip_bit_exact": true
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "index",
+      "issue5_cycles": 2684,
+      "issue2_total_rows_T": 2684,
+      "issue2_execution_rows": 2683,
+      "event_count_N": 1280,
+      "ideal_bits_5T_plus_34N": 56940,
+      "extra_bits_from_issue2_cycles_vs_issue5": 0,
+      "double_event_cycles": 146,
+      "single_event_cycles": 988,
+      "empty_execution_cycles": 1549,
+      "slot_counts": {
+        "load": 256,
+        "store": 256,
+        "vector": 256,
+        "scalar": 0,
+        "sfu": 512
+      },
+      "kultala_postpass": {
+        "objective_before_bits": 56940,
+        "same_T_move_delta_bits": 0,
+        "strictly_improving_moves": 0,
+        "accepted_moves": 0,
+        "objective_after_bits": 56940,
+        "dependency_unchecked_same_slot_move_upper_bound": 2886144,
+        "explanation": "The upper bound only shows that empty destinations exist before dependency/resource checks. None can reduce the fixed-row objective, so a strict code-size-improving pass rejects all of them without needing to alter the legal schedule."
+      },
+      "current_balanced_lane_depths": [
+        640,
+        640
+      ],
+      "mathematical_best_balanced_depths": [
+        640,
+        640
+      ],
+      "counterfactual_unbalanced_depths": [
+        1134,
+        146
+      ],
+      "balanced_allocated_depths_pow2": [
+        1024,
+        1024
+      ],
+      "unbalanced_allocated_depths_pow2": [
+        2048,
+        256
+      ],
+      "unbalanced_mapping_roundtrip_bit_exact": true
+    }
+  ],
+  "three_x64_replaceable_pool": {
+    "cases": [
+      "gelu_x64",
+      "softmax_x64",
+      "layernorm_x64"
+    ],
+    "total_T": 5475,
+    "total_N": 5766,
+    "ideal_used_bits_5T_plus_34N": 223419,
+    "config_required_depth": 5475,
+    "config_allocated_depth_pow2": 8192,
+    "slot_event_totals": {
+      "load": 1094,
+      "store": 1088,
+      "vector": 1856,
+      "scalar": 640,
+      "sfu": 1088
+    },
+    "candidate_a_compact_allocated_depths": {
+      "load": 2048,
+      "store": 2048,
+      "vector": 2048,
+      "scalar": 1024,
+      "sfu": 2048
+    },
+    "candidate_a_symmetric_depth_each": 2048,
+    "balanced_lane_required_depths": [
+      2883,
+      2883
+    ],
+    "balanced_lane_allocated_depths_pow2": [
+      4096,
+      4096
+    ],
+    "unbalanced_lane_required_depths": [
+      4026,
+      1740
+    ],
+    "unbalanced_lane_allocated_depths_pow2": [
+      4096,
+      2048
+    ],
+    "pool_depth_aware_single_assignment": {
+      "double_event_cycles": 1740,
+      "single_event_cycles": 2286,
+      "minimum_allocated_payload_entries": 6144,
+      "optimal_single_events_in_lane0_min": 0,
+      "optimal_single_events_in_lane0_max": 2286,
+      "all_singles_lane0_is_optimal": true,
+      "all_singles_lane0_roundtrip_bit_exact_for_all_programs": true
+    },
+    "allocated_bits": {
+      "candidate_a_compact": 354304,
+      "candidate_a_symmetric": 389120,
+      "two_lane_balanced": 319488,
+      "two_lane_unbalanced_counterfactual": 249856
+    },
+    "depth_aware_saves_bits_vs_balanced": 69632,
+    "depth_aware_saves_fraction_vs_balanced": 0.21794871794871795,
+    "two_lane_saves_fraction_vs_a_compact": 0.09826589595375723,
+    "two_lane_saves_fraction_vs_a_symmetric": 0.17894736842105263,
+    "depth_aware_two_lane_saves_fraction_vs_a_compact": 0.2947976878612717,
+    "depth_aware_two_lane_saves_fraction_vs_a_symmetric": 0.35789473684210527,
+    "rounding_overhead_bits_two_lane": 96069,
+    "strategy_pool_search": {
+      "candidate_combinations": 6591,
+      "min_cycle_sum": 5475,
+      "max_cycle_sum": 6100,
+      "distinct_allocated_capacity_results": 1,
+      "allocation_results": [
+        {
+          "allocated_bits": 319488,
+          "config_depth": 8192,
+          "example_cycle_sum": 5747
+        }
+      ],
+      "conclusion": "All tested schedule combinations map to the same power-of-two SRAM depths. The current priority sweep therefore provides no extra allocated-capacity gain beyond selecting short schedules."
+    }
+  },
+  "main_findings": [
+    "FU prioritization degenerates because slot bindings are fixed and the complete <=2-slot template set is symmetric.",
+    "A same-T Kultala-style post-pass cannot improve 5*T+34*N.",
+    "Greedy lane assignment already achieves the mathematical minimum maximum lane depth, but that is not the minimum power-of-two allocated capacity.",
+    "For the three-X64 pool, deliberately unbalanced single-event mapping reduces payload allocation from 4096+4096 to 4096+2048 entries and remains bit-exact.",
+    "The existing schedule sweep does not cross a new power-of-two SRAM boundary for the three-X64 pool.",
+    "The new depth-boundary gain comes from compile-time lane mapping, not yet from DAG rescheduling; the current priority sweep provides no additional allocated-capacity gain."
+  ]
+}

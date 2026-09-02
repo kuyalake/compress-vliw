@@ -1,0 +1,152 @@
+{
+  "architecture": {
+    "issue_limit": 2,
+    "functional_slots": [
+      "load",
+      "store",
+      "vector",
+      "scalar",
+      "sfu"
+    ],
+    "payload_lanes": 4,
+    "lane_groups": [
+      [
+        0,
+        1
+      ],
+      [
+        2,
+        3
+      ]
+    ],
+    "active_groups_per_cycle": 1,
+    "config_bits": 6,
+    "config_format": {
+      "bit_5": "lane group: 0 selects lanes 0/1, 1 selects lanes 2/3",
+      "bits_4_0": "existing 31-state ordered local-lane to slot mapping",
+      "eop": 63,
+      "reserved": [
+        31,
+        32
+      ],
+      "canonical_empty": 0
+    },
+    "semantic_normal_codes": 61,
+    "minimum_config_bits": 6,
+    "hardware_intent": "Two 34-bit 2:1 pair-selection muxes followed by the existing two-lane-to-five-slot router; no FIFO or dynamic scheduler.",
+    "stall_rule": "A global stall must freeze the configuration PC and all four payload pointers in the same cycle."
+  },
+  "pool": {
+    "cases": [
+      "gelu_x64",
+      "softmax_x64",
+      "layernorm_x64"
+    ],
+    "double_cycles": 1740,
+    "single_cycles": 2286,
+    "events": 5766
+  },
+  "general_symmetric": {
+    "policy": "general_symmetric",
+    "lane_depths": [
+      1442,
+      1442,
+      1441,
+      1441
+    ],
+    "workloads": [
+      {
+        "case": "gelu_x64",
+        "cycles_T": 3096,
+        "events_N": 2304,
+        "lane_depths": [
+          576,
+          576,
+          576,
+          576
+        ],
+        "roundtrip_bit_exact": true
+      },
+      {
+        "case": "softmax_x64",
+        "cycles_T": 939,
+        "events_N": 1088,
+        "lane_depths": [
+          272,
+          272,
+          272,
+          272
+        ],
+        "roundtrip_bit_exact": true
+      },
+      {
+        "case": "layernorm_x64",
+        "cycles_T": 1440,
+        "events_N": 2374,
+        "lane_depths": [
+          594,
+          594,
+          593,
+          593
+        ],
+        "roundtrip_bit_exact": true
+      }
+    ],
+    "roundtrip_cases": 3,
+    "fitted_small_pair_doubles_remaining": null
+  },
+  "pool_fitted": {
+    "policy": "pool_fitted",
+    "lane_depths": [
+      2048,
+      2048,
+      835,
+      835
+    ],
+    "workloads": [
+      {
+        "case": "gelu_x64",
+        "cycles_T": 3096,
+        "events_N": 2304,
+        "lane_depths": [
+          774,
+          774,
+          378,
+          378
+        ],
+        "roundtrip_bit_exact": true
+      },
+      {
+        "case": "softmax_x64",
+        "cycles_T": 939,
+        "events_N": 1088,
+        "lane_depths": [
+          144,
+          144,
+          400,
+          400
+        ],
+        "roundtrip_bit_exact": true
+      },
+      {
+        "case": "layernorm_x64",
+        "cycles_T": 1440,
+        "events_N": 2374,
+        "lane_depths": [
+          1130,
+          1130,
+          57,
+          57
+        ],
+        "roundtrip_bit_exact": true
+      }
+    ],
+    "roundtrip_cases": 3,
+    "fitted_small_pair_doubles_remaining": 0
+  },
+  "main_findings": [
+    "Four lanes do not change DAG issue cycles because the issue limit remains two; they change only physical event placement.",
+    "A one-bit group selector lets the existing five-bit local mapping be reused, limiting configuration width to six bits.",
+    "Both four-lane mappings decode bit-exactly to every original row."
+  ]
+}

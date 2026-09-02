@@ -1,0 +1,7 @@
+policy,case,cycles_T,events_N,lane_depths,roundtrip_bit_exact
+general_symmetric,gelu_x64,3096,2304,"[576, 576, 576, 576]",True
+general_symmetric,softmax_x64,939,1088,"[272, 272, 272, 272]",True
+general_symmetric,layernorm_x64,1440,2374,"[594, 594, 593, 593]",True
+pool_fitted,gelu_x64,3096,2304,"[774, 774, 378, 378]",True
+pool_fitted,softmax_x64,939,1088,"[144, 144, 400, 400]",True
+pool_fitted,layernorm_x64,1440,2374,"[1130, 1130, 57, 57]",True

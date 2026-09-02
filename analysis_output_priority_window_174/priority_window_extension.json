@@ -1,0 +1,2364 @@
+{
+  "strategies": [
+    "window8_latency",
+    "window16_latency",
+    "window8_critical",
+    "window16_critical",
+    "pair_window8",
+    "pair_window16"
+  ],
+  "results": [
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 609
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 609
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 622
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 643
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 609
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 609
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 518
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 518
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 528
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 515
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 516
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 516
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 511
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 510
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 537
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 530
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 543
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 543
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 1121
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 1121
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 1134
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 1155
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 1121
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 1121
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 972
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 972
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 985
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 972
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 970
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 970
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 991
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 990
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 999
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 1020
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 997
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 997
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 751
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 781
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 854
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 894
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 801
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 823
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 1440
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 1497
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 1559
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 1633
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 1483
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 1517
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 3096
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 3096
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 3096
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 3096
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 3096
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 3096
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 2188
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 2188
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 2247
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 2259
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 2189
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 2189
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 1924
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 1920
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 1985
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 1983
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 1900
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 1900
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 1914
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 1941
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 2014
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 1990
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 1958
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 1928
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 4236
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 4236
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 4295
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 4307
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 4237
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 4237
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 3780
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 3780
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 3882
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 3817
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 3688
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 3688
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 3722
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 3761
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 3895
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 3822
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 3798
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 3736
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 2090
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 2090
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 2090
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 2090
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 2085
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 2085
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 1578
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 1578
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 1578
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 1578
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 1573
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 1573
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 1342
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 1342
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 1342
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 1342
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 1342
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 1342
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 4148
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 4148
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 4148
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 4148
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 4143
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 4143
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 3124
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 3124
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 3124
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 3124
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 3119
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 3119
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 2684
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 2684
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 2684
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 2684
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 2684
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 2684
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 1140
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 1140
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 1172
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 1204
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 1140
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 1140
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 884
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 884
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 916
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 948
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 884
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 884
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 868
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 868
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 879
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 892
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 876
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 877
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 2164
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 2164
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 2196
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 2228
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 2164
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 2164
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 1652
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 1652
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 1684
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 1716
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 1652
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 1652
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 2,
+      "cycles": 1644
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 2,
+      "cycles": 1644
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 2,
+      "cycles": 1634
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 2,
+      "cycles": 1604
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 2,
+      "cycles": 1663
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 2,
+      "cycles": 1664
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 609
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 609
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 615
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 623
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 609
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 609
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 518
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 518
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 501
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 495
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 518
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 1,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 518
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 515
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 515
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 528
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 509
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 515
+    },
+    {
+      "case": "softmax_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 515
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 1121
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 1121
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 1127
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 1135
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 1121
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 1121
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 972
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 972
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 1003
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 1011
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 972
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 972
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 972
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 972
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 988
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 974
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 969
+    },
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 969
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 740
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 764
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 808
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 828
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 772
+    },
+    {
+      "case": "layernorm_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 772
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 1424
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 1454
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 1491
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 1556
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 1445
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 1445
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 1560
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 3096
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 3096
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 3096
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 3096
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 3096
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 3096
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 2188
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 2188
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 2199
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 2207
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 2189
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 2189
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 1880
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 1880
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 1901
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 1905
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 1865
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 1,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 1865
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 1907
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 1907
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 1928
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 1925
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 1878
+    },
+    {
+      "case": "logsoftmax_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 1878
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 4236
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 4236
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 4247
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 4255
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 4237
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 4237
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 3696
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 3671
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 3717
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 3728
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 3649
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 3649
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 3707
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 3729
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 3720
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 3733
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 3669
+    },
+    {
+      "case": "logsoftmax_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 3669
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 2090
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 2090
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 2090
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 2090
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 2085
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 2085
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 1578
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 1578
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 1578
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 1578
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 1573
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 1,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 1573
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 1342
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 1342
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 1342
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 1342
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 1342
+    },
+    {
+      "case": "softplus_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 1342
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 4148
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 4148
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 4148
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 4148
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 4143
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 4143
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 3124
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 3124
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 3124
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 3124
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 3119
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 3119
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 2684
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 2684
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 2684
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 2684
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 2684
+    },
+    {
+      "case": "softplus_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 2684
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 1140
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 1140
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 1146
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 1154
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 1140
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 1140
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 884
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 884
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 890
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 898
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 884
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 1,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 884
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 868
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 868
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 853
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 839
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 868
+    },
+    {
+      "case": "logsumexp_x32",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 868
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 2164
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 2164
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 2170
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 2178
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 2164
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 0,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 2164
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 1652
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 1652
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 1658
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 1666
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 1652
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 1,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 1652
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "window8_latency",
+      "issue_width": 5,
+      "cycles": 1644
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "window16_latency",
+      "issue_width": 5,
+      "cycles": 1644
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "window8_critical",
+      "issue_width": 5,
+      "cycles": 1608
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "window16_critical",
+      "issue_width": 5,
+      "cycles": 1551
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window8",
+      "issue_width": 5,
+      "cycles": 1644
+    },
+    {
+      "case": "logsumexp_x64",
+      "mode": 2,
+      "priority_strategy": "pair_window16",
+      "issue_width": 5,
+      "cycles": 1644
+    }
+  ]
+}

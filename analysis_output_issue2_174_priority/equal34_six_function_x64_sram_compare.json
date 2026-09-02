@@ -1,0 +1,1641 @@
+{
+  "organization": {
+    "function_count": 6,
+    "stored_shape": "X=64",
+    "policy": "one independently sized instruction SRAM organization per function",
+    "segmentation": "up to two power-of-two-depth macros per logical stream"
+  },
+  "per_function": {
+    "gelu_x64": {
+      "candidate_a": {
+        "shapes": {
+          "config": [
+            5,
+            3095
+          ],
+          "load": [
+            34,
+            768
+          ],
+          "store": [
+            34,
+            768
+          ],
+          "sfu": [
+            34,
+            768
+          ]
+        },
+        "macros": {
+          "config": {
+            "logical_width": 5,
+            "logical_depth": 3095,
+            "physical_depth": 4096,
+            "segment_depths": [
+              4096
+            ],
+            "segments": [
+              {
+                "physical_depth": 4096,
+                "read_energy_nj": 0.00189896
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.007984485431600002,
+            "leakage_mw": 0.927343,
+            "allocated_bits": 32768,
+            "max_access_time_ns": 0.201127,
+            "max_cycle_time_ns": 0.153087
+          },
+          "load": {
+            "logical_width": 34,
+            "logical_depth": 768,
+            "physical_depth": 768,
+            "segment_depths": [
+              256,
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 256,
+                "read_energy_nj": 0.00133635
+              },
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.00163943
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.00806692210158,
+            "leakage_mw": 0.882387,
+            "allocated_bits": 30720,
+            "max_access_time_ns": 0.164769,
+            "max_cycle_time_ns": 0.136234
+          },
+          "store": {
+            "logical_width": 34,
+            "logical_depth": 768,
+            "physical_depth": 768,
+            "segment_depths": [
+              256,
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 256,
+                "read_energy_nj": 0.00133635
+              },
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.00163943
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.00806692210158,
+            "leakage_mw": 0.882387,
+            "allocated_bits": 30720,
+            "max_access_time_ns": 0.164769,
+            "max_cycle_time_ns": 0.136234
+          },
+          "sfu": {
+            "logical_width": 34,
+            "logical_depth": 768,
+            "physical_depth": 768,
+            "segment_depths": [
+              256,
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 256,
+                "read_energy_nj": 0.00133635
+              },
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.00163943
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.00806692210158,
+            "leakage_mw": 0.882387,
+            "allocated_bits": 30720,
+            "max_access_time_ns": 0.164769,
+            "max_cycle_time_ns": 0.136234
+          }
+        },
+        "summary": {
+          "area_mm2": 0.03218525173634,
+          "leakage_mw": 3.574504,
+          "allocated_bits": 124928,
+          "macro_count": 7,
+          "max_access_time_ns": 0.201127,
+          "max_cycle_time_ns": 0.153087,
+          "suite_read_energy_nj": 9.421762480000002
+        }
+      },
+      "issue2": {
+        "shapes": {
+          "config": [
+            5,
+            3096
+          ],
+          "lane0": [
+            34,
+            1152
+          ],
+          "lane1": [
+            34,
+            1152
+          ]
+        },
+        "macros": {
+          "config": {
+            "logical_width": 5,
+            "logical_depth": 3096,
+            "physical_depth": 4096,
+            "segment_depths": [
+              4096
+            ],
+            "segments": [
+              {
+                "physical_depth": 4096,
+                "read_energy_nj": 0.00189896
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.007984485431600002,
+            "leakage_mw": 0.927343,
+            "allocated_bits": 32768,
+            "max_access_time_ns": 0.201127,
+            "max_cycle_time_ns": 0.153087
+          },
+          "lane0": {
+            "logical_width": 34,
+            "logical_depth": 1152,
+            "physical_depth": 1152,
+            "segment_depths": [
+              128,
+              1024
+            ],
+            "segments": [
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              },
+              {
+                "physical_depth": 1024,
+                "read_energy_nj": 0.00213448
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.01057883403345,
+            "leakage_mw": 1.285367,
+            "allocated_bits": 46080,
+            "max_access_time_ns": 0.213095,
+            "max_cycle_time_ns": 0.167779
+          },
+          "lane1": {
+            "logical_width": 34,
+            "logical_depth": 1152,
+            "physical_depth": 1152,
+            "segment_depths": [
+              128,
+              1024
+            ],
+            "segments": [
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              },
+              {
+                "physical_depth": 1024,
+                "read_energy_nj": 0.00213448
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.01057883403345,
+            "leakage_mw": 1.285367,
+            "allocated_bits": 46080,
+            "max_access_time_ns": 0.213095,
+            "max_cycle_time_ns": 0.167779
+          }
+        },
+        "summary": {
+          "area_mm2": 0.029142153498500002,
+          "leakage_mw": 3.498077,
+          "allocated_bits": 124928,
+          "macro_count": 5,
+          "max_access_time_ns": 0.213095,
+          "max_cycle_time_ns": 0.167779,
+          "suite_read_energy_nj": 10.385869952
+        }
+      },
+      "comparison": {
+        "sram_area_change": -0.09454946205699777,
+        "sram_leakage_change": -0.021381148265605554,
+        "allocated_bits_change": 0.0,
+        "read_energy_change": 0.10232771989811384,
+        "macro_count_change": -2
+      }
+    },
+    "layernorm_x64": {
+      "candidate_a": {
+        "shapes": {
+          "config": [
+            5,
+            1423
+          ],
+          "load": [
+            34,
+            198
+          ],
+          "store": [
+            34,
+            192
+          ],
+          "vector": [
+            34,
+            1344
+          ],
+          "scalar": [
+            34,
+            512
+          ],
+          "sfu": [
+            34,
+            128
+          ]
+        },
+        "macros": {
+          "config": {
+            "logical_width": 5,
+            "logical_depth": 1423,
+            "physical_depth": 1536,
+            "segment_depths": [
+              512,
+              1024
+            ],
+            "segments": [
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.000424779
+              },
+              {
+                "physical_depth": 1024,
+                "read_energy_nj": 0.00123843
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.004010260981980001,
+            "leakage_mw": 0.38764299999999996,
+            "allocated_bits": 12288,
+            "max_access_time_ns": 0.152401,
+            "max_cycle_time_ns": 0.121418
+          },
+          "load": {
+            "logical_width": 34,
+            "logical_depth": 198,
+            "physical_depth": 256,
+            "segment_depths": [
+              128,
+              128
+            ],
+            "segments": [
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              },
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.0027174618177,
+            "leakage_mw": 0.292814,
+            "allocated_bits": 10240,
+            "max_access_time_ns": 0.146374,
+            "max_cycle_time_ns": 0.111311
+          },
+          "store": {
+            "logical_width": 34,
+            "logical_depth": 192,
+            "physical_depth": 192,
+            "segment_depths": [
+              64,
+              128
+            ],
+            "segments": [
+              {
+                "physical_depth": 64,
+                "read_energy_nj": 0.000415264
+              },
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.00212807524359,
+            "leakage_mw": 0.2240453,
+            "allocated_bits": 7680,
+            "max_access_time_ns": 0.146374,
+            "max_cycle_time_ns": 0.111311
+          },
+          "vector": {
+            "logical_width": 34,
+            "logical_depth": 1344,
+            "physical_depth": 1536,
+            "segment_depths": [
+              512,
+              1024
+            ],
+            "segments": [
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.00163943
+              },
+              {
+                "physical_depth": 1024,
+                "read_energy_nj": 0.00213448
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.014302900734600001,
+            "leakage_mw": 1.720713,
+            "allocated_bits": 61440,
+            "max_access_time_ns": 0.213095,
+            "max_cycle_time_ns": 0.167779
+          },
+          "scalar": {
+            "logical_width": 34,
+            "logical_depth": 512,
+            "physical_depth": 512,
+            "segment_depths": [
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.00163943
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.00508279761,
+            "leakage_mw": 0.581753,
+            "allocated_bits": 20480,
+            "max_access_time_ns": 0.164769,
+            "max_cycle_time_ns": 0.136234
+          },
+          "sfu": {
+            "logical_width": 34,
+            "logical_depth": 128,
+            "physical_depth": 128,
+            "segment_depths": [
+              128
+            ],
+            "segments": [
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.00135873090885,
+            "leakage_mw": 0.146407,
+            "allocated_bits": 5120,
+            "max_access_time_ns": 0.146374,
+            "max_cycle_time_ns": 0.111311
+          }
+        },
+        "summary": {
+          "area_mm2": 0.029600227296720006,
+          "leakage_mw": 3.3533752999999997,
+          "allocated_bits": 117248,
+          "macro_count": 10,
+          "max_access_time_ns": 0.213095,
+          "max_cycle_time_ns": 0.167779,
+          "suite_read_energy_nj": 5.066838472000001
+        }
+      },
+      "issue2": {
+        "shapes": {
+          "config": [
+            5,
+            1440
+          ],
+          "lane0": [
+            34,
+            1187
+          ],
+          "lane1": [
+            34,
+            1187
+          ]
+        },
+        "macros": {
+          "config": {
+            "logical_width": 5,
+            "logical_depth": 1440,
+            "physical_depth": 1536,
+            "segment_depths": [
+              512,
+              1024
+            ],
+            "segments": [
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.000424779
+              },
+              {
+                "physical_depth": 1024,
+                "read_energy_nj": 0.00123843
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.004010260981980001,
+            "leakage_mw": 0.38764299999999996,
+            "allocated_bits": 12288,
+            "max_access_time_ns": 0.152401,
+            "max_cycle_time_ns": 0.121418
+          },
+          "lane0": {
+            "logical_width": 34,
+            "logical_depth": 1187,
+            "physical_depth": 1280,
+            "segment_depths": [
+              256,
+              1024
+            ],
+            "segments": [
+              {
+                "physical_depth": 256,
+                "read_energy_nj": 0.00133635
+              },
+              {
+                "physical_depth": 1024,
+                "read_energy_nj": 0.00213448
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.012204227616180001,
+            "leakage_mw": 1.439594,
+            "allocated_bits": 51200,
+            "max_access_time_ns": 0.213095,
+            "max_cycle_time_ns": 0.167779
+          },
+          "lane1": {
+            "logical_width": 34,
+            "logical_depth": 1187,
+            "physical_depth": 1280,
+            "segment_depths": [
+              256,
+              1024
+            ],
+            "segments": [
+              {
+                "physical_depth": 256,
+                "read_energy_nj": 0.00133635
+              },
+              {
+                "physical_depth": 1024,
+                "read_energy_nj": 0.00213448
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.012204227616180001,
+            "leakage_mw": 1.439594,
+            "allocated_bits": 51200,
+            "max_access_time_ns": 0.213095,
+            "max_cycle_time_ns": 0.167779
+          }
+        },
+        "summary": {
+          "area_mm2": 0.02841871621434,
+          "leakage_mw": 3.266831,
+          "allocated_bits": 114688,
+          "macro_count": 6,
+          "max_access_time_ns": 0.213095,
+          "max_cycle_time_ns": 0.167779,
+          "suite_read_energy_nj": 6.025362847999999
+        }
+      },
+      "comparison": {
+        "sram_area_change": -0.03991560843557873,
+        "sram_leakage_change": -0.02580811637754954,
+        "allocated_bits_change": -0.02183406113537123,
+        "read_energy_change": 0.18917602787160614,
+        "macro_count_change": -4
+      }
+    },
+    "logsoftmax_x64": {
+      "candidate_a": {
+        "shapes": {
+          "config": [
+            5,
+            3492
+          ],
+          "load": [
+            34,
+            512
+          ],
+          "store": [
+            34,
+            512
+          ],
+          "vector": [
+            34,
+            2048
+          ],
+          "scalar": [
+            34,
+            896
+          ],
+          "sfu": [
+            34,
+            576
+          ]
+        },
+        "macros": {
+          "config": {
+            "logical_width": 5,
+            "logical_depth": 3492,
+            "physical_depth": 4096,
+            "segment_depths": [
+              4096
+            ],
+            "segments": [
+              {
+                "physical_depth": 4096,
+                "read_energy_nj": 0.00189896
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.007984485431600002,
+            "leakage_mw": 0.927343,
+            "allocated_bits": 32768,
+            "max_access_time_ns": 0.201127,
+            "max_cycle_time_ns": 0.153087
+          },
+          "load": {
+            "logical_width": 34,
+            "logical_depth": 512,
+            "physical_depth": 512,
+            "segment_depths": [
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.00163943
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.00508279761,
+            "leakage_mw": 0.581753,
+            "allocated_bits": 20480,
+            "max_access_time_ns": 0.164769,
+            "max_cycle_time_ns": 0.136234
+          },
+          "store": {
+            "logical_width": 34,
+            "logical_depth": 512,
+            "physical_depth": 512,
+            "segment_depths": [
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.00163943
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.00508279761,
+            "leakage_mw": 0.581753,
+            "allocated_bits": 20480,
+            "max_access_time_ns": 0.164769,
+            "max_cycle_time_ns": 0.136234
+          },
+          "vector": {
+            "logical_width": 34,
+            "logical_depth": 2048,
+            "physical_depth": 2048,
+            "segment_depths": [
+              2048
+            ],
+            "segments": [
+              {
+                "physical_depth": 2048,
+                "read_energy_nj": 0.00407735
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.017932318805,
+            "leakage_mw": 2.11528,
+            "allocated_bits": 81920,
+            "max_access_time_ns": 0.232461,
+            "max_cycle_time_ns": 0.206752
+          },
+          "scalar": {
+            "logical_width": 34,
+            "logical_depth": 896,
+            "physical_depth": 1024,
+            "segment_depths": [
+              1024
+            ],
+            "segments": [
+              {
+                "physical_depth": 1024,
+                "read_energy_nj": 0.00213448
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.0092201031246,
+            "leakage_mw": 1.13896,
+            "allocated_bits": 40960,
+            "max_access_time_ns": 0.213095,
+            "max_cycle_time_ns": 0.167779
+          },
+          "sfu": {
+            "logical_width": 34,
+            "logical_depth": 576,
+            "physical_depth": 576,
+            "segment_depths": [
+              64,
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 64,
+                "read_energy_nj": 0.000415264
+              },
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.00163943
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.00585214194474,
+            "leakage_mw": 0.6593913,
+            "allocated_bits": 23040,
+            "max_access_time_ns": 0.164769,
+            "max_cycle_time_ns": 0.136234
+          }
+        },
+        "summary": {
+          "area_mm2": 0.05115464452594,
+          "leakage_mw": 6.0044803,
+          "allocated_bits": 219648,
+          "macro_count": 7,
+          "max_access_time_ns": 0.232461,
+          "max_cycle_time_ns": 0.206752,
+          "suite_read_energy_nj": 19.438816576
+        }
+      },
+      "issue2": {
+        "shapes": {
+          "config": [
+            5,
+            3688
+          ],
+          "lane0": [
+            34,
+            2272
+          ],
+          "lane1": [
+            34,
+            2272
+          ]
+        },
+        "macros": {
+          "config": {
+            "logical_width": 5,
+            "logical_depth": 3688,
+            "physical_depth": 4096,
+            "segment_depths": [
+              4096
+            ],
+            "segments": [
+              {
+                "physical_depth": 4096,
+                "read_energy_nj": 0.00189896
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.007984485431600002,
+            "leakage_mw": 0.927343,
+            "allocated_bits": 32768,
+            "max_access_time_ns": 0.201127,
+            "max_cycle_time_ns": 0.153087
+          },
+          "lane0": {
+            "logical_width": 34,
+            "logical_depth": 2272,
+            "physical_depth": 2304,
+            "segment_depths": [
+              256,
+              2048
+            ],
+            "segments": [
+              {
+                "physical_depth": 256,
+                "read_energy_nj": 0.00133635
+              },
+              {
+                "physical_depth": 2048,
+                "read_energy_nj": 0.00407735
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.02091644329658,
+            "leakage_mw": 2.415914,
+            "allocated_bits": 92160,
+            "max_access_time_ns": 0.232461,
+            "max_cycle_time_ns": 0.206752
+          },
+          "lane1": {
+            "logical_width": 34,
+            "logical_depth": 2272,
+            "physical_depth": 2304,
+            "segment_depths": [
+              256,
+              2048
+            ],
+            "segments": [
+              {
+                "physical_depth": 256,
+                "read_energy_nj": 0.00133635
+              },
+              {
+                "physical_depth": 2048,
+                "read_energy_nj": 0.00407735
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.02091644329658,
+            "leakage_mw": 2.415914,
+            "allocated_bits": 92160,
+            "max_access_time_ns": 0.232461,
+            "max_cycle_time_ns": 0.206752
+          }
+        },
+        "summary": {
+          "area_mm2": 0.04981737202476,
+          "leakage_mw": 5.759171,
+          "allocated_bits": 217088,
+          "macro_count": 5,
+          "max_access_time_ns": 0.232461,
+          "max_cycle_time_ns": 0.206752,
+          "suite_read_energy_nj": 24.127450880000005
+        }
+      },
+      "comparison": {
+        "sram_area_change": -0.02614176119436984,
+        "sram_leakage_change": -0.0408543766893531,
+        "allocated_bits_change": -0.011655011655011704,
+        "read_energy_change": 0.24119957537892467,
+        "macro_count_change": -2
+      }
+    },
+    "logsumexp_x64": {
+      "candidate_a": {
+        "shapes": {
+          "config": [
+            5,
+            1550
+          ],
+          "load": [
+            34,
+            256
+          ],
+          "store": [
+            34,
+            64
+          ],
+          "vector": [
+            34,
+            768
+          ],
+          "scalar": [
+            34,
+            448
+          ],
+          "sfu": [
+            34,
+            320
+          ]
+        },
+        "macros": {
+          "config": {
+            "logical_width": 5,
+            "logical_depth": 1550,
+            "physical_depth": 2048,
+            "segment_depths": [
+              2048
+            ],
+            "segments": [
+              {
+                "physical_depth": 2048,
+                "read_energy_nj": 0.00143922
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.0046560714821200005,
+            "leakage_mw": 0.494632,
+            "allocated_bits": 16384,
+            "max_access_time_ns": 0.174329,
+            "max_cycle_time_ns": 0.131895
+          },
+          "load": {
+            "logical_width": 34,
+            "logical_depth": 256,
+            "physical_depth": 256,
+            "segment_depths": [
+              128,
+              128
+            ],
+            "segments": [
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              },
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.0027174618177,
+            "leakage_mw": 0.292814,
+            "allocated_bits": 10240,
+            "max_access_time_ns": 0.146374,
+            "max_cycle_time_ns": 0.111311
+          },
+          "store": {
+            "logical_width": 34,
+            "logical_depth": 64,
+            "physical_depth": 64,
+            "segment_depths": [
+              64
+            ],
+            "segments": [
+              {
+                "physical_depth": 64,
+                "read_energy_nj": 0.000415264
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.00076934433474,
+            "leakage_mw": 0.0776383,
+            "allocated_bits": 2560,
+            "max_access_time_ns": 0.126331,
+            "max_cycle_time_ns": 0.0954144
+          },
+          "vector": {
+            "logical_width": 34,
+            "logical_depth": 768,
+            "physical_depth": 768,
+            "segment_depths": [
+              256,
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 256,
+                "read_energy_nj": 0.00133635
+              },
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.00163943
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.00806692210158,
+            "leakage_mw": 0.882387,
+            "allocated_bits": 30720,
+            "max_access_time_ns": 0.164769,
+            "max_cycle_time_ns": 0.136234
+          },
+          "scalar": {
+            "logical_width": 34,
+            "logical_depth": 448,
+            "physical_depth": 512,
+            "segment_depths": [
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.00163943
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.00508279761,
+            "leakage_mw": 0.581753,
+            "allocated_bits": 20480,
+            "max_access_time_ns": 0.164769,
+            "max_cycle_time_ns": 0.136234
+          },
+          "sfu": {
+            "logical_width": 34,
+            "logical_depth": 320,
+            "physical_depth": 320,
+            "segment_depths": [
+              64,
+              256
+            ],
+            "segments": [
+              {
+                "physical_depth": 64,
+                "read_energy_nj": 0.000415264
+              },
+              {
+                "physical_depth": 256,
+                "read_energy_nj": 0.00133635
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.00375346882632,
+            "leakage_mw": 0.3782723,
+            "allocated_bits": 12800,
+            "max_access_time_ns": 0.14498,
+            "max_cycle_time_ns": 0.120592
+          }
+        },
+        "summary": {
+          "area_mm2": 0.025046066172460003,
+          "leakage_mw": 2.7074966,
+          "allocated_bits": 93184,
+          "macro_count": 9,
+          "max_access_time_ns": 0.174329,
+          "max_cycle_time_ns": 0.136234,
+          "suite_read_energy_nj": 4.677283544
+        }
+      },
+      "issue2": {
+        "shapes": {
+          "config": [
+            5,
+            1604
+          ],
+          "lane0": [
+            34,
+            928
+          ],
+          "lane1": [
+            34,
+            928
+          ]
+        },
+        "macros": {
+          "config": {
+            "logical_width": 5,
+            "logical_depth": 1604,
+            "physical_depth": 2048,
+            "segment_depths": [
+              2048
+            ],
+            "segments": [
+              {
+                "physical_depth": 2048,
+                "read_energy_nj": 0.00143922
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.0046560714821200005,
+            "leakage_mw": 0.494632,
+            "allocated_bits": 16384,
+            "max_access_time_ns": 0.174329,
+            "max_cycle_time_ns": 0.131895
+          },
+          "lane0": {
+            "logical_width": 34,
+            "logical_depth": 928,
+            "physical_depth": 1024,
+            "segment_depths": [
+              1024
+            ],
+            "segments": [
+              {
+                "physical_depth": 1024,
+                "read_energy_nj": 0.00213448
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.0092201031246,
+            "leakage_mw": 1.13896,
+            "allocated_bits": 40960,
+            "max_access_time_ns": 0.213095,
+            "max_cycle_time_ns": 0.167779
+          },
+          "lane1": {
+            "logical_width": 34,
+            "logical_depth": 928,
+            "physical_depth": 1024,
+            "segment_depths": [
+              1024
+            ],
+            "segments": [
+              {
+                "physical_depth": 1024,
+                "read_energy_nj": 0.00213448
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.0092201031246,
+            "leakage_mw": 1.13896,
+            "allocated_bits": 40960,
+            "max_access_time_ns": 0.213095,
+            "max_cycle_time_ns": 0.167779
+          }
+        },
+        "summary": {
+          "area_mm2": 0.023096277731320003,
+          "leakage_mw": 2.772552,
+          "allocated_bits": 98304,
+          "macro_count": 3,
+          "max_access_time_ns": 0.213095,
+          "max_cycle_time_ns": 0.167779,
+          "suite_read_energy_nj": 6.27010376
+        }
+      },
+      "comparison": {
+        "sram_area_change": -0.07784809110198454,
+        "sram_leakage_change": 0.024027878742304054,
+        "allocated_bits_change": 0.05494505494505497,
+        "read_energy_change": 0.340543865048178,
+        "macro_count_change": -6
+      }
+    },
+    "softmax_x64": {
+      "candidate_a": {
+        "shapes": {
+          "config": [
+            5,
+            935
+          ],
+          "load": [
+            34,
+            128
+          ],
+          "store": [
+            34,
+            128
+          ],
+          "vector": [
+            34,
+            512
+          ],
+          "scalar": [
+            34,
+            128
+          ],
+          "sfu": [
+            34,
+            192
+          ]
+        },
+        "macros": {
+          "config": {
+            "logical_width": 5,
+            "logical_depth": 935,
+            "physical_depth": 1024,
+            "segment_depths": [
+              512,
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.000424779
+              },
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.000424779
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.0021131573742,
+            "leakage_mw": 0.227972,
+            "allocated_bits": 8192,
+            "max_access_time_ns": 0.141135,
+            "max_cycle_time_ns": 0.104013
+          },
+          "load": {
+            "logical_width": 34,
+            "logical_depth": 128,
+            "physical_depth": 128,
+            "segment_depths": [
+              128
+            ],
+            "segments": [
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.00135873090885,
+            "leakage_mw": 0.146407,
+            "allocated_bits": 5120,
+            "max_access_time_ns": 0.146374,
+            "max_cycle_time_ns": 0.111311
+          },
+          "store": {
+            "logical_width": 34,
+            "logical_depth": 128,
+            "physical_depth": 128,
+            "segment_depths": [
+              128
+            ],
+            "segments": [
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.00135873090885,
+            "leakage_mw": 0.146407,
+            "allocated_bits": 5120,
+            "max_access_time_ns": 0.146374,
+            "max_cycle_time_ns": 0.111311
+          },
+          "vector": {
+            "logical_width": 34,
+            "logical_depth": 512,
+            "physical_depth": 512,
+            "segment_depths": [
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.00163943
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.00508279761,
+            "leakage_mw": 0.581753,
+            "allocated_bits": 20480,
+            "max_access_time_ns": 0.164769,
+            "max_cycle_time_ns": 0.136234
+          },
+          "scalar": {
+            "logical_width": 34,
+            "logical_depth": 128,
+            "physical_depth": 128,
+            "segment_depths": [
+              128
+            ],
+            "segments": [
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.00135873090885,
+            "leakage_mw": 0.146407,
+            "allocated_bits": 5120,
+            "max_access_time_ns": 0.146374,
+            "max_cycle_time_ns": 0.111311
+          },
+          "sfu": {
+            "logical_width": 34,
+            "logical_depth": 192,
+            "physical_depth": 192,
+            "segment_depths": [
+              64,
+              128
+            ],
+            "segments": [
+              {
+                "physical_depth": 64,
+                "read_energy_nj": 0.000415264
+              },
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.00212807524359,
+            "leakage_mw": 0.2240453,
+            "allocated_bits": 7680,
+            "max_access_time_ns": 0.146374,
+            "max_cycle_time_ns": 0.111311
+          }
+        },
+        "summary": {
+          "area_mm2": 0.01340022295434,
+          "leakage_mw": 1.4729913,
+          "allocated_bits": 51712,
+          "macro_count": 8,
+          "max_access_time_ns": 0.164769,
+          "max_cycle_time_ns": 0.136234,
+          "suite_read_energy_nj": 1.5336829250000001
+        }
+      },
+      "issue2": {
+        "shapes": {
+          "config": [
+            5,
+            939
+          ],
+          "lane0": [
+            34,
+            544
+          ],
+          "lane1": [
+            34,
+            544
+          ]
+        },
+        "macros": {
+          "config": {
+            "logical_width": 5,
+            "logical_depth": 939,
+            "physical_depth": 1024,
+            "segment_depths": [
+              512,
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.000424779
+              },
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.000424779
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.0021131573742,
+            "leakage_mw": 0.227972,
+            "allocated_bits": 8192,
+            "max_access_time_ns": 0.141135,
+            "max_cycle_time_ns": 0.104013
+          },
+          "lane0": {
+            "logical_width": 34,
+            "logical_depth": 544,
+            "physical_depth": 544,
+            "segment_depths": [
+              32,
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 32,
+                "read_energy_nj": 0.000377619
+              },
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.00163943
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.00556349836304,
+            "leakage_mw": 0.6221342,
+            "allocated_bits": 21760,
+            "max_access_time_ns": 0.164769,
+            "max_cycle_time_ns": 0.136234
+          },
+          "lane1": {
+            "logical_width": 34,
+            "logical_depth": 544,
+            "physical_depth": 544,
+            "segment_depths": [
+              32,
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 32,
+                "read_energy_nj": 0.000377619
+              },
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.00163943
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.00556349836304,
+            "leakage_mw": 0.6221342,
+            "allocated_bits": 21760,
+            "max_access_time_ns": 0.164769,
+            "max_cycle_time_ns": 0.136234
+          }
+        },
+        "summary": {
+          "area_mm2": 0.01324015410028,
+          "leakage_mw": 1.4722404,
+          "allocated_bits": 51712,
+          "macro_count": 6,
+          "max_access_time_ns": 0.164769,
+          "max_cycle_time_ns": 0.136234,
+          "suite_read_energy_nj": 2.1018114170000004
+        }
+      },
+      "comparison": {
+        "sram_area_change": -0.011945238120695367,
+        "sram_leakage_change": -0.000509778978327935,
+        "allocated_bits_change": 0.0,
+        "read_energy_change": 0.3704341247719116,
+        "macro_count_change": -2
+      }
+    },
+    "softplus_x64": {
+      "candidate_a": {
+        "shapes": {
+          "config": [
+            5,
+            2683
+          ],
+          "load": [
+            34,
+            256
+          ],
+          "store": [
+            34,
+            256
+          ],
+          "vector": [
+            34,
+            256
+          ],
+          "sfu": [
+            34,
+            512
+          ]
+        },
+        "macros": {
+          "config": {
+            "logical_width": 5,
+            "logical_depth": 2683,
+            "physical_depth": 3072,
+            "segment_depths": [
+              1024,
+              2048
+            ],
+            "segments": [
+              {
+                "physical_depth": 1024,
+                "read_energy_nj": 0.00123843
+              },
+              {
+                "physical_depth": 2048,
+                "read_energy_nj": 0.00143922
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.007609753777000001,
+            "leakage_mw": 0.768289,
+            "allocated_bits": 24576,
+            "max_access_time_ns": 0.174329,
+            "max_cycle_time_ns": 0.131895
+          },
+          "load": {
+            "logical_width": 34,
+            "logical_depth": 256,
+            "physical_depth": 256,
+            "segment_depths": [
+              128,
+              128
+            ],
+            "segments": [
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              },
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.0027174618177,
+            "leakage_mw": 0.292814,
+            "allocated_bits": 10240,
+            "max_access_time_ns": 0.146374,
+            "max_cycle_time_ns": 0.111311
+          },
+          "store": {
+            "logical_width": 34,
+            "logical_depth": 256,
+            "physical_depth": 256,
+            "segment_depths": [
+              128,
+              128
+            ],
+            "segments": [
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              },
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.0027174618177,
+            "leakage_mw": 0.292814,
+            "allocated_bits": 10240,
+            "max_access_time_ns": 0.146374,
+            "max_cycle_time_ns": 0.111311
+          },
+          "vector": {
+            "logical_width": 34,
+            "logical_depth": 256,
+            "physical_depth": 256,
+            "segment_depths": [
+              128,
+              128
+            ],
+            "segments": [
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              },
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.0027174618177,
+            "leakage_mw": 0.292814,
+            "allocated_bits": 10240,
+            "max_access_time_ns": 0.146374,
+            "max_cycle_time_ns": 0.111311
+          },
+          "sfu": {
+            "logical_width": 34,
+            "logical_depth": 512,
+            "physical_depth": 512,
+            "segment_depths": [
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.00163943
+              }
+            ],
+            "segment_count": 1,
+            "area_mm2": 0.00508279761,
+            "leakage_mw": 0.581753,
+            "allocated_bits": 20480,
+            "max_access_time_ns": 0.164769,
+            "max_cycle_time_ns": 0.136234
+          }
+        },
+        "summary": {
+          "area_mm2": 0.020844936840100005,
+          "leakage_mw": 2.228484,
+          "allocated_bits": 75776,
+          "macro_count": 9,
+          "max_access_time_ns": 0.174329,
+          "max_cycle_time_ns": 0.136234,
+          "suite_read_energy_nj": 4.901030716
+        }
+      },
+      "issue2": {
+        "shapes": {
+          "config": [
+            5,
+            2684
+          ],
+          "lane0": [
+            34,
+            640
+          ],
+          "lane1": [
+            34,
+            640
+          ]
+        },
+        "macros": {
+          "config": {
+            "logical_width": 5,
+            "logical_depth": 2684,
+            "physical_depth": 3072,
+            "segment_depths": [
+              1024,
+              2048
+            ],
+            "segments": [
+              {
+                "physical_depth": 1024,
+                "read_energy_nj": 0.00123843
+              },
+              {
+                "physical_depth": 2048,
+                "read_energy_nj": 0.00143922
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.007609753777000001,
+            "leakage_mw": 0.768289,
+            "allocated_bits": 24576,
+            "max_access_time_ns": 0.174329,
+            "max_cycle_time_ns": 0.131895
+          },
+          "lane0": {
+            "logical_width": 34,
+            "logical_depth": 640,
+            "physical_depth": 640,
+            "segment_depths": [
+              128,
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              },
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.00163943
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.0064415285188500005,
+            "leakage_mw": 0.7281599999999999,
+            "allocated_bits": 25600,
+            "max_access_time_ns": 0.164769,
+            "max_cycle_time_ns": 0.136234
+          },
+          "lane1": {
+            "logical_width": 34,
+            "logical_depth": 640,
+            "physical_depth": 640,
+            "segment_depths": [
+              128,
+              512
+            ],
+            "segments": [
+              {
+                "physical_depth": 128,
+                "read_energy_nj": 0.000528417
+              },
+              {
+                "physical_depth": 512,
+                "read_energy_nj": 0.00163943
+              }
+            ],
+            "segment_count": 2,
+            "area_mm2": 0.0064415285188500005,
+            "leakage_mw": 0.7281599999999999,
+            "allocated_bits": 25600,
+            "max_access_time_ns": 0.164769,
+            "max_cycle_time_ns": 0.136234
+          }
+        },
+        "summary": {
+          "area_mm2": 0.020492810814700002,
+          "leakage_mw": 2.224609,
+          "allocated_bits": 75776,
+          "macro_count": 6,
+          "max_access_time_ns": 0.174329,
+          "max_cycle_time_ns": 0.136234,
+          "suite_read_energy_nj": 5.471308592
+        }
+      },
+      "comparison": {
+        "sram_area_change": -0.016892640553489602,
+        "sram_leakage_change": -0.001738850267715586,
+        "allocated_bits_change": 0.0,
+        "read_energy_change": 0.11635876391026478,
+        "macro_count_change": -3
+      }
+    }
+  },
+  "aggregate": {
+    "candidate_a": {
+      "area_mm2": 0.1722313495259,
+      "leakage_mw": 19.341331500000003,
+      "allocated_bits": 682496.0,
+      "macro_count": 50.0,
+      "suite_read_energy_nj": 45.039414713000006
+    },
+    "issue2": {
+      "area_mm2": 0.1642074843839,
+      "leakage_mw": 18.993480400000003,
+      "allocated_bits": 682496.0,
+      "macro_count": 31.0,
+      "suite_read_energy_nj": 54.381907449
+    },
+    "comparison": {
+      "sram_area_change": -0.046587715674801466,
+      "sram_leakage_change": -0.01798485797112781,
+      "allocated_bits_change": 0.0,
+      "read_energy_change": 0.207429266022487,
+      "macro_count_change": -19.0
+    }
+  }
+}
