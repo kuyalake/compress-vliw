@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>利用VLIW指令稀疏性的指令压缩研究：方向说明</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg:#f4f6f9; --panel:#fff; --text:#202936; --muted:#616d7a;
+      --line:#d8e0e8; --accent:#155eef; --good:#137a4b; --warn:#9a6700; --bad:#b42318;
+    }
+    @media (prefers-color-scheme:dark) {
+      :root {
+        --bg:#11151a; --panel:#181e25; --text:#e9edf2; --muted:#aab3be;
+        --line:#303945; --accent:#78a9ff; --good:#58c78f; --warn:#e3b341; --bad:#ff7b72;
+      }
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; background:var(--bg); color:var(--text);
+      font:15px/1.75 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    .layout { width:min(960px,calc(100% - 28px)); margin:20px auto 72px; }
+    header, section {
+      background:var(--panel); border:1px solid var(--line); border-radius:12px;
+      padding:26px 30px; margin:14px 0;
+    }
+    h1 { margin:0 0 6px; font-size:26px; line-height:1.3; }
+    h2 { margin:0 0 10px; font-size:20px; }
+    h3 { margin:18px 0 6px; font-size:16px; }
+    p { margin:8px 0; }
+    li { margin:6px 0; }
+    .muted, small { color:var(--muted); }
+    .figure-placeholder {
+      margin:14px 0; padding:28px; text-align:center; color:var(--muted);
+      border:2px dashed var(--line); border-radius:10px;
+    }
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th,td { border-bottom:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+    th { color:var(--muted); font-weight:650; }
+    .callout {
+      margin:14px 0; padding:12px 16px; border-left:4px solid var(--accent);
+      background:color-mix(in srgb,var(--accent) 7%,var(--panel));
+    }
+    .callout.warn { border-left-color:var(--warn); }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <header>
+    <h1>利用 VLIW 指令稀疏性的指令压缩研究</h1>
+    <p class="muted">研究方向说明（导师版） · 2026-09-03</p>
+  </header>
+
+  <section>
+    <h2>1. 研究平台基础</h2>
+    <p>
+      本研究基于已有的 FRV-SFU-VLIW 可重构非线性函数加速器工作。该架构通过全可重构 SFU 与五类功能槽
+      （LOAD/STORE/VECTOR/SCALAR/SFU）支持通用非线性计算加速。
+    </p>
+  </section>
+
+  <section>
+    <h2>2. 研究背景</h2>
+    <h3>(1) 静态调度架构对指令供给的硬要求</h3>
+    <p>
+      FRV-SFU-VLIW 代表了一类"硬件极简、调度前置"的 VLIW 架构：硬件核内不做任何动态调度，
+      全部依赖关系由软件以逐周期精确的静态调度解决，以此换取更高的硬件效率。
+      这带来的要求是：必须每周期稳定提供指令流。一旦指令流断供，需要等待最长延迟的操作
+      （可达二十几个周期）写回后才能恢复发射，停顿代价较大。因此需要将指令完整保存在片上 SRAM，
+      以保证稳定的逐周期指令供应。
+    </p>
+    <h3>(2) 指令流的稀疏性与压缩潜力</h3>
+    <p>
+      统计 Softmax（X=64, Y=512）、LayerNorm（X=64, Y=768）、GELU（X=64, Y=3072）三个函数的指令轨迹，
+      发现 FRV-SFU-VLIW 指令具有显著稀疏性：
+    </p>
+    <div class="figure-placeholder">【此处插入图：三个函数的有效槽分布】</div>
+    <p>
+      有效功能槽占比 = 有效槽数 /（周期数 T × 5 个功能槽）≈ 20%–30%。
+      即约 70%–80% 的指令位为 NOP，逻辑上可以去除——这给出了指令 SRAM 压缩的上限空间
+      （实际面积收益取决于物理存储组织，需单独建模兑现）。
+      压缩的潜力在于：同样的片上容量可以驻留更多、更大的非线性函数程序。
+    </p>
+    <h3>(3) 与前一工作（tiling）的关系</h3>
+    <p>
+      前一工作已在向量个数 X 维度探索 tiling 以减少 instruction footprint：将整个 workload 分成 R 个 tile 后，
+      每个 tile 的处理时间约按 1/R 下降。但由于头尾指令流利用率不高，分块数 R 较大（X 较小）时整体性能可能有明显损失。
+      因此本工作的定位是：在矩阵分块后的小块（如 X=64）基础上进行进一步的稀疏指令压缩。
+      tiling 与压缩两个维度正交互补——前者受性能约束不能无限细分，后者不改变执行行为。
+    </p>
+  </section>
+
+  <section>
+    <h2>3. 统一的无压缩基线：174-bit 指令格式</h2>
+    <p>
+      为消除槽间位宽异构、简化对齐与程序替换，将无压缩 VLIW 指令统一为 174-bit 等宽槽格式
+      （将原格式中利用率较低的 mem_addr 字段收窄并补齐，使五类功能槽等长）：
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>字段</th><th>位宽 (bit)</th></tr></thead>
+        <tbody>
+          <tr><td>LOAD</td><td>34</td></tr>
+          <tr><td>STORE</td><td>34</td></tr>
+          <tr><td>VECTOR</td><td>34</td></tr>
+          <tr><td>SCALAR</td><td>34</td></tr>
+          <tr><td>SFU</td><td>34</td></tr>
+          <tr><td>CONTROL</td><td>4</td></tr>
+          <tr><td><strong>合计</strong></td><td><strong>174</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. 压缩定位</h2>
+    <p>
+      基本原则：只压缩无效的 NOP 指令，完整保留所有有效指令，保证解压后逐周期行为与压缩前一致。
+    </p>
+    <p>三个不适合压缩的维度（已经 trace 实验验证）：</p>
+    <ul>
+      <li><strong>槽内字段级</strong>：各字段取值随任务变化大、难以预测，通用字典/熵编码难以奏效；</li>
+      <li><strong>槽间</strong>：不同槽对应不同功能单元，指令定义异构，无跨槽冗余可利用；</li>
+      <li><strong>同槽时间维</strong>（相邻指令的 delta/字典压缩）：实测收益太小，且本架构静态乱序发射的本质削弱了时间局部性，
+        地址字段在 256 深寄存器堆下难以构建通用 delta 模式。</li>
+    </ul>
+    <div class="callout">
+      因此压缩空间集中在<strong>空间维的槽级稀疏性</strong>：每拍 5 个功能槽中平均仅约 1–1.5 个有效。
+    </div>
+  </section>
+
+  <section>
+    <h2>5. 最直接已有工作：纵向压缩（Li et al., IEEE Access 2020），定位为 Baseline A</h2>
+    <p><strong>核心机制：</strong></p>
+    <ul>
+      <li>按逻辑字段纵向删除 NOP：每个槽独立成流，短列向最高列补齐后存储；</li>
+      <li>ifnull 位表逐周期记录各槽有效性；分 Bank IMEM 存放各槽流；</li>
+      <li>FPCR/BAR 等寄存器支持一拍重组：每 Bank 独立地址，并行读出后在当拍拼回完整 VLIW；</li>
+      <li>物理评价：综合时将 IMEM 容量设为原来的 50%，报告 IMEM 面积降低 44.26%
+        （注意其约 29.85% 的逻辑压缩率不能直接推出面积）。</li>
+    </ul>
+    <p>
+      <strong>分析：</strong>该工作已在软件层面达到逻辑位数下限（删除了全部 NOP）。
+      但其各槽与 Bank 一一绑定，导致两个物理层面的问题：
+    </p>
+    <ol>
+      <li><strong>物理容量由最深 Bank 决定</strong>：各槽有效指令数差异较大（本架构中尤为明显），
+        可能出现 VECTOR Bank 接近满载而 SCALAR Bank 大量空闲的情况，IMEM 实际利用率受制于最长流；</li>
+      <li><strong>程序替换性弱</strong>：容量按槽类型隔离，不同槽的剩余容量不能互借，
+        替换片上程序时受限于各槽各自的最大深度。</li>
+    </ol>
+    <div class="callout warn">
+      因此，针对本 VLIW 架构（以及类似存在槽间利用率差异的 VLIW 架构），在物理存储组织层面仍有探索空间。
+      该工作作为 Baseline A 处理。
+    </div>
+  </section>
+
+  <section>
+    <h2>6. 其他已有工作及不适用性分析</h2>
+    <h3>专利类</h3>
+    <ul>
+      <li><strong>Elbrus US5983336A（1996，已失效）</strong>：mask + 组位移指针的打包/解包方案。
+        每条指令需携带 N−1 个组指针，且变长打包流需要移位与散射网络；面向通用 CPU 取指路径，
+        与本架构"片上 SRAM 压缩常驻、定宽流"的模型不同。</li>
+      <li><strong>HP/ST US7143268B2（2000，已失效）</strong>：指令 cache 存放压缩 bundle，按 bundle 附带的地址位路由到执行簇。
+        依赖逐指令路由元数据与 cache 层级，不适用于无 cache 的压缩常驻 SRAM 模型。</li>
+      <li><strong>Samsung US8555097B2（2009，有效）</strong>：每功能单元专属配置存储 + 每周期 NOP 位 + NOP 周期读门控省能。
+        已覆盖"分槽独立流 + 读门控"结构（即 Baseline A 的硬件形态），本文不主张该结构；
+        其存储与功能单元一一绑定，与本文探索的共享流方向相反。</li>
+    </ul>
+    <h3>论文类</h3>
+    <ul>
+      <li><strong>Conte et al., MICRO 1996（TINKER）</strong>：变长 MultiOp + header/tail 定界 + 变长取指缓冲。
+        面向带分支的通用 CPU 指令流，其动态定界与缓冲逻辑在本架构的无分支静态直线流下并非必需。</li>
+      <li><strong>Brandon et al., ReConFig 2015（ρ-VEX）</strong>：stop-bit 稀疏编码，逐操作携带边界元数据，
+        位开销高于集中式 mask 方案。</li>
+      <li><strong>Kultala et al., JSPS 2016</strong>：TTA 架构上的变长模板 + 压缩感知调度。
+        其前提（同一操作可绑定多个可互换功能单元、模板不匹配可退回长格式）在本架构不成立；
+        目标函数级复现表明其收益机制在本格式下恒为零。</li>
+      <li><strong>Lee et al., ACM TACO 2018（CGRA）</strong>：模调度循环的整条配置行时间去重 + 设计时静态分区。
+        其输入是显式循环结构，而本架构展平直线流的严格周期核覆盖率不足 4%，该方法不适用。</li>
+      <li><strong>Multanen et al., DAES 2024</strong>：可编程字典压缩。逐 workload 训练字典与通用非线性计算
+        （字段取值跨任务不可预测）冲突，本文采用无字典的统一格式。</li>
+      <li><strong>Chiu &amp; Yang, CAE 2010</strong>：用指令流缓冲解决变长指令跨 cache 行的供给问题。
+        其存在本身说明高压缩率不自动保证稳定供给，本文以编译期确定性供给（零动态停顿）作为回应。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>7. 拟研究内容：共享 Lane 的指令存储组织与调度协同</h2>
+    <h3>7.1 核心思想</h3>
+    <p>
+      Baseline A 的两个物理问题——容量由最深 Bank 决定、槽间容量不能互借——根源都在于"槽与 Bank 一一绑定"。
+      本研究的出发点是<strong>打破这一绑定</strong>：把 5 类功能槽的有效操作存入少于 5 条的<strong>共享 Lane</strong>
+      （定宽 34-bit 顺序流），每拍搭配一个短配置字标明哪些槽有效；读出时按配置字把 Lane 内容还原到对应槽，
+      逐周期行为与原指令流完全一致。调度器在"每拍最多发射 k 个操作"的约束下重新生成逐周期合法的调度，
+      使稀疏指令流与共享存储组织相互匹配。在此思想下形成三个候选工作点：
+    </p>
+    <h3>7.2 三个候选方案</h3>
+    <ul>
+      <li><strong>方案一（2slot-2lane，面积优先）</strong>：每拍最多发射 2 个操作，配 2 条共享 Lane + 5-bit 配置字
+        （覆盖全部单/双槽组合与结束标志）。存储宏数量最少。</li>
+      <li><strong>方案二（2slot-4lane，能耗优先）</strong>：同样每拍最多 2 个操作，但分布到 4 条更浅的 Lane
+        （分两组，6-bit 配置字）。用更多但更浅的宏换取更低的单次读能量。</li>
+      <li><strong>方案三（4slot-4lane，性能优先）</strong>：每拍 0–4 个操作自适应，4 条 Lane + 5-bit mask + 2-bit 循环相位
+        （相位决定有效操作写入哪条 Lane，解码端按同一规则还原，无需任何逐指令路由位）。目标是性能不损失。</li>
+    </ul>
+    <p>
+      三个方案共用同一套轻量前端：配置 SRAM + 若干 Lane SRAM + 每 Lane 一个地址计数器 + 小规模译码/路由逻辑
+      （约一两千等效门）；无 FIFO、无变长解析器、无动态调度硬件。
+    </p>
+    <h3>7.3 初步结果</h3>
+    <p>
+      实验平台：6 种非线性函数 × X=32/64 共 12 条指令轨迹；物理评估采用"片上同时驻留
+      GELU/Softmax/LayerNorm（X=64）且支持程序替换"的三函数代码池模型；SRAM 用 CACTI（32nm）宏级建模，
+      逻辑按等效门估算并以真实指令流翻转率标定功耗；所有方案同一口径比较，
+      全部压缩结果通过逐周期、逐 bit 恢复验证。
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>方案</th><th>每拍发射上限</th><th>存储组织</th><th>总周期数（12 条轨迹）</th><th>面积（mm²）</th><th>三程序读能量（nJ）</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Baseline A（五槽独立 Bank）</td><td>5</td><td>5×(34×2048) + 配置</td><td>19,962</td><td>0.1063</td><td>43.60</td></tr>
+          <tr><td>方案一 2slot-2lane</td><td>2</td><td>2×(34×4096) + 配置</td><td>20,367（+2.0%）</td><td>0.0855（<strong>−19.6%</strong>）</td><td>56.04（+28.5%）</td></tr>
+          <tr><td>方案二 2slot-4lane</td><td>2</td><td>4×(34×2048) + 配置</td><td>20,367（+2.0%）</td><td>0.0889（<strong>−16.3%</strong>）</td><td>39.32（<strong>−9.8%</strong>）</td></tr>
+          <tr><td>方案三 4slot-4lane</td><td>4（自适应）</td><td>4×(34×2048) + 配置</td><td>19,962（<strong>0.0%</strong>）</td><td>0.0924（<strong>−13.1%</strong>）</td><td>43.61（<strong>+0.0%</strong>）</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>7.4 初步结论与潜力</h3>
+    <ol>
+      <li>三个工作点构成一条清晰的<strong>面积–性能–能耗权衡前沿</strong>：方案一面积最小但损失约 2% 性能且读能量上升；
+        方案二以少量面积换回读能量；方案三在<strong>零性能损失</strong>下同时取得面积 −13% 与读能量持平。</li>
+      <li>这验证了核心判断：<strong>打破槽与 Bank 的一一绑定确有物理收益空间</strong>，且调度约束与存储组织可以协同设计——
+        这正是 Baseline A 无法利用、而本架构槽间利用率差异大所留下的空间。</li>
+      <li>下一步工作：RTL 实现与 1 GHz 时序验证、28nm 工艺口径统一、更多 workload 与更高利用率场景的检验、
+        存储组织与调度的进一步联合优化。</li>
+    </ol>
+  </section>
+</div>
+</body>
+</html>

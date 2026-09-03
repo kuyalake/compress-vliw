@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>自适应四 Bank VLIW 指令供给：论文与专利风险检索及创新边界</title>
+  <style>
+    :root { --ink:#182235; --muted:#5e6b7c; --line:#d8e0ea; --blue:#175cd3; --green:#067647; --amber:#b54708; --red:#b42318; --bg:#f5f7fb; --card:#fff; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:var(--bg); font:15px/1.72 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC","Microsoft YaHei",sans-serif; }
+    main { width:min(1500px,96vw); margin:24px auto 72px; }
+    h1 { font-size:30px; line-height:1.25; margin:0 0 8px; }
+    h2 { margin:38px 0 12px; padding-bottom:7px; border-bottom:2px solid #b9c8dd; font-size:23px; }
+    h3 { margin:26px 0 8px; font-size:18px; }
+    p { margin:8px 0 13px; }
+    a { color:var(--blue); }
+    code { background:#eef2f7; border-radius:4px; padding:1px 5px; }
+    .hero,.box { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px 24px; box-shadow:0 2px 9px #1822350c; }
+    .hero { border-top:5px solid var(--blue); }
+    .lead { font-size:17px; }
+    .meta,.small { color:var(--muted); font-size:13px; }
+    .grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:16px 0; }
+    .stat { background:#f8fafc; border:1px solid var(--line); border-radius:10px; padding:13px; }
+    .stat b { display:block; font-size:23px; }
+    .good { color:var(--green); } .warn { color:var(--amber); } .bad { color:var(--red); }
+    .callout { margin:15px 0; padding:13px 16px; border-left:5px solid var(--blue); background:#eff6ff; border-radius:7px; }
+    .callout.warn { border-color:var(--amber); background:#fff7ed; color:var(--ink); }
+    .callout.bad { border-color:var(--red); background:#fff1f0; color:var(--ink); }
+    .callout.good { border-color:var(--green); background:#ecfdf3; color:var(--ink); }
+    table { width:100%; border-collapse:collapse; background:#fff; margin:12px 0 20px; font-size:13px; }
+    th,td { border:1px solid var(--line); padding:9px 10px; text-align:left; vertical-align:top; }
+    th { background:#eaf0f8; position:sticky; top:0; z-index:1; }
+    .matrix th:not(:first-child),.matrix td:not(:first-child) { text-align:center; }
+    .matrix td:last-child { text-align:left; min-width:230px; }
+    .yes { color:var(--green); font-weight:700; } .part { color:var(--amber); font-weight:700; } .no { color:#7b8797; }
+    ul,ol { padding-left:24px; } li { margin:5px 0; }
+    .formula { font-family:ui-monospace,SFMono-Regular,Consolas,monospace; background:#111827; color:#e5efff; padding:15px 18px; border-radius:8px; overflow:auto; white-space:pre-wrap; }
+    .flow { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:14px 0; }
+    .flow span { border:1px solid #b7c6dc; background:#fff; border-radius:8px; padding:8px 12px; }
+    .flow i { color:#58708f; font-style:normal; font-size:19px; }
+    .tag { display:inline-block; padding:2px 8px; border-radius:999px; color:#fff; font-size:12px; font-weight:700; }
+    .tag.red { background:var(--red); } .tag.amber { background:var(--amber); } .tag.green { background:var(--green); }
+    @media(max-width:900px){ .grid{grid-template-columns:1fr 1fr;} table{display:block;overflow-x:auto;} }
+    @media(max-width:560px){ .grid{grid-template-columns:1fr;} main{width:94vw;} .hero,.box{padding:16px;} }
+  </style>
+</head>
+<body><main>
+  <section class="hero">
+    <h1>自适应四 Bank VLIW 指令供给：前沿论文与专利风险检索</h1>
+    <p class="meta">检索与复核日期：2026-09-02 ｜ 对象：5 槽、174-bit 原始 VLIW 的 5-bit Config + 4×34-bit 共享 payload Bank ｜ 本报告不构成法律意见</p>
+    <p class="lead"><strong>结论先行：</strong>这次检索不能支持“mask、稀疏 bundle、多 Bank、逐 Bank 门控、固定周期恢复、动态宽度”中的任何一个作为独立创新。特别是 2018 年 CGRA 配置压缩论文和仍显示为有效的 US8555097B2，已经非常接近“原周期索引 + 多个独立压缩流/指针 + 按 NOP/变化位关闭存储体读取”。1996 年 flexible-silo 又已提出跨功能类型共享存储以缓解专属分区利用率失衡。因此，上一版对创新性的判断需要明显收紧。</p>
+    <div class="grid">
+      <div class="stat"><small>宽泛创新表述</small><b class="bad">不可用</b><small>已有论文/专利直接覆盖</small></div>
+      <div class="stat"><small>精确五特征组合</small><b class="warn">未找到单篇完全相同</b><small>但显而易见性风险仍中高</small></div>
+      <div class="stat"><small>池接纳指标</small><b class="warn">条件性有效</b><small>必须先证明多内核常驻需求</small></div>
+      <div class="stat"><small>当前论文决策</small><b class="warn">有条件继续</b><small>需转向约束建模、可证明映射与 RTL</small></div>
+    </div>
+    <div class="callout bad"><strong>不能宣称：</strong>首次删除 VLIW NOP、首次用 mask 恢复槽位、首次多 Bank 并行恢复、首次逐 Bank 门控、首次跨功能类型共享存储、首次动态适配 1/2/4 发射宽度。</div>
+    <div class="callout good"><strong>仍可争取的窄化命题：</strong>在“一条 Config 对应原始一个执行周期、最多四个等宽有效事件、五类异构目的槽、不得跨周期拆包”的合同下，把事件循环条带化进四个共享单口 SRAM；由 Config mask 的前缀计数和一个 2-bit phase 在同周期确定性复原；再把固定 SRAM 宏约束下的多内核驻留可容纳性作为优化目标。检索中未发现一份公开文献把这些条件全部同时给出。</div>
+  </section>
+
+  <h2>1. “域内程序池接纳能力”到底是什么</h2>
+  <div class="box">
+    <p><strong>它不是一个通行的 VLIW 专业术语，而是上一轮实验为了比较固定 SRAM 容量而定义的评价指标。</strong>更不容易误解的名称是：<strong>“固定片上指令存储下的多内核同时驻留可容纳性”</strong>。</p>
+    <p>假设芯片希望提前把若干个 Softmax、LayerNorm、GELU 等内核都放进片上指令 SRAM，运行时切换内核而不重新从片外加载。给定一组内核，如果它们的 Config 总量和每一个 payload Bank 的占用都没有超过硬件深度，就说这组内核被“接纳”；只要有一个 Bank 溢出，即使其他 Bank 还有空位，也不能同时驻留。</p>
+    <div class="flow"><span>选择若干内核</span><i>→</i><span>分别累计 Config 与各 Bank 占用</span><i>→</i><span>逐项比较 SRAM 深度</span><i>→</i><span>全部不溢出＝可接纳</span></div>
+    <div class="formula">Candidate A（五个专属槽 Bank）可接纳条件：
+Σ T_i ≤ 8192，并且对每个槽 s：Σ n(i,s) ≤ 2048
+
+四共享 Bank 可接纳条件：
+Σ T_i ≤ 8192，并且对每个物理 Bank b：Σ n(i,b) ≤ 2048</div>
+    <h3>用当前三个 X64 内核举例</h3>
+    <table><thead><tr><th>组织</th><th>实际占用</th><th>最紧张处</th><th>为什么有差异</th></tr></thead><tbody>
+      <tr><td>A：LOAD/STORE/VECTOR/SCALAR/SFU 各自专属</td><td>1094 / 1088 / 1856 / 640 / 1088</td><td>VECTOR 只剩 192 项</td><td>SCALAR 虽空 1408 项，但不能借给 VECTOR。</td></tr>
+      <tr><td>四共享 Bank：按全局有效事件次序循环条带化</td><td>1442 / 1442 / 1441 / 1441</td><td>每 Bank 还剩约 606–607 项</td><td>五种功能事件共同使用四个容量池，容量碎片较少。</td></tr>
+    </tbody></table>
+    <p>例如在 A 中再加入一个含 300 条 VECTOR、几乎没有 SCALAR 的小内核，VECTOR 会从 1856 增至 2156，超过 2048，因而被拒绝；这时 SCALAR Bank 即使还有大量空位也无济于事。共享 Bank 的目的就是让这部分闲置容量可以被其他功能类型使用。</p>
+    <h3>“域内”为什么必须写在前面</h3>
+    <p>当前实验只从已有 12 条非线性函数 trace 中取子集。12 个程序共有 <code>2^12−1=4095</code> 个非空子集；A 接纳 473 个，四共享 Bank 接纳 1037 个，其中 A 接纳的 473 个在这批数据里也全部被四 Bank 接纳。这里的“域内”只表示<strong>样本来自这 12 个相关程序</strong>，不能外推为“未来任意 VLIW 程序有 25.32% 的接纳概率”。</p>
+    <div class="callout warn"><strong>它也不是：</strong>运行吞吐率、每拍发射几条、缓存命中率、动态调度器能否接收新指令，或一个程序能不能独立运行。它只回答“给定片上代码 SRAM，哪些内核集合能同时放进去”。</div>
+    <div class="callout bad"><strong>最关键的适用性门槛：</strong>如果第三篇架构实际始终只在指令 SRAM 中装载一个内核，切换时允许重新 DMA 加载，而且加载开销并不重要，那么“程序池接纳”就不是强需求，1037 对 473 的结果也不应成为论文主贡献。必须先用系统场景证明多内核常驻、快速切换或加载能耗确实重要。</div>
+  </div>
+
+  <h2>2. 检索范围与判定规则</h2>
+  <p>本次先全文阅读仓库 <code>paper/</code> 中的 VLIW、CGRA 配置压缩论文，再按其参考文献和专利引用链追溯 Google Patents、IEEE/ACM/高校论文门户。专利部分重点阅读摘要、结构描述和独立权利要求，而不是只根据标题判断。</p>
+  <ul>
+    <li>关键词族：VLIW mask word、NOP compression、sparse bundle、instruction dispersal、silo/flexible silo、banked instruction memory、distributed configuration memory、configuration-memory compression、independent program counter、bank gating、round-robin/cyclic striping、dynamic issue width、application-domain partitioning。</li>
+    <li><span class="yes">●</span> 表示文献明确给出；<span class="part">◐</span> 表示概念相近但数据组织、时序或目标不同；<span class="no">—</span> 表示在所读文本中未找到。</li>
+    <li>“未找到”只描述本次可访问语料，不等于全球不存在。论文新颖性、专利可授权性和自由实施（FTO）是三个不同问题。</li>
+  </ul>
+
+  <h2>3. 五项结构特征逐项对照</h2>
+  <table class="matrix"><thead><tr>
+    <th>公开工作</th><th>固定周期<br>Config</th><th>多独立<br>事件流/指针</th><th>跨功能槽<br>共享容量</th><th>phase/循环<br>条带化</th><th>逐 Bank<br>读门控</th><th>无额外周期<br>恢复</th><th>多程序池<br>接纳目标</th><th>对当前方案的实际影响</th>
+  </tr></thead><tbody>
+    <tr><td><a href="https://patents.google.com/patent/US5057837A/en">US5057837A</a><br>Mask-word instruction storage，优先权 1987</td><td class="part">◐</td><td class="no">—</td><td class="part">◐</td><td class="no">—</td><td class="no">—</td><td class="part">◐</td><td class="no">—</td><td>每条宽指令一个 mask，只存非零字段；还描述交织 Bank 和把字段路由回分布式 I-cache。直接否定“mask 删除 NOP”这一宽泛创新。</td></tr>
+    <tr><td><a href="https://patents.google.com/patent/US5983336A/en">US5983336A</a><br>Pointer+mask parallel unpacking，优先权 1996</td><td class="part">◐</td><td class="part">◐</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="yes">●</td><td class="no">—</td><td>把执行单元分组，header 含每组 pointer/mask，并行移位和散布 syllable。不能把“mask+前缀定位+并行路由”单独写成新颖。</td></tr>
+    <tr><td><a href="https://patents.google.com/patent/US7143268B2/en">US7143268B2</a><br>Wide-issue alignment/dispersal，优先权 2000</td><td class="no">—</td><td class="no">—</td><td class="part">◐</td><td class="part">◐</td><td class="no">—</td><td class="yes">●</td><td class="no">—</td><td>stop bit/地址位驱动 bundle 对齐与 lane 路由，独立权利要求包含多 lane 和 dispersal。尤其说明“用低地址位/位置决定 lane”早已存在，phase 的 modulo 运算不能单独作为创新。</td></tr>
+    <tr><td><a href="https://prod.tinker.cc.gatech.edu/symposia/micro29_icache.pdf">Conte 等，MICRO 1996</a><br>Rigid/Flexible Silo Cache</td><td class="no">—</td><td class="part">◐</td><td class="yes">●</td><td class="no">—</td><td class="no">—</td><td class="part">◐</td><td class="no">—</td><td>rigid silo 按 FU 类型分区；flexible silo 允许互补 FU 类型共享一个 silo，以缓解类型偏斜造成的低利用率。它直接覆盖“跨类型共享存储来减少专属 Bank 碎片”的核心动机。</td></tr>
+    <tr><td><a href="https://doi.org/10.1109/ACCESS.2020.2985501">Li 等，IEEE Access 2020</a><br>纵向 VLIW 压缩</td><td class="yes">●</td><td class="yes">●</td><td class="no">—</td><td class="no">—</td><td class="part">◐</td><td class="yes">●</td><td class="no">—</td><td>ifnull 数组保留原周期语义，每个子字段独立 Bank、BAR/FPCR 地址并行恢复。Candidate A 基本属于这一方向；其 NOP 情况读地址 0，不等于明确关闭宏读使能。</td></tr>
+    <tr><td><a href="https://patents.google.com/patent/US8555097B2/en">US8555097B2</a><br>Distributed configuration memory gating，优先权 2009</td><td class="yes">●</td><td class="yes">●</td><td class="no">—</td><td class="no">—</td><td class="yes">●</td><td class="yes">●</td><td class="no">—</td><td><strong>最危险的单项专利。</strong>NOP register 每周期前进，各分布式配置存储的第二指针只在非 NOP 时前进，并在 NOP 周期停用相应存储。页面显示专利仍有效，预期至 2031 年；需专业 FTO 复核。</td></tr>
+    <tr><td><a href="https://dl.acm.org/doi/10.1145/3162018">Lee 等，ACM TACO 2018</a><br>Modulo-schedule compression</td><td class="yes">●</td><td class="yes">●</td><td class="part">◐</td><td class="no">—</td><td class="yes">●</td><td class="yes">●</td><td class="part">◐</td><td><strong>最接近的论文。</strong>每个原周期读取 decompression-offset；宽配置拆成多个物理分区，每区独立 PC 和读使能，无额外恢复延迟；还基于应用域中的多组 loop 做静态分区。当前方案与它的边界必须成为 related-work 核心。</td></tr>
+    <tr><td><a href="https://research.tudelft.nl/en/publications/a-sparse-vliw-instruction-encoding-scheme-compatible-with-generic/">Brandon 等，ReConFig 2015</a><br>ρ-VEX sparse generic binary</td><td class="no">—</td><td class="no">—</td><td class="part">◐</td><td class="no">—</td><td class="no">—</td><td class="part">◐</td><td class="no">—</td><td>stop-bit 稀疏 bundle、dispatch routing、跨 cache-line 缓冲以及 2/4/8 issue-width 兼容均已有。当前四 Bank 方案不能称为动态 issue-width。</td></tr>
+    <tr><td><a href="https://past.date-conference.com/proceedings-archive/2013/PDFFILES/07.3_3.PDF">Brandon &amp; Wong，DATE 2013</a><br>Dynamic issue width</td><td class="no">—</td><td class="no">—</td><td class="part">◐</td><td class="no">—</td><td class="part">◐</td><td class="no">—</td><td class="no">—</td><td>同一 generic binary 在 2/4/8 发射配置上执行，核心资源按宽度重组。再次说明“1/2/4 自适应”作为标题会误导且撞车。</td></tr>
+    <tr><td><a href="https://patents.google.com/patent/US8583895B2/en">US8583895B2 / Philips family</a><br>Variable-length VLIW format</td><td class="no">—</td><td class="no">—</td><td class="yes">●</td><td class="part">◐</td><td class="no">—</td><td class="part">◐</td><td class="no">—</td><td>五 issue-slot、NOP 不存、有效操作紧凑排列并路由回目标槽，cache 还进行多 Bank swizzle。进一步压缩了“共享紧凑 payload+散布”的可主张空间。</td></tr>
+    <tr><td><a href="https://patents.google.com/patent/US9286074B2/en">US9286074B2</a><br>NOP bundle compression</td><td class="part">◐</td><td class="no">—</td><td class="yes">●</td><td class="no">—</td><td class="no">—</td><td class="part">◐</td><td class="no">—</td><td>两位 bundle code 删除 bundle 尾部和后继全 NOP bundle。与当前结构不同，但 NOP/空周期压缩也不能声称首次提出。</td></tr>
+    <tr><td><a href="https://patents.google.com/patent/US9727460B2/en">US9727460B2</a> 及相关三星配置存储族<br>按激活 FU 数选择 memory mapping</td><td class="yes">●</td><td class="part">◐</td><td class="part">◐</td><td class="no">—</td><td class="part">◐</td><td class="yes">●</td><td class="no">—</td><td>根据 loop 并行度、每周期激活 FU 数、配置存储信息共同调度和选择映射。不能笼统宣称首次做“软件调度与配置 SRAM 映射协同”。</td></tr>
+    <tr><td><strong>当前四共享 Bank 方案</strong></td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td class="yes">●</td><td>本次没有找到一项公开工作同时满足全部列；但绝大部分构件分别已有，组合的非显而易见性需要靠严格问题合同、证明和数据建立。</td></tr>
+  </tbody></table>
+
+  <h2>4. 哪些风险已经“关闭”，哪些没有</h2>
+  <table><thead><tr><th>风险命题</th><th>检索后的状态</th><th>理由</th></tr></thead><tbody>
+    <tr><td>“我们的主要创新是用 mask 删除空槽并恢复五槽 VLIW。”</td><td><span class="tag red">关闭：不能主张</span></td><td>US5057837A、US5983336A、Li 2020 等均直接覆盖。</td></tr>
+    <tr><td>“我们的主要创新是多个独立事件流在同一周期恢复。”</td><td><span class="tag red">关闭：不能单独主张</span></td><td>Li 2020 与 Lee 2018 都有多 Bank/多地址计数器和并行恢复。</td></tr>
+    <tr><td>“我们的主要创新是根据 mask 只读取活跃 Bank。”</td><td><span class="tag red">关闭：不能主张</span></td><td>US8555097B2 的独立权利要求明确覆盖 NOP 位、独立指针和配置存储停用；Lee 2018 也明确实现读使能控制。</td></tr>
+    <tr><td>“我们的主要创新是不同 FU 类型共享存储，减少专属 Bank 浪费。”</td><td><span class="tag red">关闭：不能单独主张</span></td><td>MICRO 1996 flexible silo 已提出让互补 FU 类型共享 silo 来提高利用率。</td></tr>
+    <tr><td>“我们的主要创新是 1/2/4 发射宽度自适应。”</td><td><span class="tag red">关闭：而且表述错误</span></td><td>DATE 2013/ReConFig 2015 已有 2/4/8；当前硬件实际是四 Bank、每拍 0–4 次读取，并没有重构 issue width。</td></tr>
+    <tr><td>“固定周期 Config + 四共享等宽事件 Bank + 连续事件 modulo-4 条带化 + mask/phase 直接散布 + 固定宏多内核驻留约束”的完整组合。</td><td><span class="tag amber">未发现单一完全相同先例</span></td><td>可以继续做论文差异点，但已有构件很多，审稿人仍可能认为是已知纵向压缩、bank interleaving 与 flexible silo 的直接组合。</td></tr>
+    <tr><td>专利自由实施风险已经完全关闭。</td><td><span class="tag red">没有关闭</span></td><td>检索只能筛查；US8555097B2 等仍显示有效。是否落入权利要求需按目标国家、权利要求解释和具体 RTL 做律师级 FTO。</td></tr>
+  </tbody></table>
+
+  <h2>5. 要让它成为论文，问题定义必须升级</h2>
+  <h3>5.1 不再把算法写成“轮流放进四个 Bank”</h3>
+  <p><code>lane=(phase+rank) mod 4</code> 本质上是低位交织，单看公式不新。应把它放在严格合同中，并证明它解决了什么只有该合同才产生的问题：</p>
+  <div class="formula">输入合同：每个原执行周期一条 5-bit Config；有效操作等宽 34 bit；每周期最多 4 个；五类目的槽异构。
+时序合同：每个 accepted cycle 必须恢复原周期的完整槽语义；不能扫描变长流，不能把一个 bundle 拆到下一拍。
+存储合同：仅允许单口、固定深度 SRAM 宏；每个宏每拍最多读一次；未读宏可门控。
+控制流合同：branch/loop/restart 必须在入口描述符中恢复 phase 与各 Bank 指针。</div>
+  <h3>5.2 把“phase 条带化”变成可证明的映射性质</h3>
+  <p>对于连续的 <code>E</code> 个有效事件，按全局事件编号 <code>e mod 4</code> 分配，四个 Bank 的深度只能是 <code>⌊E/4⌋</code> 或 <code>⌈E/4⌉</code>，最大差为 1。这不是复杂定理，但它把“共享容量”从经验观察变成确定保证：在忽略基本块独立布局时，四 Bank payload 可容纳当且仅当总事件数不超过 8192。</p>
+  <p>进一步可做真正有内容的部分：每个内核为了独立跳转有自己的起始 phase；多个内核同时驻留时，为每个内核选择起始 phase 和四个 Bank 基地址，使全局最大 Bank 深度最小。当前池实验把每个程序都从 phase 0 开始再相加，并没有实现这种 loader/allocator；因此“phase-aware 多内核布局”既可能改善 1037 的结果，也是比简单 modulo 更好的软件切入点。</p>
+  <h3>5.3 将“池接纳”改成清楚、可复现的系统目标</h3>
+  <p>论文中不要只给 4095 个子集计数。应先说明为什么内核需要同时驻留，再报告：</p>
+  <ul>
+    <li>固定总 SRAM 面积下，随机到达/移除内核序列的重新加载次数、加载字节数与切换延迟；</li>
+    <li>专属槽 Bank 因单一槽先满造成的“容量碎片”，以及共享 Bank 的真实剩余空间；</li>
+    <li>同域训练、同域未见程序、跨域程序三组结果，避免 12 条非线性 trace 过拟合；</li>
+    <li>phase 固定为 0、贪心选择起始 phase、最优 phase 分配三个消融；</li>
+    <li>如果只允许单内核驻留，则诚实删除这项主张，转而比较同一 SRAM 面积能支持的最大 shape/最大 instruction footprint。</li>
+  </ul>
+  <h3>5.4 与 Lee 2018 的核心差异必须量化，而非口头区分</h3>
+  <table><thead><tr><th>维度</th><th>Lee 2018</th><th>当前方案应证明的差异</th></tr></thead><tbody>
+    <tr><td>压缩对象</td><td>配置字段在相邻周期保持不变，删除重复配置行。</td><td>删除空槽事件；事件一旦出现就从共享 Bank 读取，NOP 恢复为零。</td></tr>
+    <tr><td>物理分区</td><td>硬件实体到分区的映射在设计时固定，每区宽度可不同。</td><td>所有 34-bit 有效事件共享四个等宽 Bank，目的槽由 Config mask 决定。</td></tr>
+    <tr><td>恢复状态</td><td>每分区一个 PC，并保持上一配置值。</td><td>四 Bank 指针 + 2-bit phase；同拍按 prefix-rank 读取并散布到五个槽。</td></tr>
+    <tr><td>主要目标</td><td>减少配置存储位数和读能量，按应用域选择分区。</td><td>在周期零损失、固定 SRAM 宏和多内核驻留约束下减少容量碎片。</td></tr>
+    <tr><td>必须增加的公平基线</td><td colspan="2">复现其“分区 + change/offset + gate”思想到本 174-bit trace；否则审稿人会质疑为何只与较弱的 Candidate A 比。</td></tr>
+  </tbody></table>
+
+  <h2>6. 论文 Go/No-Go 判据</h2>
+  <div class="callout warn"><strong>当前判定：有条件 Go，但不是因为五个组件本身新。</strong>如果只能得到“比五个专属 Bank 少一个 Bank、面积约省 13%”，并且多内核常驻没有实际需求，则不建议把它独立写成第四篇。若能完成下面三项，仍有形成架构小论文的可能。</div>
+  <ol>
+    <li><strong>理论：</strong>给出固定周期、多目的槽、有限并行 SRAM 下的事件布局模型；证明连续条带化的单程序最优均衡性质，并给出多程序 phase/base 分配算法和复杂度。</li>
+    <li><strong>硬件：</strong>参数化 RTL 覆盖 Config SRAM、四个独立 SRAM read-enable、前缀计数、phase、4→5 dispersal、ready/valid 停顿、branch/loop checkpoint；报告真实宏、Fmax、门级面积和功耗。</li>
+    <li><strong>系统：</strong>与 Li/Candidate A、Lee-style partition/change compression、stop-bit/变长前端及四 Bank 不门控版本公平比较；加入外部高 ILP 和不同槽偏斜 trace，并证明驻留/加载收益。</li>
+  </ol>
+  <p><strong>建议标题：</strong>“面向固定周期 VLIW 加速器的确定性共享 Bank 指令供给与多内核驻留布局”。避免 “1/2/4 adaptive issue width”，因为真实结构不是三种 issue-width 模式。</p>
+
+  <h2>7. 建议给导师的准确表述</h2>
+  <div class="callout good"><strong>一句话版本：</strong>系统检索后，mask 去 NOP、独立压缩流、配置 Bank 门控、并行散布和跨 FU 存储共享都已有明确先例，不能作为单项创新；尚未发现完全相同的是，在第三篇“一拍一条、五个异构槽”的固定周期合同下，用四个等宽共享单口 SRAM 对有效事件做 phase 条带化并由 mask 同拍复原，同时面向固定宏的多内核常驻进行 phase/base 布局。这个窄化方向仍可研究，但需要证明常驻需求、补 Lee 2018/US8555097 基线并完成 RTL，才足以判断能否成文。</div>
+
+  <h2>8. 证据与本地实验入口</h2>
+  <table><thead><tr><th>材料</th><th>用途</th></tr></thead><tbody>
+    <tr><td><a href="../paper/Instruction_fetch_mechanisms_for_VLIW_architectures_with_compressed_encodings.pdf">本地 Conte 1996 PDF</a></td><td>rigid/flexible silo、FU 类型分区与共享、hit-path expander。</td></tr>
+    <tr><td><a href="../paper/Improving Energy Efficiency of Coarse-Grain Reconfigurable Arrays Through Modulo Schedule Compression%3ADecompression.pdf">本地 Lee 2018 PDF</a></td><td>固定周期 offset、多独立 PC、分区门控、应用域训练与未见程序。</td></tr>
+    <tr><td><a href="../paper/An_Efficient_and_Fast_VLIW_Compression_Scheme_for_Stream_Processor.pdf">本地 Li 2020 PDF</a></td><td>Candidate A 的最直接论文基线。</td></tr>
+    <tr><td><a href="../paper/A_sparse_VLIW_instruction_encoding_scheme_compatible_with_generic_binaries.pdf">本地 Brandon 2015 PDF</a></td><td>stop-bit、稀疏 bundle、dispatch、动态 issue-width generic binary。</td></tr>
+    <tr><td><a href="../paper/Revised_Paper_TVLSI_00472_2026.R%20%281%29.pdf">第三篇论文 PDF</a></td><td>确认五功能槽加控制槽、编译器逐周期生成、硬件每拍取一条直到 EOP 的原始合同。</td></tr>
+    <tr><td><a href="../analysis_output_issue124_four_lane_174/corrected_superset/issue124_superset_corrected_study.json">四 Bank 修正实验 JSON</a></td><td>12 条 trace 的 bit-exact、周期、占用、Bank 深度和门控能耗。</td></tr>
+    <tr><td><a href="../analysis_output_issue3_three_lane_174/pool_admission_subset_study.json">程序池子集实验 JSON</a></td><td>4095 个域内子集及 A/2/3/4 Bank/Sidecar 接纳集合；文件自身也明确警告不能外推为总体概率。</td></tr>
+    <tr><td><a href="../experiments/pool_admission_subset_study.py">程序池实验脚本</a></td><td>核对接纳定义、Config 8192 与各 Bank 固定深度条件。</td></tr>
+  </tbody></table>
+  <p class="small">限制说明：本报告进行了针对性而非律师级穷尽检索；Google Patents 的法律状态本身也标注为非法律结论。若目标包括专利申请或产品实施，应由专利代理人对 US8555097B2、三星配置存储专利族及目标国家同族逐项制作正式 claim chart。</p>
+</main></body></html>

@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VLIW指令压缩：论文与专利先行工作对比专档</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg:#f4f6f9; --panel:#fff; --text:#202936; --muted:#616d7a;
+      --line:#d8e0e8; --accent:#155eef; --good:#137a4b; --warn:#9a6700; --bad:#b42318;
+    }
+    @media (prefers-color-scheme:dark) {
+      :root {
+        --bg:#11151a; --panel:#181e25; --text:#e9edf2; --muted:#aab3be;
+        --line:#303945; --accent:#78a9ff; --good:#58c78f; --warn:#e3b341; --bad:#ff7b72;
+      }
+    }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body {
+      margin:0; background:var(--bg); color:var(--text);
+      font:15px/1.68 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    .layout { width:min(1260px,calc(100% - 28px)); margin:20px auto 72px; }
+    nav, header, section {
+      background:var(--panel); border:1px solid var(--line); border-radius:12px;
+      padding:24px; margin:14px 0;
+    }
+    nav ol { columns:2; margin:8px 0 0; }
+    nav a { color:var(--accent); text-decoration:none; }
+    h1 { margin:0 0 8px; font-size:28px; line-height:1.28; }
+    h2 { margin:0 0 12px; font-size:21px; }
+    h3 { margin:22px 0 8px; font-size:17px; }
+    h4 { margin:16px 0 6px; font-size:15px; }
+    p { margin:8px 0; }
+    li { margin:5px 0; }
+    code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .muted, small { color:var(--muted); }
+    .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+    .grid-2 { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+    .card { border:1px solid var(--line); border-radius:9px; padding:15px; }
+    .stat b { display:block; font-size:23px; margin-top:3px; }
+    .good { color:var(--good); } .warn { color:var(--warn); } .bad { color:var(--bad); }
+    .callout {
+      margin:14px 0; padding:14px 16px; border-left:4px solid var(--accent);
+      background:color-mix(in srgb,var(--accent) 7%,var(--panel));
+    }
+    .callout.good { border-left-color:var(--good); color:var(--text); }
+    .callout.warn { border-left-color:var(--warn); color:var(--text); }
+    .callout.bad { border-left-color:var(--bad); color:var(--text); }
+    pre, .formula {
+      white-space:pre-wrap; overflow-wrap:anywhere;
+      background:color-mix(in srgb,var(--text) 5%,var(--panel));
+      border:1px solid var(--line); border-radius:8px; padding:14px;
+      font:14px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;
+    }
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th,td { border-bottom:1px solid var(--line); padding:9px 10px; text-align:right; vertical-align:top; }
+    th:first-child,td:first-child { text-align:left; }
+    th { color:var(--muted); font-weight:650; }
+    .left th,.left td { text-align:left; }
+    .tag {
+      display:inline-block; border:1px solid var(--line); border-radius:999px;
+      padding:2px 8px; margin-right:5px; font-size:12px;
+    }
+    .tag.direct { background:#fee4e2; color:#912018; border-color:#fecdca; }
+    .tag.close { background:#fff0c2; color:#7a2e0e; border-color:#f5df9e; }
+    .tag.family { background:#d1e9ff; color:#0b4a8f; border-color:#b2ddff; }
+    .tag.expired { background:#dcfae6; color:#087443; border-color:#a6f4c5; }
+    @media (prefers-color-scheme:dark) {
+      .tag.direct { background:#3b1210; color:#ff9b8a; border-color:#7a271a; }
+      .tag.close { background:#3a2c07; color:#f0c453; border-color:#7a5b12; }
+      .tag.family { background:#0b2f56; color:#84c5ff; border-color:#175cd3; }
+      .tag.expired { background:#063c24; color:#4ade80; border-color:#0e6245; }
+    }
+    @media (max-width:850px) {
+      .grid-4,.grid-2 { grid-template-columns:1fr 1fr; }
+      nav ol { columns:1; }
+    }
+    @media (max-width:560px) { .grid-4,.grid-2 { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <header>
+    <h1>VLIW指令压缩：论文与专利先行工作对比专档</h1>
+    <p class="muted">本文方案的逐篇/逐件定位、可主张与不可主张的新颖性边界 · 2026-09-03</p>
+    <div class="callout warn">
+      <strong>本文档的定位：</strong>
+      这是专门的先行工作对比档案，与主研究记录
+      <a href="vliw_174bit_equal_slot_priority_study_2026-09-02.html">vliw_174bit_equal_slot_priority_study_2026-09-02.html</a>
+      配套。主文档记录"我们做了什么"，本文档回答"别人已经做过什么、我们还剩什么"。
+      每篇对比都按统一格式展开：<em>工作信息 → 核心机制 → 与本文的共同点 → 关键区别 → 对论文写作的意义</em>。
+      所有"仅摘要核实"的结论均已标注，投稿前需补全文验证。
+    </div>
+    <div class="callout good">
+      <strong>一句话结论：</strong>
+      逐指令路由元数据（dispersal bit / template / address bit / 组位移指针）、删 NOP、分 Bank、变长取指、字典、周期核、
+      压缩感知调度本身、保持前值低翻转技巧均已有先行工作；本文可辩护的新颖性落在
+      <strong>发射宽度约束调度 + 零路由元数据的 Lane 分配（mask+phase）+ 真实 SRAM Bank 物理模型 + 可替换代码池</strong>
+      四者的协同上。专利方面：US7143268B2（HP/ST，2022 失效）与 US5983336A（Elbrus，2016 失效）均已期满，
+      不构成任何限制；US8555097B2（Samsung，<strong>有效至 2031</strong>）在 CGRA 语境下覆盖了
+      "每 FU 专属存储 + 有效位 + 读门控"的 Candidate A 结构——不影响论文发表，但进一步强化
+      "Candidate A 只能作基线"的定位，且提示未来商业实施时需做 FTO 分析；
+      本文共享旋转 Lane 的结构在权利要求特征上避开了该专利。
+    </div>
+  </header>
+
+  <nav>
+    <strong>目录</strong>
+    <ol>
+      <li><a href="#ours">本文方案速览</a></li>
+      <li><a href="#axes">对比维度定义</a></li>
+      <li><a href="#li2020">Li 2020（最直接基线）</a></li>
+      <li><a href="#kultala">Kultala 2016（压缩感知调度）</a></li>
+      <li><a href="#patent">专利 US7143268B2（HP/ST）</a></li>
+      <li><a href="#patent-elbrus">专利 US5983336A（Elbrus）</a></li>
+      <li><a href="#patent-samsung">专利 US8555097B2（Samsung，有效）</a></li>
+      <li><a href="#tinker">Conte 1996 TINKER</a></li>
+      <li><a href="#brandon">Brandon 2015 ρ-VEX</a></li>
+      <li><a href="#tta">TTA 模板压缩族（SAMOS 2014 / IJPP 2018）</a></li>
+      <li><a href="#chiu">Chiu &amp; Yang 2010 指令流缓冲</a></li>
+      <li><a href="#cgra">CGRA 配置压缩族（TACO 2018 / MICPRO 2018）</a></li>
+      <li><a href="#dict">Multanen 2024 可编程字典</a></li>
+      <li><a href="#commercial">经典商业方案（Multiflow / TI / IA-64）</a></li>
+      <li><a href="#entropy">通用熵编码族</a></li>
+      <li><a href="#matrix">总定位矩阵</a></li>
+      <li><a href="#claims">新颖性边界声明</a></li>
+      <li><a href="#glossary">术语表</a></li>
+    </ol>
+  </nav>
+
+  <section id="ours">
+    <h2>1. 本文方案速览（对比的参照系）</h2>
+    <p>
+      目标平台是自研的 <strong>FRV-SFU-VLIW 可重构非线性函数加速器</strong>（前作见
+      <a href="../paper/Revised_Paper_TVLSI_00472_2026.R%20(1).pdf">TVLSI 2026 投稿</a>）。
+      当前指令基线为 <strong>174-bit 等宽槽 VLIW</strong>：5 个功能槽（LOAD/STORE/VECTOR/SCALAR/SFU）各 34 bit，
+      外加 5-bit 配置。压缩方案的三个已评估工作点：
+    </p>
+    <div class="table-wrap">
+      <table class="left">
+        <thead><tr><th>工作点</th><th>每拍发射上限</th><th>存储组织</th><th>性能（12条轨迹）</th><th>物理结果（三函数X64池，32nm CACTI）</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>双 Lane</strong>（2×4096 通用替换点）</td>
+            <td>2</td>
+            <td>5-bit 配置流（5×8192）+ 2 条 34×4096 payload Lane</td>
+            <td class="warn">+2.03% 周期（最坏 LogSoftmax X64 +5.58%）</td>
+            <td>容量 −17.89%；面积 −19.67%；读能量 <span class="bad">+28.52%</span></td>
+          </tr>
+          <tr>
+            <td><strong>分组四 Lane</strong>（对照实验）</td>
+            <td>2</td>
+            <td>6-bit 配置流 + 4 条 34×2048 Lane（分两组）</td>
+            <td class="warn">与双 Lane 相同（仍最多 2 发射）</td>
+            <td>面积介于双 Lane 与自适应四 Lane 之间；读能量低于双 Lane</td>
+          </tr>
+          <tr>
+            <td><strong>自适应四 Lane</strong>（性能优先点）</td>
+            <td>4（0–4 连续，含 3）</td>
+            <td>5-bit mask 配置流（5×8192）+ 4 条 34×2048 Lane + 2-bit 旋转 phase</td>
+            <td class="good">19,962 拍，逐条追平优化五槽基线（零损失）</td>
+            <td>面积 0.0924 mm²（相对 A-symmetric −13.05%）；读能量 43.61 nJ（持平）；配套逻辑约 2,064 GE</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>五个贯穿全文的硬约束（任何对比都必须在这套约束下理解）：</p>
+    <ol>
+      <li><strong>逐周期精确恢复</strong>：解压后每拍的行为与压缩前一致（允许后期为降翻转率做非功能位优化，但功能行为逐拍相同）。</li>
+      <li><strong>零动态停顿</strong>：正常执行中指令供给永不成为瓶颈，无运行时调度器、无动态依赖检查。</li>
+      <li><strong>压缩常驻</strong>：指令以压缩形式存放在片上 SRAM 中，读出时才恢复，不存在"等容量全宽 cache"。</li>
+      <li><strong>统一格式</strong>：一套编码格式覆盖全部 workload，不允许逐 workload 训练字典或换格式。</li>
+      <li><strong>物理公平</strong>：比较必须落到真实 SRAM 宏（含 2 次幂深度取整、外围电路、多程序可替换池），不能只比逻辑位数。</li>
+    </ol>
+  </section>
+
+  <section id="axes">
+    <h2>2. 对比维度定义</h2>
+    <p>后文所有逐篇对比都围绕以下七个维度展开，这些维度同时是审稿人最可能发问的角度：</p>
+    <div class="table-wrap">
+      <table class="left">
+        <thead><tr><th>维度</th><th>含义</th><th>本文的取值</th></tr></thead>
+        <tbody>
+          <tr><td>存储层级</td><td>压缩代码驻留在哪一级：主存 / 指令 cache / 片上 SRAM</td><td>片上 SRAM 压缩常驻，读出即恢复</td></tr>
+          <tr><td>路由元数据</td><td>"哪条指令去哪个功能单元"的信息存在哪里、占多少位</td><td>payload 中零路由位；由 5-bit mask + 2-bit phase 派生</td></tr>
+          <tr><td>调度协同</td><td>编译器调度是否感知编码/物理约束</td><td>发射宽度约束直接进调度器；13 种优先级启发式扫描</td></tr>
+          <tr><td>恢复粒度</td><td>功能正确即可，还是逐周期行为一致</td><td>逐周期精确（含逐 bit roundtrip 验证）</td></tr>
+          <tr><td>供给保证</td><td>平均带宽够即可，还是硬保证无停顿</td><td>零动态 stall（编译期可证明）</td></tr>
+          <tr><td>目标平台</td><td>通用 CPU / 流处理器 / CGRA / 专用加速器</td><td>可重构非线性函数加速器（静态调度、无分支内循环）</td></tr>
+          <tr><td>物理评价</td><td>只报逻辑位数，还是真实宏面积/能耗</td><td>CACTI 32nm 宏 + GE 逻辑 + 真实翻转率功耗</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="li2020">
+    <h2>3. Li, Hou, Zhu, IEEE Access 2020 <span class="tag direct">最直接基线</span></h2>
+    <p>
+      <em>An Efficient and Fast VLIW Compression Scheme for Stream Processor</em>，本地
+      <a href="../paper/An_Efficient_and_Fast_VLIW_Compression_Scheme_for_Stream_Processor.pdf">PDF</a>。
+    </p>
+    <h4>核心机制</h4>
+    <ul>
+      <li>按逻辑字段<strong>纵向删除 NOP</strong>：每个槽独立成流，短列向最高列补齐后存储。</li>
+      <li><strong>ifnull 位表</strong>逐周期记录各槽有效性；分 Bank IMEM 存放各槽流。</li>
+      <li>FPCR/BAR 等寄存器支持<strong>一拍重组</strong>：每 Bank 独立地址，并行读出后在当拍拼回完整 VLIW。</li>
+      <li>物理评价：综合时将 IMEM 容量设为原来的 50%，报告 IMEM 面积降低 44.26%（逻辑压缩率约 29.85% 不能直接推出面积）。</li>
+    </ul>
+    <h4>与本文的共同点</h4>
+    <p>
+      纵向槽流、有效位表、分 Bank 存储、独立地址计数、一拍恢复——本文的 Candidate A（直接分槽存储按 mask 读出）
+      在机制上几乎就是它。这也是本文明确把 Candidate A 定位为<strong>基线而非创新</strong>的原因。
+    </p>
+    <h4>关键区别</h4>
+    <div class="table-wrap">
+      <table class="left">
+        <thead><tr><th>维度</th><th>Li 2020</th><th>本文</th></tr></thead>
+        <tbody>
+          <tr><td>物理并行方式</td><td>每槽一个独立 Bank，执行拍空间并行读出</td><td>2 或 4 条共享 Lane，配置流决定读哪几条</td></tr>
+          <tr><td>调度协同</td><td>无；接受原 schedule，只删 NOP</td><td>发射宽度约束进调度器，调度-编码-物理三方协同</td></tr>
+          <tr><td>路由/地址</td><td>每 Bank 独立地址计数器（5 套）</td><td>共享 Lane 计数器（2 或 4 套）+ mask/phase 派生路由</td></tr>
+          <tr><td>容量模型</td><td>短列补齐到最高列；IMEM 容量手工设 50%</td><td>2 次幂深度取整 + 三函数可替换池 + 深度感知 Lane 映射</td></tr>
+          <tr><td>能耗分析</td><td>未报逐事件读能量</td><td>报每事件读能量（pJ/event）并发现深宏读能量上升的权衡</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout bad">
+      <strong>写作红线：</strong>
+      独立槽流、去 NOP、ifnull/mask、分 Bank 并行重组本身都<strong>不能</strong>写进贡献列表。
+      本文相对 Li 2020 的收益必须表述为"相同恢复保证下，更少的 Bank 数、更小的可替换池面积、以及调度协同带来的格式简化"，
+      并给出同一物理口径下的宏级对比。
+    </div>
+  </section>
+
+  <section id="kultala">
+    <h2>4. Kultala et al., JSPS 2016 <span class="tag direct">最接近的调度类先行工作</span></h2>
+    <p>
+      <em>Improving Code Density with Variable Length Encoding Aware Instruction Scheduling</em>，
+      Journal of Signal Processing Systems 84(3)，DOI
+      <a href="https://doi.org/10.1007/s11265-015-1081-6">10.1007/s11265-015-1081-6</a>，本地
+      <a href="../paper/Improving%20Code%20Density%20with%20Variable%20Length%20Encoding%20Aware%20Instruction%20Scheduling.pdf">PDF</a>。
+    </p>
+    <h4>核心机制</h4>
+    <ul>
+      <li>面向 TTA（传输触发架构）的 3-issue/96-bit、4-issue/128-bit VLIW，指令有有限种<strong>变长模板</strong>。</li>
+      <li><strong>FU 优先级</strong>：统计每个功能单元在多少模板里可以隐式为 NOP，据此引导调度绑定。</li>
+      <li><strong>slack 后处理</strong>：主调度后按依赖计算操作最早/最晚可移动周期，在余量内跨周期搬移，让更多周期匹配短模板，且保证基本块不变长。</li>
+      <li>新 schedule 由 cycle-based scheduler 保证依赖与资源合法——<strong>不是保持旧 trace，也不靠运行时硬件修复</strong>。</li>
+    </ul>
+    <h4>与本文的共同点</h4>
+    <p>
+      都是编译期生成逐周期合法的新 schedule。因此<strong>"静态调度"和"压缩感知调度"本身不能作为本文的新颖性主张</strong>。
+    </p>
+    <h4>关键区别（含目标函数级复现证据）</h4>
+    <div class="table-wrap">
+      <table class="left">
+        <thead><tr><th>维度</th><th>Kultala 2016</th><th>本文</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>调度对象</td>
+            <td>TTA 的 operand/result transport 可独立移动</td>
+            <td>五类固定异构 34-bit 原子操作槽，必须整体发射</td>
+          </tr>
+          <tr>
+            <td>FU 选择空间</td>
+            <td>同一操作可绑定多个 FU，按"可隐式 NOP 的模板数"打分</td>
+            <td>LOAD/STORE/VECTOR/SCALAR/SFU 不可互换；复现显示五类得分完全相等，可替代 FU 事件数为 0</td>
+          </tr>
+          <tr>
+            <td>模板约束性质</td>
+            <td>模板不匹配可退回完整 96/128-bit 格式——影响的是<strong>指令长度</strong></td>
+            <td>超过发射上限该拍<strong>根本不能发射</strong>——是硬供给资源约束</td>
+          </tr>
+          <tr>
+            <td>编码成本函数</td>
+            <td>各周期所选模板宽度之和</td>
+            <td>固定 5T 配置位 + 34N 事件位；固定 T 下跨周期搬移的容量收益恒为 0（12 条 schedule 实测 787,683 → 787,683 bit）</td>
+          </tr>
+          <tr>
+            <td>物理模型</td>
+            <td>总编码 bit 数 / instruction memory</td>
+            <td>Bank 数量、各 Lane 最大深度、2 次幂取整、多程序可替换池</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      复现实验细节（脚本 <code>experiments/kultala_prior_art_reproduction.py</code>，结果
+      <code>analysis_output_issue2_174_priority/kultala_prior_art_reproduction.json/.csv</code>）：
+    </p>
+    <ul>
+      <li><strong>实验 A（FU 优先级退化）</strong>：16 种逻辑功能 mask 中每类槽都在 11 种里隐式 NOP、5 种里出现，五类得分相同；31 种 Lane 配置码下结论不变。</li>
+      <li><strong>实验 B（slack 后处理零收益）</strong>：固定 T 时任一操作跨周期搬移只是把一个 34-bit 事件从源周期挪到目标周期，总目标 <code>5T+34N</code> 不变。</li>
+      <li><strong>实验 C（物理深度边界）</strong>：6,591 种策略/模式组合的周期和为 5,475–6,100，但 Config 均取整到 8192，物理容量只有 1 种结果；真实收益来自编译期 Lane 映射跨越 4096/2048 深度边界，而非调度策略本身。</li>
+    </ul>
+    <div class="callout warn">
+      <strong>复现边界（投稿措辞注意）：</strong>
+      当前复现是"目标函数级"而非完整算法对拍——没有重放 ASAP/ALAP 节点搬移和全部资源合法性检查。
+      证据足以证明其<strong>编码收益机制</strong>在本平台退化；若论文使用"完整复现"措辞，需要调度器导出
+      node-to-cycle 映射后再做合法性重放。
+    </div>
+  </section>
+
+  <section id="patent">
+    <h2>5. 专利 US7143268B2（HP/ST）<span class="tag expired">已失效 2022-10-24</span></h2>
+    <p>
+      <em>Circuit and method for instruction compression and dispersal in wide-issue processors</em>，
+      <a href="https://patents.google.com/patent/US7143268B2/en">Google Patents 全文</a>。
+      2000-12-29 申请（STMicroelectronics + HP，发明人含 Paolo Faraboschi），2006-11-28 授权，2022-10-24 期满失效。
+      同族 EP1220091B1、DE60139453D1 亦已失效。这是 HP Lx / ST200 产品线的分发方案。
+    </p>
+    <h4>核心机制</h4>
+    <ul>
+      <li>压缩 bundle（1–4 个 syllable）存放在<strong>指令 cache</strong> 的 cache line 中。</li>
+      <li>取指时由 instruction issue unit 取出完整 bundle（允许乱序对齐）。</li>
+      <li>对齐与分发电路根据 bundle/syllable 附带的<strong>地址位（address bit）</strong>、cluster bit 或 stop bit，
+        把 bundle 路由到正确的<strong>执行簇</strong>，并把乱序 syllable 重排对齐到正确的 lane。</li>
+    </ul>
+    <h4>法律层面：不构成任何限制</h4>
+    <ol>
+      <li><strong>专利已期满失效</strong>，其技术方案进入公有领域，任何人可自由实施。</li>
+      <li>即使专利有效，专利限制的是"制造、使用、销售"被保护方案的产品，<strong>从不限制学术论文的发表与描述</strong>。</li>
+    </ol>
+    <h4>技术层面：权利要求 1 特征对比</h4>
+    <div class="table-wrap">
+      <table class="left">
+        <thead><tr><th>权利要求 1 的必要特征</th><th>本文方案</th><th>是否具备该特征</th></tr></thead>
+        <tbody>
+          <tr><td>多个执行簇（plurality of execution clusters）</td><td>单一 VLIW，5 个固定功能槽，无簇概念</td><td class="good">否</td></tr>
+          <tr><td>指令 cache + cache line 存放 syllable</td><td>片上 SRAM 直接存压缩流，无 cache 层级</td><td class="good">否</td></tr>
+          <tr><td>根据 bundle/syllable 附带的地址位路由</td><td>payload 零路由位；由 5-bit mask + 2-bit phase 派生</td><td class="good">否</td></tr>
+          <tr><td>重排乱序 bundle 以对齐 lane</td><td>每 Lane 纯顺序流，计数器寻址，无乱序无重排</td><td class="good">否</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      权利要求采用"全部特征"原则：本文方案缺少其多个必要特征，即使该专利仍有效也不落入保护范围。
+    </p>
+    <h4>对论文写作的意义</h4>
+    <p>
+      该专利（连同其背景中引用的 Multiflow mask、TI C6xxx dispersal bit、IA-64 template）代表了
+      <strong>"逐指令携带路由元数据 + cache 路径解压分发"</strong>的经典路线。本文的定位恰好是这一路线的反面：
+      路由信息零存储开销（mask 本来就要存，phase 是派生状态）、压缩常驻 SRAM、调度-编码-物理协同。
+      建议在相关工作章节引用它作为经典路线的代表，并用一句话点明区别与失效状态。
+    </p>
+  </section>
+
+  <section id="patent-elbrus">
+    <h2>6. 专利 US5983336A（Elbrus）<span class="tag expired">已失效 2016-08-07</span></h2>
+    <p>
+      <em>Method and apparatus for packing and unpacking wide instruction word using pointers and masks
+      to shift word syllables to designated execution units groups</em>，
+      <a href="https://patents.google.com/patent/US5983336A/en">Google Patents 全文</a>。
+      Elbrus International Ltd 申请，优先权 1996-08-07（PCT/RU1996/000218），1999-11-09 授权，
+      2016-08-07 期满失效。这是俄罗斯 Elbrus-2/E2K 系列 VLIW 的指令打包/解包方案，
+      是"mask + 打包 syllable"路线<strong>最早的系统性专利之一</strong>，比 Multiflow 的商业实践更完整。
+    </p>
+    <h4>核心机制</h4>
+    <ul>
+      <li>执行单元分成若干<strong>组（group）</strong>，组在执行单元顺序上连续。</li>
+      <li>打包指令 = header + 有序 syllable 序列；未选中执行单元的 syllable 直接省略（去 NOP）。</li>
+      <li>header 含<strong>每组一个 pointer（位移指针）+ 每组一个 mask</strong>：pointer 指出该组 syllable 在打包流中的起始位置；
+        mask 标明组内哪些执行单元有操作、NOP 补在哪些位置；末组 pointer 兼作整条指令长度以省存储。</li>
+      <li>解包：<strong>shifter</strong> 按 pointer 把各组 syllable 移位到位，<strong>scattering unit</strong> 按 mask 把 syllable
+        散射到组内各执行单元；多组并行处理以掩盖延迟。</li>
+      <li>存储层级：主存/指令缓冲（IB 2048×64-bit，带 cache miss 填充引擎）上的变长打包流，面向带分支、谓词、投机的通用 CPU。</li>
+    </ul>
+    <h4>法律层面：不构成任何限制</h4>
+    <ol>
+      <li><strong>专利已于 2016 年期满失效</strong>，技术方案进入公有领域，可自由实施。</li>
+      <li>即使有效，专利也只限制商业实施，<strong>从不限制学术论文的发表与描述</strong>。</li>
+    </ol>
+    <h4>与本文的共同点（必须承认）</h4>
+    <p>
+      mask 驱动的 NOP 消除、header（控制信息）与 payload（操作本体）分离存放、取指路径上并行解包——
+      这个宏观思想 1996 年就已被完整覆盖。因此<strong>"mask 去 NOP"和"header/payload 分离"本身不能写入本文贡献</strong>。
+    </p>
+    <h4>关键区别（权利要求 1 特征逐项对比）</h4>
+    <div class="table-wrap">
+      <table class="left">
+        <thead><tr><th>权利要求 1 的必要特征</th><th>本文方案</th><th>是否具备</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>每条指令的 header 携带 <strong>pointer</strong>（每组一个位移，N 组需 N−1 个）</td>
+            <td>无任何指针；Lane 位置由 2-bit phase 状态 + mask 的 popcount 派生，不占存储</td>
+            <td class="good">否</td>
+          </tr>
+          <tr>
+            <td>变长打包 syllable 流，需 <strong>shifter</strong> 按 pointer 移位对齐</td>
+            <td>定宽 34-bit Lane 顺序流，每 Lane 一个计数器寻址，无 shifter、无对齐网络</td>
+            <td class="good">否</td>
+          </tr>
+          <tr>
+            <td>组在执行单元顺序上<strong>连续</strong></td>
+            <td>Lane 分配是旋转的（(phase+k) mod 4），不对应任何连续分组</td>
+            <td class="good">否</td>
+          </tr>
+          <tr>
+            <td>mask 控制 scattering unit 把 syllable 散射到组内执行单元</td>
+            <td>每槽一个 34-bit 4:1 多路器，选择信号由 (phase+rank) mod 4 直接算出；无通用散射网络</td>
+            <td class="good">否</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      此外该专利不涉及：调度器与编码的协同（其编译器只负责打包）、片上 SRAM 压缩常驻（其存储在主存/指令缓冲）、
+      逐周期精确加零动态 stall 的供给契约（其目标是通用 CPU 的正确取指）。
+    </p>
+    <h4>对论文写作的意义</h4>
+    <div class="callout warn">
+      <strong>这是比 US7143268B2 更贴近本文 mask 设计的先行工作，熟悉 Elbrus/E2K 的审稿人很可能直接引用它。</strong>
+      建议的差异化表述："即使是最早、最精简的 mask 打包方案（Elbrus 1996），每条指令仍需携带 N−1 个组位移指针，
+      且变长打包流迫使前端配置移位与散射网络；本文把逐指令路由元数据降为零——
+      mask 仅表达槽有效性（它本来就要存在），Lane 归属由 2-bit 派生状态推出，每条 Lane 退化为定宽无标签顺序流。"
+    </div>
+  </section>
+
+  <section id="patent-samsung">
+    <h2>7. 专利 US8555097B2（Samsung）<span class="tag direct">有效至 2031-10-11，需特别注意</span></h2>
+    <p>
+      <em>Reconfigurable processor with pointers to configuration information and entry in NOP register
+      at respective cycle to deactivate configuration memory for reduced power consumption</em>，
+      <a href="https://patents.google.com/patent/US8555097B2/en">Google Patents 全文</a>。
+      Samsung Electronics 申请（发明人 Bernhard Egger、Soo-jung Ryu、Dong-hoon Yoo——
+      Egger 即 TACO 2018 共同作者，两者是同一团队思想的专利版与期刊版），
+      优先权 2009-02-05（韩国同族 KR101581414B1 同样有效），2013-10-08 授权，
+      <strong>法律状态：有效，调整后期满日 2031-10-11</strong>（12 年年费已于 2025-01 缴纳）。共 16 项权利要求。
+    </p>
+    <h4>核心机制（权利要求 1）</h4>
+    <ul>
+      <li>每个处理单元（PU）包含：功能单元、<strong>该 FU 专属的分布式配置存储</strong>、
+        <strong>NOP 寄存器</strong>（每周期 1 bit 标记本拍是否 NOP）、控制器。</li>
+      <li>控制器管理两个指针：第一指针<strong>每周期 +1</strong> 指向 NOP 寄存器；
+        NOP 周期<strong>关闭（deactivate）该 FU 的配置存储</strong>（不读出＝省功耗）；
+        第二指针<strong>仅在非 NOP 周期 +1</strong>——因此配置存储中只存非 NOP 项（这本身就是 NOP 压缩）。</li>
+      <li>控制器管理 iteration interval（面向循环）；配置信息可从大存储动态加载（双缓冲/双端口）。</li>
+    </ul>
+    <h4>与本文的关系：结构上最接近 Candidate A</h4>
+    <p>
+      "每 FU 专属指令存储 + 每周期有效位 + 条件递增指针 + NOP 周期读门控"——这正是本文 Candidate A
+      （直接分槽 SRAM + mask + 每槽计数器 + 读使能门控）的硬件结构，该专利在 CGRA 语境下于 2009 年已完整覆盖
+      （早于 Li 2020）。两个直接后果：
+    </p>
+    <ol>
+      <li>"per-slot 独立流 + 有效位 + <strong>读门控省能</strong>"彻底不能主张为创新；
+        此前因 Li 2020 已不能主张分槽结构，现在连读门控省能这个点也被明确覆盖。</li>
+      <li>本文的 Lane 使能省能在论文中只能写为"采用已知技术"。</li>
+    </ol>
+    <h4>为何不覆盖本文核心方案</h4>
+    <div class="table-wrap">
+      <table class="left">
+        <thead><tr><th>权利要求 1 的必要特征</th><th>本文自适应四 Lane 方案</th><th>是否具备</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>每个处理单元包含<strong>专属该 FU 的</strong>分布式配置存储</td>
+            <td>Lane 由 5 类槽<strong>共享</strong>，mask+phase 旋转分配；一条 Lane 在不同周期装不同槽的操作</td>
+            <td class="good">否</td>
+          </tr>
+          <tr><td>每 PU 一个 NOP 寄存器（逐 FU 的有效位流）</td><td>单一共享 5-bit mask 流（功能等价但结构不同）</td><td class="warn">功能等价</td></tr>
+          <tr><td>目标是降低功耗（读门控）</td><td>目标是面积/容量 + 性能保持 + 功耗联合优化</td><td class="good">目标不同</td></tr>
+          <tr><td>无调度协同、无物理 Bank 模型、无多程序替换</td><td>发射宽度约束调度 + 深度感知 Lane 映射 + 可替换代码池</td><td class="good">否</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h4>法律层面：与前两件失效专利不同</h4>
+    <ol>
+      <li><strong>对论文发表：完全没有限制。</strong>专利从不限制学术发表、描述与评价，有效与否都一样。</li>
+      <li><strong>对商业实施（提醒，非法律意见）：</strong>该专利有效至 2031 年。若未来芯片产品采用
+        Candidate A 形态（每槽专属 SRAM + NOP 位读门控）且产品落入"reconfigurable processor"范围，
+        届时建议做正式的 FTO（自由实施）分析；本文的共享 Lane 方案在结构上避开了"每 FU 专属存储"特征。</li>
+    </ol>
+    <h4>对论文写作的意义</h4>
+    <p>
+      与 TACO 2018 一起引用（同团队：专利是 2009 年的读门控思想原型，TACO 2018 是加分区与时间优化的期刊版）。
+      引用要点：(a) 承认"按有效位门控分布式配置存储"已有专利级先行工作；(b) 指出其存储是逐 FU 专属的，
+      本文的共享旋转 Lane 打破了"存储与功能单元一一对应"的前提，这正是面积收益的来源之一。
+    </p>
+  </section>
+
+  <section id="tinker">
+    <h2>8. Conte et al., MICRO-29 1996（TINKER）<span class="tag family">变长取指族</span></h2>
+    <p>
+      <em>Instruction fetch mechanisms for VLIW architectures with compressed encodings</em>，本地
+      <a href="../paper/Instruction_fetch_mechanisms_for_VLIW_architectures_with_compressed_encodings.pdf">PDF</a>。
+    </p>
+    <h4>核心机制与对比</h4>
+    <ul>
+      <li>固定 64-bit Op 组成变长 MultiOp，以 header/tail 位定界；系统比较 uncompressed、banked、rigid/flexible silo cache 与 expander 等取指组织。</li>
+      <li>覆盖：NOP-free 变长编码、动态 NextPC、前端拼接、按 FU 分区存放。</li>
+    </ul>
+    <p>
+      <strong>意义：</strong>"删 NOP + 变长取指 + 前端分发"在 30 年前已被系统研究。
+      本文不能在这个层面上主张任何新颖性；本文的空间来自目标平台更窄的约束——
+      无分支静态直线流、编译期完全确定的供给计划，因此可以去掉 TINKER 必需的动态定界与缓冲逻辑。
+    </p>
+  </section>
+
+  <section id="brandon">
+    <h2>9. Brandon et al., ReConFig 2015（ρ-VEX sparse encoding）<span class="tag family">Stop-bit 族</span></h2>
+    <p>
+      <em>A sparse VLIW instruction encoding scheme compatible with generic binaries</em>，本地
+      <a href="../paper/A_sparse_VLIW_instruction_encoding_scheme_compatible_with_generic_binaries.pdf">PDF</a>。
+    </p>
+    <h4>核心机制与对比</h4>
+    <ul>
+      <li>Stop-bit 稀疏 VLIW 编码：逐操作携带"是否 bundle 末尾"位，尾部 NOP 隐式化，支持不同 issue width 的通用 binary，给出硬件实现。</li>
+      <li>注意：其主体是 stop-bit，不是 mask-word；两者都是"逐指令元数据"路线。</li>
+    </ul>
+    <p>
+      <strong>意义：</strong>stop-bit / 可变 bundle 必须作为基线之一，不能作为主贡献。
+      本文与它的区别在于：元数据从逐操作（每操作 1 bit）降为每拍 5 bit 配置流，且 payload 完全无标记。
+    </p>
+  </section>
+
+  <section id="tta">
+    <h2>10. TTA 模板压缩族：SAMOS 2014 / IJPP 2018 <span class="tag family">模板族</span></h2>
+    <p>
+      Helkala, Viitanen, Kultala, Jääskeläinen, Takala 等，
+      <em>Variable Length Instruction Compression on Transport Triggered Architectures</em>。
+      <span class="tag close">仅摘要核实</span>（trepo.tuni.fi 全文被拦截）。
+    </p>
+    <h4>核心机制与对比</h4>
+    <ul>
+      <li>基于指令模板的压缩 + 两种变长取指方案，面向 TTA 这种静态多发射、数据通路暴露的架构；摘要称平均程序尺寸最多减 44%。</li>
+      <li>与 Kultala 2016 同属 TTA 族，是"模板选择"路线的直接代表。</li>
+    </ul>
+    <p>
+      <strong>意义：</strong>模板路线与本文的"固定配置 + 共享事件流"是两种不同的格式哲学。
+      本文不采用逐拍可选模板，因此其模板匹配收益机制不适用（这一点已被 Kultala 复现实验 B 覆盖）。
+      投稿前若引用具体数字需补全文。
+    </p>
+  </section>
+
+  <section id="chiu">
+    <h2>11. Chiu &amp; Yang, CAE 2010（指令流缓冲）<span class="tag family">供给保证族</span></h2>
+    <p>
+      <em>A Novel instruction stream buffer for VLIW architectures</em>，本地
+      <a href="../paper/A%20Novel%20instruction%20stream%20buffer%20for%20VLIW%20architectures.pdf">PDF</a>。
+    </p>
+    <h4>核心机制与对比</h4>
+    <ul>
+      <li>用 instruction stream buffer 处理变长压缩指令跨 cache line 的 split fetch，保证连续发射。</li>
+      <li>覆盖：变长取指的缓冲、重复块驻留。</li>
+    </ul>
+    <p>
+      <strong>意义：</strong>它证明了"高压缩率不自动保证供给"——这正是本文把<strong>零动态 stall</strong>列为硬约束、
+      并在早期用带宽窗口/预填充分析否决纯事件流方案的原因。本文的回应方式是编译期确定性供给
+      （每拍读多少、从哪读完全确定），而非运行时缓冲吸收。
+    </p>
+  </section>
+
+  <section id="cgra">
+    <h2>12. CGRA 配置压缩族：TACO 2018 / MICPRO 2018 <span class="tag close">周期核近邻</span></h2>
+    <h4>Lee et al., ACM TACO 2018 <span class="tag expired">已全文核实 2026-09-03</span></h4>
+    <p>
+      <em>Improving Energy Efficiency of Coarse-Grain Reconfigurable Arrays Through Modulo Schedule Compression/Decompression</em>，
+      DOI <a href="https://doi.org/10.1145/3162018">10.1145/3162018</a>，本地
+      <a href="../paper/Improving%20Energy%20Efficiency%20of%20Coarse-Grain%20Reconfigurable%20Arrays%20Through%20Modulo%20Schedule%20Compression%3ADecompression.pdf">PDF</a>。
+      首尔国立大学 + 三星，面向量产 SRP CGRA（4×4 PE，配置行 1,280 bit × 128–256 行片上 SRAM），CGO'17 的期刊扩展版。
+    </p>
+    <h4>核心机制（全文确认）</h4>
+    <ul>
+      <li><strong>压缩对象与单元</strong>：模调度循环核的<strong>整条配置行</strong>；方法是时间维去重——连续相同的整行只存一份，
+        用 dofs 位向量（每周期 1 bit/分区）标记是否切换新行，压缩存储配 PCp 计数器，解压零额外延迟。</li>
+      <li><strong>时间优化（编译器后处理 ASAP-ALAN）</strong>：把空闲实体的配置信号用前/后拍的值填充（空闲实体输出是 don't-care），
+        让信号变化聚集到同一行以制造重复行；<strong>用谓词位置 0 阻止空闲实体真正执行</strong>。该后处理只改信号值，
+        <strong>从不在时间上移动任何操作</strong>。</li>
+      <li><strong>空间优化（设计时静态分区）</strong>：宽配置行切成多个分区，各自独立压缩、独立程序计数器、独立读使能；
+        分区方案在芯片设计时用统计分析（编辑距离/装箱）对目标应用领域训练得到，流片后不可改。</li>
+      <li><strong>结果</strong>：247 个循环核，存储 −63%、取指能耗 −70%、面积开销约 8%，45nm 综合 + CACTI 6.5；
+        指令存储与取指占芯片能耗 25%–45%（可引用的动机数据）。</li>
+      <li><strong>原文自承弱点</strong>：高利用率（高 IPC）核压缩率显著下降；分区跨应用领域退化严重（最多 −51%）。</li>
+    </ul>
+    <h4>它封掉的两个边角（本文必须引用、不能主张）</h4>
+    <div class="callout bad">
+      <ol>
+        <li><strong>"保持前值降翻转"技巧</strong>：本文的低翻转设计（无效槽除 OP 外字段保持前一有效值、OP 置 0）
+          就是其 ASAP-ALAN 时间优化的同构技巧（空闲实体传播前值、谓词位阻止执行，连"控制位单独处理"都一致）。
+          低翻转只能写为"采用已知技术"。</li>
+        <li><strong>"分区独立存储 + 按位读门控"的硬件宏观结构</strong>：其每分区独立 PC、dofs 位控制本拍是否读该分区，
+          与本文"每 Lane 独立计数器、mask 位控制读使能"在结构上同构。</li>
+      </ol>
+    </div>
+    <h4>动不了本文核心的区别</h4>
+    <div class="table-wrap">
+      <table class="left">
+        <thead><tr><th>维度</th><th>TACO 2018</th><th>本文</th></tr></thead>
+        <tbody>
+          <tr><td>压缩单元</td><td>整条配置行的时间去重（1,280 bit 全同才消去）</td><td>逐槽 NOP 的空间消除（34-bit 操作粒度）</td></tr>
+          <tr><td>输入形式</td><td>显式模调度循环（锁步、无控制流）</td><td>展平直线流 + EOP；实测严格周期核覆盖 &lt;4%，其方法在本文 workload 上不适用</td></tr>
+          <tr><td>路由</td><td>无路由：分区内容永远进固定 buffer 位置</td><td>mask+phase 动态路由：任何 Lane 可去任何槽</td></tr>
+          <tr><td>调度参与</td><td>只改空闲槽信号值，从不移动操作时序</td><td>发射宽度约束直接进调度器，改变操作发射周期</td></tr>
+          <tr><td>流组织</td><td>设计时按领域统计训练，跨领域退化</td><td>与 workload 无关的等宽 Lane，无训练，统一格式</td></tr>
+          <tr><td>优化目标</td><td>时序不变，只提高可压缩性</td><td>周期数、Lane 深度、2 次幂边界联合优化</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h4>Energy Efficient Configuration Unification and Compression for CGRAs, MICPRO 2018</h4>
+    <p>
+      DOI 10.1016/j.micpro.2018.06.010，本地
+      <a href="../paper/Energy%20Efficient%20Configuration%20Unification%20and%20Compression%20for%20CGRAs%202018.pdf">PDF</a>。
+      <span class="tag close">仅摘要核实</span>
+      配置统一化 + 压缩缩减 context memory；检索摘录称最多减 83% context memory 能耗（未核实）。属同族背景，引用时注意其对象是 CGRA 配置字而非 VLIW 指令。
+    </p>
+  </section>
+
+  <section id="dict">
+    <h2>13. Multanen et al., DAES 2024（可编程字典）<span class="tag family">字典族</span></h2>
+    <p>
+      <em>Energy-Efficient Instruction Compression with Programmable Dictionaries</em>，本地
+      <a href="../paper/Energy-Efficient%20Instruction%20Compression%20with%20Programmable%20Dictionaries.pdf">PDF</a>。
+    </p>
+    <h4>核心机制与对比</h4>
+    <ul>
+      <li>编译期指导、运行时可编程的细粒度多字典；RAW/COMPRESSED 混排，固定 packet 供给，联合评估字典大小/压缩率/能耗。</li>
+      <li><strong>本文的立场恰好相反：</strong>本文面向通用非线性计算，各槽字段在不同任务中的取值不可预测，
+        逐 workload 字典已被明确否决；字段混合编码的 10.02% 只保留为理论下界（oracle），不进入主格式。
+        唯一保留的是<strong>固定小 delta fast path</strong>（LOAD/STORE 地址、SFU 寄存器地址的 1–2 bit 硬连线 delta + RAW escape），
+        且降级为"后期可选小优化"。</li>
+    </ul>
+    <p>
+      <strong>意义：</strong>DICT 原语本身不新。本文若提到字典，必须强调"统一格式、无逐 workload 训练、固定预算"的反面立场。
+    </p>
+  </section>
+
+  <section id="commercial">
+    <h2>14. 经典商业方案：Multiflow / TI C6xxx / IA-64 <span class="tag family">历史路线</span></h2>
+    <p>三者均作为背景出现在 US7143268B2 中，是"元数据嵌入指令流"的三条经典形态：</p>
+    <div class="table-wrap">
+      <table class="left">
+        <thead><tr><th>方案</th><th>元数据形式</th><th>解压时机</th><th>已知缺点（专利原文）</th></tr></thead>
+        <tbody>
+          <tr><td>Multiflow Trace</td><td>mask syllable 描述后续 bundle 布局</td><td>cache 填入时完全展开</td><td>浪费指令 cache 空间</td></tr>
+          <tr><td>TI C6xxx</td><td>逐 syllable dispersal bit + end-of-bundle 位</td><td>取指时分发</td><td>需逐 syllable 检查才能路由</td></tr>
+          <tr><td>IA-64</td><td>每个存储块的 template 位</td><td>取指时分发</td><td>模板同时承担边界与分发，格式僵化</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      <strong>意义：</strong>三条路线的共同点——路由/边界元数据都嵌入指令流并占用存储。
+      本文的配置流（5 bit/拍）独立成流、payload 零标记，是对这一族的整体性区别。
+      引用时建议合并为一行历史背景，不必逐家展开。
+    </p>
+  </section>
+
+  <section id="entropy">
+    <h2>15. 通用熵编码族（Huffman / 算术 / LZW / V2F）<span class="tag family">不适用但可作参照</span></h2>
+    <p>
+      利用统计冗余获得更高静态压缩率，常面向主存到 cache 的压缩传输。
+      顺序/变长解码和缓存层级与本平台（片上 SRAM、逐拍确定性供给、1 GHz 单周期恢复）不匹配，不宜直接采用；
+      可在论文中作为<strong>熵下界</strong>或离线参考出现，用来证明本文格式离理论极限还有多远。
+    </p>
+  </section>
+
+  <section id="matrix">
+    <h2>16. 总定位矩阵</h2>
+    <div class="table-wrap">
+      <table class="left">
+        <thead>
+          <tr><th>工作</th><th>存储层级</th><th>路由/边界元数据</th><th>调度协同</th><th>恢复粒度</th><th>物理评价</th><th>与本文关系</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Multiflow Trace</td><td>cache（填入时展开）</td><td>mask syllable</td><td>无</td><td>功能正确</td><td>无宏级</td><td>历史背景</td></tr>
+          <tr><td>TI C6xxx</td><td>cache</td><td>逐 syllable dispersal+stop bit</td><td>无</td><td>功能正确</td><td>无宏级</td><td>历史背景</td></tr>
+          <tr><td>IA-64</td><td>cache</td><td>template 位</td><td>无</td><td>功能正确</td><td>无宏级</td><td>历史背景</td></tr>
+          <tr><td>Conte 1996 TINKER</td><td>cache（多种组织）</td><td>header/tail 定界</td><td>无</td><td>功能正确</td><td>cache 组织比较</td><td>变长取指族</td></tr>
+          <tr><td>US7143268B2（已失效）</td><td>cache</td><td>逐 bundle/syllable 地址位、cluster bit、stop bit</td><td>无</td><td>功能正确</td><td>产品级（ST200）</td><td>经典路线代表；无法律限制</td></tr>
+          <tr><td>US5983336A Elbrus（已失效）</td><td>主存/指令缓冲</td><td><strong>每组 pointer + mask</strong>（逐指令 N−1 个指针）</td><td>无（编译器只打包）</td><td>功能正确</td><td>产品级（Elbrus-2/E2K）</td><td><strong>最早的 mask 打包系统方案；最贴近本文 mask 设计，必须引用</strong></td></tr>
+          <tr><td>US8555097B2 Samsung（<strong>有效至 2031</strong>）</td><td>逐 FU 分布式配置存储</td><td>逐 FU NOP 位寄存器；读门控</td><td>无</td><td>功能正确</td><td>功耗为目标</td><td><strong>覆盖 Candidate A 结构与读门控省能；不覆盖共享 Lane；商业实施需 FTO</strong></td></tr>
+          <tr><td>Brandon 2015 ρ-VEX</td><td>cache/IMEM</td><td>stop-bit</td><td>无</td><td>功能正确</td><td>有硬件实现</td><td>基线之一</td></tr>
+          <tr><td>Chiu &amp; Yang 2010</td><td>cache + stream buffer</td><td>变长跨行处理</td><td>无</td><td>功能正确</td><td>缓冲结构</td><td>供给保证问题的证据</td></tr>
+          <tr><td>Li 2020</td><td>分 Bank IMEM</td><td>ifnull 位表</td><td>无</td><td>一拍重组</td><td>IMEM 面积 −44.26%</td><td><strong>最直接基线</strong></td></tr>
+          <tr><td>TTA 模板族 2014/2018</td><td>IMEM</td><td>模板</td><td>有（模板选择）</td><td>功能正确</td><td>程序尺寸 −44%</td><td>模板路线代表</td></tr>
+          <tr><td>Kultala 2016</td><td>IMEM</td><td>变长模板</td><td><strong>有（FU 优先级 + slack 后处理）</strong></td><td>逐周期合法新 schedule</td><td>编码 bit 数</td><td><strong>最接近的调度类先行工作；已被目标函数级复现证伪其机制在本平台的适用性</strong></td></tr>
+          <tr><td>TACO 2018 CGRA（全文核实）</td><td>分区 context memory + dofs 位向量</td><td>无路由（分区→固定 buffer）；dofs 读门控</td><td>只改空闲信号值，不移动时序</td><td>零额外延迟</td><td>代码 −63%、取指能耗 −70%（45nm + CACTI）</td><td>周期核近邻；<strong>封掉"保持前值低翻转"与"分区读门控"两个边角</strong></td></tr>
+          <tr><td>Multanen 2024</td><td>L0 指令层级</td><td>RAW/COMPRESSED 标记</td><td>编译期选字典</td><td>功能正确</td><td>字典/压缩率/能耗联合</td><td>字典族；本文持无字典立场</td></tr>
+          <tr><td><strong>本文</strong></td><td><strong>片上 SRAM 压缩常驻</strong></td><td><strong>payload 零路由位（5-bit mask + 2-bit phase 派生）</strong></td><td><strong>发射宽度约束进调度器 + 深度感知 Lane 映射</strong></td><td><strong>逐周期精确 + 逐 bit 验证</strong></td><td><strong>CACTI 宏 + GE + 真实翻转率</strong></td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="claims">
+    <h2>17. 新颖性边界声明</h2>
+    <h4>不能主张为创新的点（均已有直接先行工作）</h4>
+    <ul>
+      <li>删除 NOP / 稀疏编码本身（Multiflow、Elbrus 1996、TINKER、Li 2020、Brandon 2015）</li>
+      <li>mask 驱动 NOP 消除与 header/payload 分离（Elbrus US5983336A，1996 年已完整覆盖）</li>
+      <li>mask / stop-bit / template / dispersal bit / 组位移指针等逐指令元数据（经典商业三家 + 两件专利）</li>
+      <li>分 Bank 纵向槽流 + 独立地址 + 一拍重组（Li 2020）</li>
+      <li>变长取指与前端缓冲（TINKER、Chiu &amp; Yang 2010）</li>
+      <li>静态调度 / 压缩感知调度本身（Kultala 2016 及 TTA 族）</li>
+      <li>字典编码原语（Multanen 2024 等）</li>
+      <li>周期/模调度压缩（TACO 2018；且本文 trace 已否决通用周期核）</li>
+      <li>"保持前值降翻转"的低翻转技巧与"分区独立存储 + 按位读门控"结构（TACO 2018 全文确认已覆盖；本文可使用但不得主张）</li>
+      <li>"每 FU 专属指令存储 + 每周期有效位 + 条件递增指针 + NOP 周期读门控省能"（Samsung US8555097B2，2009 优先权，有效专利；Candidate A 即此结构，只能作基线）</li>
+    </ul>
+    <h4>可以主张、但必须用实验辩护的点</h4>
+    <ol>
+      <li><strong>发射宽度约束调度 + 编码格式 + 物理 SRAM Bank 的三方协同</strong>：
+        调度器直接在"每拍最多 k 个操作"的硬供给约束下工作，编码格式与 Bank 组织随之联合确定；
+        不同于 Kultala 的"调度服务模板匹配"，也不同于 Li 的"调度后与编码无关"。</li>
+      <li><strong>零路由元数据的 Lane 分配（mask + 旋转 phase）</strong>：
+        payload 不携带任何 dispersal/address/template/pointer 位，路由由每拍 5-bit mask 与 2-bit 派生状态推出；
+        每条 Lane 退化为无标签纯顺序流，前端无 shifter/散射网络。
+        相对 Elbrus 1996（每条指令 N−1 个组位移指针 + shifter + scattering unit）与 HP/ST 2000（逐 bundle 地址位）
+        的逐指令元数据路线形成整体区别。需用 GE 与翻转率数据证明其确实更便宜。</li>
+      <li><strong>可替换代码池的物理容量模型</strong>：
+        多函数共享片上指令 SRAM、2 次幂深度取整、深度感知 Lane 映射（4096+2048 非平衡点）；
+        把"逻辑压缩率"与"物理面积"之间的鸿沟显式建模，这是 Li 2020 与 Kultala 2016 都未处理的。</li>
+      <li><strong>在压缩常驻 SRAM 加速器上同时达成逐周期精确 + 零动态 stall + 面积下降</strong>的组合保证。</li>
+    </ol>
+    <div class="callout warn">
+      <strong>待补强的证据（投稿前）：</strong>
+      (1) Kultala 完整算法对拍（需调度器导出 node-to-cycle 映射）；
+      (2) TTA 族、MICPRO 2018 的全文核实（当前仅摘要；TACO 2018 已于 2026-09-03 完成全文核实）；
+      (3) 高利用率 workload 下自适应四 Lane 的收益检验（当前 3–4 操作周期仅占 4.7%）；
+      (4) 28nm 与 32nm 口径统一后的最终面积/能耗表。
+    </div>
+  </section>
+
+  <section id="glossary">
+    <h2>18. 术语表</h2>
+    <div class="table-wrap">
+      <table class="left">
+        <thead><tr><th>术语</th><th>含义</th></tr></thead>
+        <tbody>
+          <tr><td>VLIW（超长指令字）</td><td>一条指令显式包含多个并行操作，由编译器静态安排，硬件不做动态调度</td></tr>
+          <tr><td>bundle / syllable</td><td>bundle＝一拍同时发射的操作组；syllable＝bundle 中定长的编码单元（一个操作可占一个或多个 syllable）</td></tr>
+          <tr><td>槽（slot）</td><td>VLIW 指令中固定位置的操作字段；本文有五类功能槽：LOAD/STORE/VECTOR/SCALAR/SFU</td></tr>
+          <tr><td>Lane</td><td>本文压缩方案中存放有效操作的共享物理流（34 bit 宽），数量少于槽数（2 或 4）</td></tr>
+          <tr><td>mask（功能掩码）</td><td>每拍 5 bit，逐位标明五类槽哪个有效；00000＝空周期，11111 借用为 EOP</td></tr>
+          <tr><td>phase（旋转相位）</td><td>2 bit 状态；第 k 个有效操作写入 Lane (phase+k) mod 4，使四条 Lane 深度均衡</td></tr>
+          <tr><td>EOP（程序结束）</td><td>End of Program；本文借用 11111 码点表示</td></tr>
+          <tr><td>模板（template）</td><td>预先定义的有限种指令格式，每拍选一种；IA-64 与 TTA 族使用</td></tr>
+          <tr><td>dispersal bit / stop bit</td><td>逐操作携带的分发/边界标记位；TI C6xxx 与 Brandon 2015 使用</td></tr>
+          <tr><td>ifnull</td><td>Li 2020 中逐周期记录各槽有效性的位表，功能类似本文的 mask</td></tr>
+          <tr><td>TTA（传输触发架构）</td><td>一类 VLIW，程序显式控制功能单元间的数据搬运（transport），Kultala 2016 的目标平台</td></tr>
+          <tr><td>CGRA（粗粒度可重构阵列）</td><td>由处理单元阵列构成、以配置字（context）驱动的加速器；TACO/MICPRO 2018 的平台</td></tr>
+          <tr><td>模调度（modulo scheduling）</td><td>把循环体排成固定周期的流水线调度方法；CGRA 压缩的输入通常是显式模调度循环</td></tr>
+          <tr><td>压缩常驻（compressed-resident）</td><td>指令以压缩形式存放在片上 SRAM，读出时才恢复；不在任何层级存全宽展开形式</td></tr>
+          <tr><td>逐周期精确恢复</td><td>解压后每拍的功能行为与压缩前完全一致（允许非功能位为降功耗而不同）</td></tr>
+          <tr><td>零动态 stall</td><td>正常执行中指令供给永不引起停顿，编译期即可证明</td></tr>
+          <tr><td>Candidate A / A-symmetric</td><td>直接分槽存 SRAM、按 mask 读出的基线方案；A-symmetric 指五槽 Bank 统一 2048 深的可替换版本</td></tr>
+          <tr><td>可替换代码池</td><td>片上指令 SRAM 按"任意目标函数都能装入"设计容量，当前为 GELU/Softmax/LayerNorm X64 三函数</td></tr>
+          <tr><td>GE（等效门）</td><td>Gate Equivalent，逻辑面积单位；1 GE ≈ 一个二输入与非门</td></tr>
+          <tr><td>CACTI</td><td>HP 的 SRAM 面积/功耗/延迟建模工具，本文用 32nm 工艺口径</td></tr>
+          <tr><td>深度感知 Lane 映射</td><td>编译期故意让 Lane 深度非平衡（如 4096+2048），使其跨越 2 次幂 SRAM 深度边界以省面积</td></tr>
+          <tr><td>目标函数级复现</td><td>不逐行重跑对方算法，而是证明对方的收益机制在本文的成本函数下恒为零的实验方法</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+</body>
+</html>

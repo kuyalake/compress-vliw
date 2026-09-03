@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>174-bit VLIW压缩：小论文可行性复核与三主Lane+尾部Sidecar新方案</title>
+  <style>
+    :root{--ink:#172033;--muted:#5f6b7a;--line:#d9e0ea;--paper:#fff;--bg:#f3f6fa;--blue:#175cd3;--green:#067647;--amber:#b54708;--red:#b42318;--violet:#6938ef}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.68 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+    main{max-width:1180px;margin:24px auto 80px;background:var(--paper);padding:42px 54px;box-shadow:0 8px 30px #18315316;border-radius:14px}
+    h1{font-size:32px;line-height:1.25;margin:0 0 10px} h2{font-size:23px;margin:42px 0 14px;padding-bottom:8px;border-bottom:2px solid #e8edf4} h3{font-size:18px;margin:28px 0 10px} h4{font-size:16px;margin:20px 0 6px}
+    p{margin:8px 0 12px} a{color:var(--blue);text-decoration:none} a:hover{text-decoration:underline} code{background:#f1f4f8;padding:1px 5px;border-radius:4px;font-size:.93em;overflow-wrap:anywhere}
+    .meta{color:var(--muted);margin-bottom:22px}.lead{font-size:17px;background:#f7f9fc;border-left:5px solid var(--blue);padding:16px 18px;border-radius:8px}.verdict{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.stat{border:1px solid var(--line);border-radius:10px;padding:14px;background:#fbfcfe}.stat b{display:block;font-size:24px;margin:3px 0}.stat small{color:var(--muted)}
+    .good{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}.violet{color:var(--violet)}
+    .callout{border:1px solid #b8cdf5;background:#f5f8ff;border-radius:10px;padding:14px 17px;margin:14px 0}.callout.warnbox{border-color:#f3c696;background:#fff9f2}.callout.badbox{border-color:#f2b8b5;background:#fff7f6}.callout.goodbox{border-color:#a6d7c1;background:#f3fbf7}
+    table{width:100%;border-collapse:collapse;margin:12px 0 20px;font-size:14px}th,td{border:1px solid var(--line);padding:9px 10px;vertical-align:top}th{background:#edf2f8;text-align:left}tbody tr:nth-child(even){background:#fafbfd}.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+    ul,ol{padding-left:24px}li{margin:5px 0}.toc{columns:2;column-gap:36px;background:#fafbfd;border:1px solid var(--line);border-radius:10px;padding:16px 28px}.toc li{break-inside:avoid}
+    .flow{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;margin:14px 0}.flow>div{flex:1;min-width:150px;border:1px solid var(--line);border-radius:9px;padding:11px;background:#fbfcfe}.arrow{flex:0!important;min-width:auto!important;border:0!important;background:none!important;display:flex;align-items:center;font-size:24px;color:#8090a5}
+    .bar{height:14px;background:#e8edf4;border-radius:7px;overflow:hidden;min-width:120px}.bar>i{display:block;height:100%;background:var(--blue)}.tag{display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:650}.tag.go{background:#dff6ea;color:#05603a}.tag.cond{background:#fff0d9;color:#8f4300}.tag.no{background:#ffe4e2;color:#9f1c15}
+    .small{font-size:13px;color:var(--muted)}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.pagebreak{break-before:page}
+    @media(max-width:780px){main{margin:0;padding:24px 16px;border-radius:0}.verdict{grid-template-columns:1fr 1fr}.toc{columns:1}table{display:block;overflow-x:auto}}
+    @media print{body{background:#fff}main{max-width:none;margin:0;box-shadow:none;padding:24px}.toc{columns:2}a{color:#111}}
+  </style>
+</head>
+<body><main>
+  <h1>174-bit VLIW压缩：小论文可行性复核与“三主Lane + 尾部Sidecar”新方案</h1>
+  <div class="meta">基于远端仓库提交 <code>688acd7a311e30029ad407f465e69ee15f0be3a0</code> · 复核日期：2026-09-02 · 评估目标：一人3–4个月完成一篇可投稿小论文</div>
+
+  <p class="lead"><strong>先给结论：</strong>最新plan中的“固定双Lane”本身仍不足以支撑一篇有把握的小论文；它在面积上成立，但创新性容易被解释成已有纵向压缩加发射宽度限制，且存在读能耗和调度性能代价。<strong>可以继续做，但应改题为“SRAM宏块量化感知的共享Lane VLIW指令供给”，并把新发现的“三主Lane + 稀有第四事件Sidecar”作为主结构。</strong>该结构在当前数据上恢复了最佳已知周期，面积仍比Candidate A粗估低29.7%。当前判定为<span class="tag cond">有条件可做</span>，不是已经达到投稿状态。</p>
+
+  <div class="verdict">
+    <div class="stat"><small>目标池总周期</small><b class="good">5,449</b><small>与最佳已知无约束参考一致</small></div>
+    <div class="stat"><small>粗估总面积</small><b class="good">0.07476 mm²</b><small>CACTI 32 nm + 1,632 GE</small></div>
+    <div class="stat"><small>相对A-symmetric</small><b class="good">−29.7%</b><small>统一逻辑口径后</small></div>
+    <div class="stat"><small>尚缺的决定性证据</small><b class="warn">RTL + 外部测例</b><small>也是论文能否成立的门槛</small></div>
+  </div>
+
+  <ol class="toc">
+    <li><a href="#scope">仓库、阅读与复核范围</a></li><li><a href="#baseline">原plan到底提出了什么</a></li>
+    <li><a href="#audit">复现实验与发现的问题</a></li><li><a href="#three">缺失的三Lane工作点</a></li>
+    <li><a href="#sidecar">推荐主方案：三主Lane+Sidecar</a></li><li><a href="#ppa">周期、面积、能耗完整比较</a></li>
+    <li><a href="#pool">可替换代码池是否真的成立</a></li><li><a href="#prior">已有工作的边界与创新性</a></li>
+    <li><a href="#risk">论文风险清单</a></li><li><a href="#paper">建议的问题定义和论文贡献</a></li>
+    <li><a href="#plan">3–4个月工作安排与停止条件</a></li><li><a href="#files">新增实验、数据与复现说明</a></li>
+  </ol>
+
+  <h2 id="scope">1. 仓库、阅读与复核范围</h2>
+  <p>从远端重新克隆了干净仓库，远端HEAD与本地初始HEAD均为<code>688acd7</code>。重点逐段阅读了<a href="vliw_174bit_equal_slot_priority_study_2026-09-02.html">原始最新plan</a>，并检查调度器、Candidate A/B、四Lane、Kultala复现、CACTI脚本和已有JSON结果。本文新增实验均只在这个新克隆目录本地执行，没有git push。</p>
+  <table><thead><tr><th>证据类型</th><th>本次实际完成</th><th>可信边界</th></tr></thead><tbody>
+    <tr><td>代码与数据复核</td><td>阅读174-bit调度器、13种优先级搜索、2/4 Lane编码、CACTI/GE模型和原plan所列结果。</td><td>能够发现实现口径错误；不能代替RTL功能验证。</td></tr>
+    <tr><td>新增调度实验</td><td>MAX_ISSUE=3下完整执行364组合法配置；12个测例逐条比特精确压缩—恢复。</td><td>仍是同一个调度器和同一类非线性工作负载。</td></tr>
+    <tr><td>新增硬件组织</td><td>实现三Lane，以及三主Lane+128深度Sidecar的软件模型；运行CACTI 34×128宏块。</td><td>面积为早期筛选，不是foundry SRAM compiler或综合结果。</td></tr>
+    <tr><td>代码池审计</td><td>枚举现有12个程序的全部4,095个非空子集，比较固定容量合同。</td><td>是域内有限枚举，不是对未来程序分布的统计证明。</td></tr>
+    <tr><td>文献交叉检查</td><td>核对纵向压缩、稀疏VLIW、模板感知调度、变长取指和稀疏HYB主体+异常结构。</td><td>关键词检索没有发现完全相同Sidecar结构，但不能据此直接宣称首创。</td></tr>
+  </tbody></table>
+
+  <h2 id="baseline">2. 原plan的核心方案和它的真实含义</h2>
+  <h3>2.1 174-bit等宽槽格式</h3>
+  <p>一条原始VLIW由5个34-bit功能槽和4-bit控制组成，即<code>5×34+4=174 bit</code>。五个槽分别是LOAD、STORE、VECTOR、SCALAR、SFU。等宽34 bit使不同功能槽的有效操作可以进入相同宽度的共享SRAM，但LOAD/STORE地址被缩为20 bit，SCALAR/SFU用零填充补齐。</p>
+
+  <h3>2.2 Candidate A：普通纵向压缩</h3>
+  <p>每个周期保存一个5-bit有效槽mask；每个功能槽拥有独立的34-bit纵向Bank。mask某位为1时，对应Bank读指针前进，否则该槽恢复为NOP。它的优点是无跨槽路由、可保持原周期；缺点是五个Bank必须分别按最坏深度配置，槽之间的空余容量不能共享。</p>
+
+  <h3>2.3 Candidate B：两个共享payload Lane</h3>
+  <p>编译器把每周期最多发射数限制为2，再把有效操作存入两个共享34-bit Lane；5-bit配置告诉硬件本周期应恢复到哪些功能槽。其价值不是减少逻辑有效位——对当前轨迹它与A几乎相同——而是把五个独立Bank的容量合并成两个较深Bank，利用SRAM宏块的离散深度降低面积。</p>
+  <div class="callout warnbox"><strong>关键判断：</strong>Candidate B不是对Candidate A的普遍支配。它用更少Bank换来更深SRAM、更高单次读能耗和最多双发射的调度限制。论文必须把它写成一个PPA/性能折中点，而不能写成“全面优于A”。</div>
+
+  <h2 id="audit">3. 复现实验发现的关键问题</h2>
+  <h3>3.1 原有主要数值可以复现</h3>
+  <ul>
+    <li>Kultala式固定周期目标<code>5T+34N</code>在12条schedule上没有找到改进；6,591个池级映射组合的容量结论可复现。</li>
+    <li>CACTI宏块结果可复现：34×1024面积0.009220 mm²、34×2048为0.017932 mm²、34×4096为0.033954 mm²；5×8192配置Bank为0.015455 mm²。</li>
+    <li>原plan报告的Candidate A、双Lane、分组四Lane和自适应四Lane粗面积与JSON一致。</li>
+  </ul>
+
+  <h3>3.2 调度搜索没有满足“架构超集”性质</h3>
+  <p>理论上，最多发射3个操作的机器必然能执行任何最多发射2个操作的合法schedule；最多发射5个也必然能执行3个操作的schedule。但现有贪心调度器在Softmax X64上得到的原生三Lane最好结果为943周期，反而差于已有双Lane的939周期；LayerNorm X64的三Lane结果1417周期又好于所谓“五槽优化参考”的1424周期。</p>
+  <p>这证明原表中的“best”只是当前启发式搜索得到的最好值，不是体系结构的真实最优值。本次修正方法是：对三Lane显式继承更短的合法双Laneschedule；对无约束参考取已有2/3/4/5发射结果中的最短合法schedule。修正后：</p>
+  <table><thead><tr><th>范围</th><th class="num">旧五槽参考</th><th class="num">修正后的最佳已知无约束参考</th><th>变化原因</th></tr></thead><tbody>
+    <tr><td>12测例合计</td><td class="num">19,962</td><td class="num"><strong>19,955</strong></td><td>LayerNorm X64采用三Lane搜索得到的1417周期schedule。</td></tr>
+    <tr><td>GELU/Softmax/LayerNorm X64池</td><td class="num">5,456</td><td class="num"><strong>5,449</strong></td><td>LayerNorm −7；Softmax继续采用936周期宽发射schedule。</td></tr>
+  </tbody></table>
+  <div class="callout badbox"><strong>论文风险：</strong>若不修正这个问题，审稿人只要指出“MAX_ISSUE=3不可能比MAX_ISSUE=2更差”，整个性能比较就会失去可信度。后续必须用统一的schedule候选池或能保证单调性的调度框架。</div>
+
+  <h3>3.3 20-bit地址字段实际上只验证了10 bit</h3>
+  <p>扫描三Lane 364次调度产生的1,379,458条LOAD/STORE CSV记录，最大<code>mem_addr</code>为767（<code>0x2ff</code>），只需要10 bit。也就是说，“20-bit地址足够”目前不是被实验验证的体系结构结论，只是生成器没有产生更大地址。必须增加边界随机测试，并明确20 bit表示字节地址、元素地址、局部SRAM行号还是基址加偏移。</p>
+
+  <h3>3.4 可复现环境存在明确故障</h3>
+  <ul>
+    <li>系统<code>python3</code>为3.6.8，直接执行plan给出的命令会因<code>from __future__ import annotations</code>报SyntaxError。</li>
+    <li>仓库<code>.python-deps</code>包含<code>cpython-39-darwin.so</code>，在当前Linux/Python 3.11环境无法加载NumPy C扩展。</li>
+    <li>部分<code>--reuse-sweep</code>模式依赖未跟踪的sweep目录，fresh clone无法只凭仓库内容完整重跑。</li>
+  </ul>
+  <p>这些不影响本次已得到的数据，但投稿前必须提供Linux requirements/lockfile、明确Python版本和一键复现实验入口。</p>
+
+  <h2 id="three">4. 缺失的三Lane工作点：为什么它比2/4二选一更合理</h2>
+  <p>原plan已经显示，12个测例中只有109个周期发射4个操作，占19,962周期的0.55%；目标X64三程序池只有36个四操作周期。直接从2 Lane跳到4 Lane因此漏掉了最自然的中间点。</p>
+  <div class="flow">
+    <div><strong>5-bit target mask</strong><br><span class="small">指示五个功能槽中哪些有效；11111保留给EOP。</span></div><div class="arrow">→</div>
+    <div><strong>按槽号排序有效操作</strong><br><span class="small">最多三个，无需变长码表。</span></div><div class="arrow">→</div>
+    <div><strong>三Lane循环条带化</strong><br><span class="small">lane=(phase+rank) mod 3。</span></div><div class="arrow">→</div>
+    <div><strong>同周期恢复五槽</strong><br><span class="small">未命中槽恢复为NOP。</span></div>
+  </div>
+  <p>完整364组搜索并继承合法双Lane结果后，三Lane在12测例合计为20,081周期，相对最佳已知无约束参考增加0.631%；目标池为5,452周期，只增加3周期（0.055%）。目标池5,766个事件分配为1,923/1,922/1,921，能装进3×34×2048。</p>
+  <table><thead><tr><th>测例</th><th class="num">最佳已知无约束</th><th class="num">三Lane</th><th class="num">代价</th><th>说明</th></tr></thead><tbody>
+    <tr><td>GELU X64</td><td class="num">3,096</td><td class="num">3,096</td><td class="num">0</td><td>天然最多双发射。</td></tr>
+    <tr><td>Softmax X64</td><td class="num">936</td><td class="num">939</td><td class="num">+0.321%</td><td>继承双Lane schedule；原生三Lane贪心为943。</td></tr>
+    <tr><td>LayerNorm X64</td><td class="num">1,417</td><td class="num">1,417</td><td class="num">0</td><td>三Lane反而找到比旧五槽参考更短的schedule。</td></tr>
+    <tr><td><strong>目标池</strong></td><td class="num"><strong>5,449</strong></td><td class="num"><strong>5,452</strong></td><td class="num"><strong>+0.055%</strong></td><td>固定三Lane已非常接近无性能损失。</td></tr>
+  </tbody></table>
+
+  <h2 id="sidecar">5. 推荐主方案：三主Lane + 稀有第四事件Sidecar</h2>
+  <h3>5.1 从稀疏数据结构引入“主体+异常尾部”</h3>
+  <p>固定三Lane的三个性能损失周期都来自少量四操作bundle。与其为每个周期永久配置完整第四个2048深度Bank，可以把绝大多数事件放入三个规则主Bank，把每个四操作周期的第4个事件放入很浅的Sidecar。这个思想与稀疏矩阵HYB格式把规则主体放在ELL、把不规则尾部放在COO相似，但这里的目标不是矩阵计算，而是<strong>固定周期VLIW指令供给和SRAM宏块量化</strong>。</p>
+
+  <h3>5.2 编码与精确恢复方法</h3>
+  <ol>
+    <li>每周期读取一个5-bit target mask。<code>00000</code>表示空周期，<code>11111</code>表示EOP；其余mask的1位指出目标功能槽。</li>
+    <li>把有效目标按LOAD、STORE、VECTOR、SCALAR、SFU顺序排列。前3个有效操作按phase循环进入3个主Lane。</li>
+    <li>若mask恰有4个1，第4个有效操作进入Sidecar。硬件从mask即可知道Sidecar是否读、以及它应送往哪个目标槽，不需要额外逐周期标志位。</li>
+    <li>主phase只按本周期主Lane事件数前进；Sidecar保持独立顺序指针。程序入口保存主Bank基址/界限、Sidecar基址/界限和初始phase。</li>
+    <li>三个主Bank与Sidecar并行读取；Sidecar的CACTI访问时间0.146 ns，小于34×2048主Bank的0.232 ns，不构成宏块级关键路径，但优先级译码和路由仍需RTL综合确认。</li>
+  </ol>
+  <div class="callout goodbox"><strong>本次已验证：</strong>从现有三Lane和四/五发射压缩流解码出最佳已知schedule，再用该结构重新编码；12个测例全部逐周期、逐槽、逐bit恢复一致。12测例共63个Sidecar事件；目标池只有Softmax X64产生9个Sidecar事件。</div>
+
+  <h3>5.3 为什么预留128深度，而不是按9个事件紧配</h3>
+  <p>CACTI中34×16会被物理提升到32深度，面积仅0.000481 mm²；但按9个事件紧配不具备替换价值。选择34×128后面积仍仅0.001359 mm²，同时当前12个程序全部最快schedule的Sidecar事件总和63也能装下。它仍不是“任意程序都能替换”的保证，但比9/16/32深度更可辩护。</p>
+
+  <h2 id="ppa">6. 周期、面积、能耗的统一比较</h2>
+  <p>下表统一采用32 nm CACTI宏块和同一NAND2等效面积口径。逻辑GE仍是结构估算；“读能耗”只包括配置/载荷SRAM读，不包括路由逻辑动态功耗，因此不能直接作为最终芯片能耗结论。</p>
+  <table><thead><tr><th>组织</th><th>payload SRAM</th><th class="num">粗逻辑</th><th class="num">粗总面积 mm²</th><th class="num">目标池周期</th><th class="num">目标池SRAM读 nJ</th><th>定位</th></tr></thead><tbody>
+    <tr><td>Candidate A-symmetric</td><td>5×(34×2048)</td><td class="num">≈468 GE</td><td class="num">0.106306</td><td class="num">5,449*</td><td class="num">43.600</td><td>通用纵向基线；*采用修正后最佳已知schedule。</td></tr>
+    <tr><td>双Lane通用</td><td>2×(34×4096)</td><td class="num">≈832 GE</td><td class="num">0.085477</td><td class="num">5,475</td><td class="num">56.035</td><td>面积低于A，替换容量强；深Bank能耗较高。</td></tr>
+    <tr><td>双Lane池定制</td><td>34×4096 + 34×2048</td><td class="num">≈826 GE</td><td class="num"><strong>0.069440</strong></td><td class="num">5,475</td><td class="num">52.307</td><td>最小面积，但容量合同对当前池定制。</td></tr>
+    <tr><td>固定三Lane</td><td>3×(34×2048)</td><td class="num">≈1,468 GE</td><td class="num">0.072983</td><td class="num">5,452</td><td class="num">43.585</td><td>面积/能耗/周期的强中间点。</td></tr>
+    <tr><td><strong>三Lane+128 Sidecar</strong></td><td>3×(34×2048) + 34×128</td><td class="num">≈1,632 GE</td><td class="num"><strong>0.074758</strong></td><td class="num"><strong>5,449</strong></td><td class="num"><strong>43.542</strong></td><td><strong>推荐论文主结构；零最佳已知周期损失。</strong></td></tr>
+    <tr><td>自适应四Lane</td><td>4×(34×2048)</td><td class="num">≈2,064 GE</td><td class="num">0.092430</td><td class="num">5,449†</td><td class="num">43.611</td><td>†硬件可继承更短schedule；旧JSON为5,456。</td></tr>
+    <tr><td>分组四Bank/最多双发射</td><td>4个较浅Bank</td><td class="num">≈1,196 GE</td><td class="num">0.088943</td><td class="num">5,475</td><td class="num">39.318</td><td>最低SRAM读能耗，但逻辑/Bank数增加。</td></tr>
+  </tbody></table>
+  <table><thead><tr><th>推荐Sidecar方案相对对象</th><th class="num">面积变化</th><th class="num">周期变化（目标池）</th><th>解释</th></tr></thead><tbody>
+    <tr><td>A-symmetric</td><td class="num good">−29.68%</td><td class="num good">0</td><td>当前最重要的主结果。</td></tr>
+    <tr><td>A-compact</td><td class="num good">−23.39%</td><td class="num good">0</td><td>即使与池定制A比较仍有明显面积收益。</td></tr>
+    <tr><td>双Lane通用2×4096</td><td class="num good">−12.54%</td><td class="num good">−26周期</td><td>同时改善面积、读能耗和周期，但总payload容量更小。</td></tr>
+    <tr><td>双Lane池定制4096+2048</td><td class="num bad">+7.66%</td><td class="num good">−26周期</td><td>用约7.7%面积换性能和浅Bank读能耗。</td></tr>
+    <tr><td>自适应四Lane</td><td class="num good">−19.12%</td><td class="num">0</td><td>利用第四Lane极少使用的事实。</td></tr>
+  </tbody></table>
+  <div class="callout warnbox"><strong>不能过度解读：</strong>0.074758 mm²中的路由、优先级选择、phase和计数器仍是GE估算，尚未包括布线拥塞、时钟树、测试逻辑、跨Bank对齐寄存器和真实SRAM外围。最终论文应该报告RTL综合与目标SRAM compiler结果，并把CACTI仅作为前期设计空间筛选。</div>
+
+  <h2 id="pool">7. “可替换代码池”是否真的成立</h2>
+  <p>不同组织接受新程序的条件并不相同。A要求每个功能槽累计事件数分别不超过各自Bank深度；共享Lane要求总事件能被Lane容量容纳，同时schedule不超过发射上限；Sidecar还要求四操作周期的数量不超过尾部容量。不能只用同一组三程序刚好都能装下，就宣称替换能力相同。</p>
+  <h3>7.1 目标池容量余量</h3>
+  <table><thead><tr><th>组织</th><th>目标池使用量</th><th>最紧余量</th><th>含义</th></tr></thead><tbody>
+    <tr><td>A-symmetric</td><td>LOAD 1094；STORE 1088；VECTOR 1856；SCALAR 640；SFU 1088</td><td class="num">192</td><td>VECTOR Bank最紧。</td></tr>
+    <tr><td>三Lane</td><td>1923 / 1922 / 1921</td><td class="num">125</td><td>总容量利用更均衡，但目标池本身已经很接近2048。</td></tr>
+    <tr><td>三Lane+Sidecar</td><td>主Lane 1920 / 1919 / 1918；Sidecar 9/128</td><td class="num">主Lane 128</td><td>第四事件移出后主Bank余量略增。</td></tr>
+  </tbody></table>
+
+  <h3>7.2 对现有12个程序的全部4,095个子集枚举</h3>
+  <table><thead><tr><th>固定容量合同</th><th class="num">可接纳子集数</th><th class="num">占4,095比例</th><th>注意</th></tr></thead><tbody>
+    <tr><td>A-symmetric</td><td class="num">473</td><td class="num">11.55%</td><td>槽分布不均导致大量payload拒绝。</td></tr>
+    <tr><td>双Lane 2×4096</td><td class="num">1,016</td><td class="num">24.81%</td><td>总payload容量更大，但调度周期使配置Bank也可能先满。</td></tr>
+    <tr><td>三Lane 3×2048</td><td class="num">541</td><td class="num">13.21%</td><td>与A不是包含关系：A独占75个、三Lane独占143个。</td></tr>
+    <tr><td>三Lane+128 Sidecar</td><td class="num">546</td><td class="num">13.33%</td><td>与A共同接纳401个；A独占72个；Sidecar独占145个。</td></tr>
+    <tr><td>四Lane 4×2048</td><td class="num">1,037</td><td class="num">25.32%</td><td>容量更大，面积也显著更大。</td></tr>
+  </tbody></table>
+  <p class="small">这些数字只说明在现有12个生成程序上的固定合同关系。程序之间高度相关，且X32/X64是同一算法的规模变体；不能把“子集比例”解释为未来程序接纳概率。</p>
+
+  <h2 id="prior">8. 已有工作边界：什么不能当创新点，什么仍可能成立</h2>
+  <table><thead><tr><th>已有工作</th><th>已做内容</th><th>对本工作的约束</th></tr></thead><tbody>
+    <tr><td><a href="https://doi.org/10.1109/ACCESS.2020.2985501">Li等，IEEE Access 2020</a></td><td>把VLIW拆成子字段，删除纵向NOP，用Banked instruction memory和每Bank地址生成器实现单周期恢复；报告65 nm综合。</td><td><strong>Candidate A及“纵向Bank+mask+单周期恢复”不能作为新贡献。</strong>本文必须超越每槽独立Bank。</td></tr>
+    <tr><td><a href="https://ieeexplore.ieee.org/document/7393361">Brandon等，ReConFig 2015</a></td><td>稀疏/变长VLIW bundle、stop bit、跨cache-line buffer、syllable到功能单元的dispatch routing，并在FPGA和14个benchmark上验证。</td><td><strong>“删除NOP后把操作路由回功能单元”本身已有充分先例。</strong>本文的差异必须落在固定周期多Bank流、宏块量化和尾部结构。</td></tr>
+    <tr><td><a href="https://trepo.tuni.fi/handle/10024/212810">Kultala等，JPSS 2016</a></td><td>面向变长模板的静态调度；FU优先和postpass平均改善约5.4%。</td><td>“为压缩而重新调度”不是新概念；应比较或解释为何其目标函数不适用离散SRAM Bank。</td></tr>
+    <tr><td><a href="https://trepo.tuni.fi/handle/10024/214690">Viitanen等，IJPP 2018</a></td><td>模板压缩与两种变长取指实现；CHStone上平均压缩比44%，综合处理器平均面积降33%、能耗降15%。</td><td>审稿人会要求真实RTL/PPA，而不会接受只给逻辑比特数。</td></tr>
+    <tr><td><a href="https://journals.sagepub.com/doi/abs/10.3233/EMC-2005-00043">Haga等，2005</a></td><td>以代码尺寸为目标的VLIW调度与搜索。</td><td>调度目标和搜索完整性必须认真对待，不能只比较单一贪心。</td></tr>
+    <tr><td><a href="https://citeseerx.ist.psu.edu/document?doi=196dc3a243b496ef389253d315142e5d7890dc46&amp;repid=rep1&amp;type=pdf">Aditya/Mahlke/Rau，2000</a></td><td>应用定制VLIW/EPIC ISA与指令格式综合。</td><td>“自动选择指令格式/发射宽度”也有先例；新优化目标要明确包含SRAM宏块离散成本和代码池接纳。</td></tr>
+    <tr><td><a href="https://research.nvidia.com/publication/2008-12_efficient-sparse-matrix-vector-multiplication-cuda">Bell &amp; Garland，NVR-2008-004</a></td><td>HYB稀疏格式用规则主体加不规则尾部，兼顾吞吐与异常分布。</td><td>它是Sidecar的跨领域设计启发，不是VLIW先例；论文可引用类比，但不能把HYB思想包装成原创。</td></tr>
+    <tr><td><a href="https://doi.org/10.1016/j.compeleceng.2009.08.006">Chiu &amp; Yang，2010</a></td><td>为压缩VLIW跨cache-line和循环体设计instruction stream buffer。</td><td>分支、循环、取指边界是成熟文献会追问的系统问题，线性trace不足。</td></tr>
+  </tbody></table>
+  <div class="callout"><strong>可辩护的新边界：</strong>“针对逐周期固定配置流的VLIW，把有效操作跨异构功能槽共享到少量等宽Bank；用真实SRAM宏块深度量化而不是逻辑bit数选择主Lane数；再用浅Sidecar吸收稀有高发射宽度，从而保持精确周期恢复。”这个组合在本次检索中未发现完全相同实现，但必须继续做系统文献/专利检索，尤其检查mask-word、compressed bundle dispersal、silo/flexible-silo和工业DSP取指专利。</div>
+
+  <h2 id="risk">9. 风险清单与可执行的确认方法</h2>
+  <table><thead><tr><th>等级</th><th>风险</th><th>当前证据</th><th>必须怎样关闭</th></tr></thead><tbody>
+    <tr><td><span class="tag no">高</span></td><td><strong>创新性被已有稀疏VLIW/模板/dispatch覆盖</strong></td><td>已有工作已经覆盖NOP删除、mask/stop bit、路由、变长取指和压缩感知调度。</td><td>把贡献集中为“宏块量化感知的Bank数/深度联合设计+尾部Sidecar+可替换池约束”，做逐项对照表和专利检索。</td></tr>
+    <tr><td><span class="tag no">高</span></td><td><strong>RTL面积或时序推翻GE优势</strong></td><td>Sidecar粗估1,632 GE；优先级/路由可能低估，布线未计。</td><td>实现A、2、3、3+Sidecar、4五个等接口RTL；同工艺、同约束综合，报告Fmax/面积/功耗。</td></tr>
+    <tr><td><span class="tag no">高</span></td><td><strong>工作负载过窄</strong></td><td>12个测例都来自6个非线性函数和同一DAG生成器；目标池只有3个X64。</td><td>至少加入第三篇完整工作负载、密集高ILP压力测例、分支/循环、不同X/Y和外部VLIW/DSP benchmark。</td></tr>
+    <tr><td><span class="tag no">高</span></td><td><strong>程序替换合同并不等价</strong></td><td>4,095子集枚举显示A、3 Lane互不包含；Sidecar主Bank余量仅128左右。</td><td>明确池容量/SLA，加入admission optimizer；报告拒绝率、最坏程序、池更新时的重排与装载成本。</td></tr>
+    <tr><td><span class="tag cond">中高</span></td><td><strong>调度器启发式导致不公平</strong></td><td>已经实证发现3发射搜索输给2发射、又赢5发射。</td><td>所有架构共享schedule候选池；保留较窄架构schedule；增加合法性重放和单调性回归测试。</td></tr>
+    <tr><td><span class="tag cond">中高</span></td><td><strong>五操作周期无法编码</strong></td><td><code>11111</code>被占作EOP；当前trace无五操作周期。</td><td>规定编译器禁止五发射并量化代价，或设计escape/EOP独立控制；加入五发射合成压力测例。</td></tr>
+    <tr><td><span class="tag cond">中高</span></td><td><strong>分支、循环、异常恢复未实现</strong></td><td>当前只有线性trace；phase和多个Bank指针是隐状态。</td><td>每个控制流入口保存/恢复config PC、主phase、3个主指针、Sidecar指针；做随机分支回放和暂停/背压断言。</td></tr>
+    <tr><td><span class="tag cond">中</span></td><td><strong>20-bit地址改变了ISA能力</strong></td><td>实际最大只到767；高10位从未翻转。</td><td>给出地址语义、寻址范围、基址机制和第三篇兼容性；对0、最大值、跨页/跨Bank做bit-exact测试。</td></tr>
+    <tr><td><span class="tag cond">中</span></td><td><strong>CACTI宏块量化结果对工具参数敏感</strong></td><td>5-bit与物理8-bit配置口径甚至出现8-bit面积/能耗更低的非单调结果。</td><td>统一物理端口宽度；用至少两个工艺点/真实SRAM compiler做敏感性；报告宏块不可用时的退化。</td></tr>
+    <tr><td><span class="tag cond">中</span></td><td><strong>功耗比较不完整</strong></td><td>新方案表中只计SRAM读；路由活动未用VCD/SAIF。</td><td>RTL仿真采集真实toggle，门级或综合功耗；同时计装载写能耗、泄漏和时钟树。</td></tr>
+    <tr><td><span class="tag cond">中</span></td><td><strong>复现环境不可直接使用</strong></td><td>Python 3.6与Darwin NumPy二进制已实证失败。</td><td>增加Python≥3.10 lockfile、Linux wheel/venv脚本、固定随机种子、结果manifest和CI smoke test。</td></tr>
+  </tbody></table>
+
+  <h2 id="paper">10. 建议重新定义论文问题</h2>
+  <h3>10.1 不建议的题目</h3>
+  <p><del>“一种两Lane的VLIW纵向压缩方法”</del>。这个表述太像在Li 2020纵向压缩上减少Bank数，同时又受Kultala、Brandon、Viitanen等已有工作的夹击。当前双Lane的优势也主要来自特定CACTI宏块深度，不具备普适支配关系。</p>
+
+  <h3>10.2 建议的问题定义</h3>
+  <p><strong>给定功能槽数、等宽payload、程序池、允许的周期代价和目标SRAM宏块库，如何共同选择共享Lane数、各Bank深度、稀有宽发射尾部容量及静态schedule，使总面积/能耗最小，同时逐周期精确恢复原VLIW语义？</strong></p>
+  <p>这一问题把第三篇“逐周期发射174-bit VLIW、平均只用2–3槽”的专用现象上升为一般问题：<strong>固定宽VLIW的低平均槽利用率与离散SRAM宏块配置之间不匹配。</strong></p>
+
+  <h3>10.3 可以写成的四项贡献</h3>
+  <ol>
+    <li><strong>宏块量化感知的设计空间：</strong>不是按逻辑bit数比较，而是统一枚举2/3/4共享Lane、Bank深度、配置宽度、Sidecar深度，并使用实际宏块面积/访问能耗作为目标。</li>
+    <li><strong>固定周期、硬件友好的mask+循环条带化：</strong>配置流每周期固定宽度，payload Bank并行读，不需要Huffman/字典/变长取指拼接；用phase和target mask精确恢复。</li>
+    <li><strong>三主Lane+稀有宽发射尾部：</strong>主体处理常见0–3操作周期，浅Sidecar仅处理第4事件；当前数据上用9次Sidecar访问恢复目标池最佳已知周期。</li>
+    <li><strong>面向替换池的容量合同：</strong>把config容量、主Lane容量、Sidecar尾部容量、周期SLA共同纳入admission；报告可接纳集合，而不是只给一个手选池。</li>
+  </ol>
+  <div class="callout goodbox"><strong>大论文串联方式：</strong>第三篇提供可编程VLIW非线性执行架构和真实指令流；第四篇解决其逐周期超长指令供给的面积/能耗瓶颈。第一篇可作为早期VLIW/可编程架构基础，第二篇作为非线性计算需求来源。这样主线是“面向非线性算子的可编程计算与高效指令供给”，不会出现两个互不相关的概率计算或另起一个LU方向。</div>
+
+  <h2 id="plan">11. 一人3–4个月工作安排与Go/No-Go门槛</h2>
+  <table><thead><tr><th>时间</th><th>任务</th><th>必须交付</th><th>停止/转向条件</th></tr></thead><tbody>
+    <tr><td>第1–2周</td><td>冻结174-bit ISA语义和公平比较规则；修复环境；统一schedule候选池。</td><td>可复现脚本、单调性回归、20-bit地址边界、控制字段规范。</td><td>若174-bit格式无法与第三篇真实RTL兼容，立即回到原ISA重新做槽宽模型。</td></tr>
+    <tr><td>第3–4周</td><td>完成2/3/3+Sidecar/4/A设计空间工具和池admission优化。</td><td>多规模、多池、不同Sidecar深度的Pareto曲线；不是只看三程序。</td><td>若Sidecar只在手选池有效，改成“自动Bank组织综合”，不把Sidecar作为主贡献。</td></tr>
+    <tr><td>第5–7周</td><td>SystemVerilog实现五种同接口取指/恢复器；随机和形式化/断言验证。</td><td>逐周期bit-exact、背压、程序切换、分支入口、EOP、空周期、四事件、非法五事件测试。</td><td>若3+Sidecar无法一周期读出或路由成为关键路径，增加一级预取流水并重新定义周期合同。</td></tr>
+    <tr><td>第8–9周</td><td>综合与功耗；接目标SRAM compiler，CACTI作补充。</td><td>面积/Fmax/功耗/泄漏/宏块列表；VCD/SAIF活动；至少一个工艺或FPGA实证。</td><td><strong>若相对A总面积收益&lt;15%，或能耗/时序显著恶化，则不以硬件结构论文投稿。</strong></td></tr>
+    <tr><td>第10–11周</td><td>扩大工作负载和压力测试；完整池替换实验。</td><td>第三篇真实测例、外部benchmark、密集ILP、控制流、X/Y扫描；均值和最坏值。</td><td>若平均周期损失&gt;1%或最坏&gt;3%且无法通过Sidecar容量解决，改做可配置尾部或双模式组织。</td></tr>
+    <tr><td>第12–14周</td><td>消融、已有工作对比、论文写作和复现实验包。</td><td>A/2/3/3+tail/4消融；无phase/不同tail/不同宏块/不同池；初稿与图表。</td><td>若系统检索发现相同Bank+Sidecar专利/论文，则把贡献重心转为自动设计空间综合和实证。</td></tr>
+  </tbody></table>
+  <p><strong>工作量判断：</strong>若第三篇RTL接口清楚、已有综合环境可用，并把范围限制在取指/恢复器与编译后处理，3–4个月一人可完成；若还要重做完整编译器、处理任意控制流并流片级后端，则超出这个周期。建议两周内完成第一个Go/No-Go，七周内用RTL综合完成第二个Go/No-Go。</p>
+
+  <h2 id="files">12. 本次新增实验、数据和复现入口</h2>
+  <table><thead><tr><th>文件</th><th>用途</th></tr></thead><tbody>
+    <tr><td><a href="../experiments/issue3_adaptive_three_lane_study.py"><code>experiments/issue3_adaptive_three_lane_study.py</code></a></td><td>364组MAX_ISSUE=3搜索、双Lane合法schedule继承、三Lane编码/恢复和CACTI+GE筛选。</td></tr>
+    <tr><td><a href="../analysis_output_issue3_three_lane_174/issue3_adaptive_three_lane_study.json"><code>analysis_output_issue3_three_lane_174/issue3_adaptive_three_lane_study.json</code></a></td><td>12测例三Lane完整结果、目标池深度与物理粗估。</td></tr>
+    <tr><td><a href="../experiments/issue3_tail_sidecar_study.py"><code>experiments/issue3_tail_sidecar_study.py</code></a></td><td>从最佳已知schedule构造三主Lane+Sidecar，bit-exact回放，并调用CACTI 34×128。</td></tr>
+    <tr><td><a href="../analysis_output_issue3_tail_sidecar_174/issue3_tail_sidecar_study.json"><code>analysis_output_issue3_tail_sidecar_174/issue3_tail_sidecar_study.json</code></a></td><td>Sidecar逐测例事件数、目标池容量、宏块、GE和能耗结果。</td></tr>
+    <tr><td><a href="../experiments/pool_admission_subset_study.py"><code>experiments/pool_admission_subset_study.py</code></a></td><td>枚举12程序的4,095个非空子集并检查固定容量合同。</td></tr>
+    <tr><td><a href="../analysis_output_issue3_three_lane_174/pool_admission_subset_study.json"><code>analysis_output_issue3_three_lane_174/pool_admission_subset_study.json</code></a></td><td>A/2/3/3+Sidecar/4的接纳数量、拒绝原因和目标池余量。</td></tr>
+  </tbody></table>
+  <h3>关键复现命令</h3>
+  <pre class="mono"># 需要 Python 3.10+、NumPy、Pandas；不要使用仓库当前Darwin .python-deps
+python3.11 experiments/issue3_adaptive_three_lane_study.py
+python3.11 experiments/issue3_adaptive_three_lane_study.py --reuse-sweep
+python3.11 experiments/issue3_tail_sidecar_study.py --cacti-root /path/to/cacti
+python3.11 experiments/pool_admission_subset_study.py</pre>
+  <p class="small">本次运行使用HP CACTI兼容源码目录；宏块输出应与JSON中的32 nm、RAM、1RW口径一致。CACTI项目可参考<a href="https://github.com/HewlettPackard/cacti">Hewlett Packard官方仓库</a>。</p>
+
+  <h2>13. 最终决策建议</h2>
+  <table><thead><tr><th>选择</th><th>判断</th><th>理由</th></tr></thead><tbody>
+    <tr><td>继续只做Candidate B固定双Lane</td><td><span class="tag no">不建议单独成文</span></td><td>创新边界弱；相对A不是全面优势；深SRAM读能耗增加；调度损失需要解释。</td></tr>
+    <tr><td>改做固定三Lane</td><td><span class="tag cond">可作核心消融</span></td><td>当前数据的Pareto点明显更好，但“把2改成3”仍不足以构成完整方法。</td></tr>
+    <tr><td>三主Lane+128 Sidecar</td><td><span class="tag go">推荐主硬件候选</span></td><td>当前最佳已知周期无损；相对A粗面积−29.7%；硬件恢复规则固定；新增实验已bit-exact。</td></tr>
+    <tr><td>论文整体定位</td><td><span class="tag cond">有条件Go</span></td><td>必须补齐RTL、目标宏块、外部工作负载、控制流和系统已有工作检索；否则只能作为内部设计报告。</td></tr>
+  </tbody></table>
+  <p class="lead"><strong>一句话建议给导师：</strong>普通纵向压缩不是理论终点，但突破点也不是“再换一个双Lane映射”。真正值得继续验证的是：以真实SRAM宏块量化为目标，用三条共享主Lane承载常见低宽度VLIW，用一个浅Sidecar承载极少数第四事件，从而在不改变周期语义的前提下降低指令供给面积；现有数据支持该假设，RTL和更广工作负载将决定它能否成为论文。</p>
+</main></body></html>
