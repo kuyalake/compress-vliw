@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>174-bit VLIW：LLM非线性函数扩展与10负载压缩实验</title>
+  <style>
+    :root{--ink:#172033;--muted:#657187;--line:#dce3ed;--blue:#2257b8;--green:#087a4b;--amber:#9a5700;--red:#a52b23;--bg:#edf1f6}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.7 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+    main{max-width:1220px;margin:24px auto 70px;padding:42px 52px;background:#fff;border-radius:14px;box-shadow:0 8px 28px #1b2b4617}
+    h1{font-size:31px;line-height:1.3;margin:0 0 8px}h2{font-size:23px;margin:40px 0 13px;padding-bottom:7px;border-bottom:2px solid #e7ecf3}h3{font-size:18px;margin:27px 0 8px}p{margin:8px 0 12px}.meta,.small{color:var(--muted)}
+    .lead{font-size:17px;background:#f4f7fd;border-left:5px solid var(--blue);padding:15px 18px;border-radius:8px}.good{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin:17px 0}.stat{border:1px solid var(--line);border-radius:9px;padding:13px;background:#fafbfd}.stat b{display:block;font-size:24px;margin:2px 0}.stat small{color:var(--muted)}
+    .callout{border:1px solid #b8cae9;background:#f5f8fe;border-radius:10px;padding:14px 17px;margin:14px 0}.callout.goodbox{border-color:#a4d5be;background:#f2fbf6}.callout.warnbox{border-color:#efc189;background:#fff9f1}
+    table{width:100%;border-collapse:collapse;margin:12px 0 20px;font-size:13.5px}th,td{border:1px solid var(--line);padding:8px 9px;vertical-align:top}th{background:#edf2f8;text-align:left}tbody tr:nth-child(even){background:#fafbfd}.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+    code{background:#eff3f8;padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}.formula{white-space:pre-wrap;background:#111827;color:#eef4ff;padding:13px 16px;border-radius:9px;font:13px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace}
+    ul,ol{padding-left:24px}li{margin:5px 0}a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}.tag{display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:700;background:#dff5e9;color:#05603a}
+    @media(max-width:850px){main{margin:0;padding:25px 15px;border-radius:0}.grid{grid-template-columns:1fr 1fr}table{display:block;overflow-x:auto}}
+  </style>
+</head>
+<body><main>
+  <h1>174-bit VLIW：LLM非线性函数扩展与10负载压缩实验</h1>
+  <p class="meta">日期：2026-09-03｜基于 <code>schedule_v19_issue2_priority_174.py</code>｜X固定64｜NUM_VE=256｜priority统一为index</p>
+
+  <p class="lead"><strong>结论先行：</strong>在完全不修改原调度器、也不删除原有Softmax、LayerNorm、GELU等函数的前提下，新脚本增加了9类常用复合非线性DAG，并为每类都提供显式短向量与长向量入口。18组短/长回归和10组代表负载全部调度成功，primitive白名单与压缩—恢复逐bit检查全部通过。10负载池中，4-slot合并组织相对“每函数独立对称padding”的纵向压缩减少<strong>51.70%</strong>逻辑分配bit、粗估总面积减少<strong>49.03%</strong>；相对“10函数先合并再对称padding”的纵向压缩分别减少<strong>53.68%</strong>与<strong>50.46%</strong>。5-slot和4-slot总执行周期同为76,678，没有观察到性能损失。</p>
+
+  <div class="grid">
+    <div class="stat">新增函数<b>9类</b><small>每类短/长两个入口</small></div>
+    <div class="stat">回归通过<b class="good">18 / 18</b><small>primitive + 调度 + roundtrip</small></div>
+    <div class="stat">代表负载<b class="good">10 / 10</b><small>X=64，index priority</small></div>
+    <div class="stat">4-slot周期代价<b class="good">0.00%</b><small>相对原生5-slot Candidate A</small></div>
+  </div>
+
+  <h2>1. 代码和实验产物</h2>
+  <table><thead><tr><th>文件</th><th>用途</th></tr></thead><tbody>
+    <tr><td><a href="../experiments/llm_nonlinear_174bit_extension_study.py"><code>experiments/llm_nonlinear_174bit_extension_study.py</code></a></td><td>唯一新增Python脚本；包含DAG扩展、短/长回归、5-slot/4-slot调度、两种编码、逐bit恢复、padding与CACTI/GE筛选模型。原脚本未改。</td></tr>
+    <tr><td><a href="../analysis_output_llm_nonlinear_174_2026-09-03/llm_nonlinear_174bit_extension_results.json"><code>analysis_output_llm_nonlinear_174_2026-09-03/llm_nonlinear_174bit_extension_results.json</code></a></td><td>完整机器可读结果，包括每个DAG使用的primitive、逐负载事件数、周期、occupancy、SRAM组织与面积。</td></tr>
+    <tr><td><a href="../analysis_output_llm_nonlinear_174_2026-09-03/representative_workloads.csv"><code>representative_workloads.csv</code></a></td><td>10个代表负载简表。</td></tr>
+    <tr><td><a href="../analysis_output_llm_nonlinear_174_2026-09-03/short_long_regression.json"><code>short_long_regression.json</code></a></td><td>9类新增函数的短/长向量调度回归。</td></tr>
+    <tr><td><a href="../analysis_output_llm_nonlinear_174_2026-09-03/four_lane_streams/"><code>four_lane_streams/</code></a></td><td>10个代表负载的5-bit Config与四条34-bit payload流，可供后续RTL testbench直接读取。</td></tr>
+  </tbody></table>
+
+  <h2>2. 当前primitive边界</h2>
+  <p>这里的“primitive支持”不是说数学库里有这个名字，而是每个DAG节点最终都能落到174-bit ISA已有槽位编码。新增脚本没有加入新opcode。</p>
+  <table><thead><tr><th>槽位</th><th>本次实际使用的已有primitive</th><th>作用</th></tr></thead><tbody>
+    <tr><td>LOAD / STORE</td><td><code>load</code>、<code>store</code></td><td>读取输入、bias、gamma以及写回输出。</td></tr>
+    <tr><td>VECTOR / SCALAR</td><td><code>add</code>、<code>mul</code>、<code>max</code>、<code>reduce_sum_bf16</code>、<code>add_bf16</code>、<code>mul_bf16_fp16_fp16</code>、<code>square_fp16_fp16_bf16</code></td><td>逐元素运算、局部规约、跨分段规约树和归一化系数。</td></tr>
+    <tr><td>SFU</td><td><code>gelu</code>、<code>sigmoid</code>、<code>sqrt</code>、<code>inv</code></td><td>直接激活、SiLU分解及RMSNorm的倒平方根。</td></tr>
+  </tbody></table>
+  <p>原调度器的Softmax、LogSoftmax、LogSumExp、LayerNorm、Softplus、ELU，以及通用GELU/Sigmoid/Tanh/Sin/Cos入口全部保留。新dispatcher仅在遇到新增名字时接管，否则原样委托原dispatcher。</p>
+
+  <h2>3. 新增函数及DAG拆解</h2>
+  <h3>3.1 短向量和长向量的共同定义</h3>
+  <ul>
+    <li><strong>短向量：</strong><code>Y ≤ 256</code>，一个逻辑向量由一个VE段处理；入口名均为 <code>construct_*_short_vector_no_fusion</code>。</li>
+    <li><strong>长向量：</strong><code>Y &gt; 256</code>，先拆成 <code>K=ceil(Y/256)</code> 段，末段保留实际长度；入口名均为 <code>construct_*_long_vector_no_fusion</code>。</li>
+    <li>逐元素函数的各段彼此独立；RMSNorm必须先对每段局部平方和，再用标量二叉树合并为全局平方和，最后把同一个归一化系数广播回K段。</li>
+    <li>Bias和Gamma是参数向量：每个段只加载一次，在64个逻辑向量之间复用；SwiGLU/GeGLU的gate和up是两条动态输入流，因此每个逻辑向量每段均加载两次。</li>
+  </ul>
+
+  <table><thead><tr><th>新增函数</th><th>数学形式</th><th>短/长DAG主链</th><th>新增结构价值</th></tr></thead><tbody>
+    <tr><td>ReLU</td><td><code>max(x,0)</code></td><td>LOAD → MAX(x,0) → STORE；长向量逐段复制。</td><td>最轻量的纯VECTOR激活对照。</td></tr>
+    <tr><td>SiLU / Swish</td><td><code>x·sigmoid(x)</code></td><td>LOAD → SIGMOID；原x与sigmoid结果做MUL → STORE。</td><td>同时占用SFU和VECTOR，且存在扇出依赖。</td></tr>
+    <tr><td>Bias+ReLU</td><td><code>max(x+b,0)</code></td><td>参数Bias LOAD；数据LOAD → ADD → MAX → STORE。</td><td>验证参数复用和Bias融合。</td></tr>
+    <tr><td>Bias+GELU</td><td><code>GELU(x+b)</code></td><td>参数Bias LOAD；数据LOAD → ADD → GELU → STORE。</td><td>BERT类Bias+激活融合，覆盖LOAD/VECTOR/SFU/STORE。</td></tr>
+    <tr><td>Bias+SiLU</td><td><code>z=x+b; z·sigmoid(z)</code></td><td>Bias LOAD；数据LOAD → ADD → SIGMOID；z与结果MUL → STORE。</td><td>比Bias+GELU多一个VECTOR事件与扇出。</td></tr>
+    <tr><td>SwiGLU</td><td><code>up·(gate·sigmoid(gate))</code></td><td>LOAD gate + LOAD up → SIGMOID → 两级MUL → STORE。</td><td>LLM常见双输入门控结构，LOAD压力最高之一。</td></tr>
+    <tr><td>GeGLU</td><td><code>up·GELU(gate)</code></td><td>LOAD gate + LOAD up → GELU → MUL → STORE。</td><td>与SwiGLU形成直接SFU和复合SFU路径对照。</td></tr>
+    <tr><td>RMSNorm</td><td><code>gamma·x / sqrt(mean(x²)+eps)</code></td><td>LOAD → SQUARE → 局部SUM；长向量ADD树 → 乘1/Y → 加eps → SQRT → 校正MUL → INV；广播后乘x、乘gamma、STORE。</td><td>无均值中心化的全局规约/广播结构。</td></tr>
+    <tr><td>Residual+RMSNorm</td><td><code>RMSNorm(x+r)</code></td><td>双LOAD → ADD形成残差值，再进入完整RMSNorm链。</td><td>覆盖常见残差融合；已支持并回归，但未列入最终10例以避免RMSNorm重复过多。</td></tr>
+  </tbody></table>
+
+  <h3>3.2 短/长入口回归</h3>
+  <p>回归设置为短向量 <code>X=2,Y=128</code>，长向量 <code>X=2,Y=257</code>。每组都执行：DAG构建 → primitive集合检查 → 寄存器/存储地址分配 → index调度 → 4-lane编码 → 解码后逐周期逐bit比较。</p>
+  <table><thead><tr><th>函数</th><th class="num">短周期/事件</th><th class="num">短Lane深度</th><th class="num">长周期/事件</th><th class="num">长Lane深度</th><th>结果</th></tr></thead><tbody>
+    <tr><td>ReLU</td><td class="num">12 / 6</td><td class="num">2/2/1/1</td><td class="num">14 / 12</td><td class="num">3/3/3/3</td><td><span class="tag">PASS</span></td></tr>
+    <tr><td>SiLU</td><td class="num">38 / 8</td><td class="num">2/2/2/2</td><td class="num">50 / 16</td><td class="num">4/4/4/4</td><td><span class="tag">PASS</span></td></tr>
+    <tr><td>Bias+ReLU</td><td class="num">21 / 9</td><td class="num">3/2/2/2</td><td class="num">24 / 18</td><td class="num">5/5/4/4</td><td><span class="tag">PASS</span></td></tr>
+    <tr><td>Bias+GELU</td><td class="num">39 / 9</td><td class="num">3/2/2/2</td><td class="num">50 / 18</td><td class="num">5/5/4/4</td><td><span class="tag">PASS</span></td></tr>
+    <tr><td>Bias+SiLU</td><td class="num">46 / 11</td><td class="num">3/3/3/2</td><td class="num">57 / 22</td><td class="num">6/6/5/5</td><td><span class="tag">PASS</span></td></tr>
+    <tr><td>SwiGLU</td><td class="num">45 / 12</td><td class="num">3/3/3/3</td><td class="num">57 / 24</td><td class="num">6/6/6/6</td><td><span class="tag">PASS</span></td></tr>
+    <tr><td>GeGLU</td><td class="num">38 / 10</td><td class="num">3/3/2/2</td><td class="num">48 / 20</td><td class="num">5/5/5/5</td><td><span class="tag">PASS</span></td></tr>
+    <tr><td>RMSNorm</td><td class="num">98 / 23</td><td class="num">6/6/6/5</td><td class="num">109 / 38</td><td class="num">10/10/9/9</td><td><span class="tag">PASS</span></td></tr>
+    <tr><td>Residual+RMSNorm</td><td class="num">107 / 27</td><td class="num">7/7/7/6</td><td class="num">120 / 46</td><td class="num">12/12/11/11</td><td><span class="tag">PASS</span></td></tr>
+  </tbody></table>
+
+  <h2>4. 10个代表性workload如何选择</h2>
+  <p>“代表性”同时考虑使用频率和DAG形态差异，不把所有已有数学名称都塞进十例。BERT论文/配置给出512序列长度、768隐藏维和3072中间维的经典组合；LLaMA 2采用RMSNorm与SwiGLU，7B配置对应4096隐藏维与11008中间维。GLU变体和RMSNorm的原始论文分别说明了GeGLU/SwiGLU与RMSNorm定义。参见 <a href="https://arxiv.org/abs/1810.04805">BERT</a>、<a href="https://arxiv.org/abs/2307.09288">LLaMA 2</a>、<a href="https://arxiv.org/abs/2002.05202">GLU Variants Improve Transformer</a>、<a href="https://arxiv.org/abs/1910.07467">RMSNorm</a>。</p>
+  <div class="callout warnbox"><strong>尺度口径：</strong>X=64表示一次实验中并行排入调度器的64条独立逻辑向量，并不声称等于完整模型的batch或全部token数。Y取模型中有物理意义的序列/隐藏/中间维。11008是LLaMA 2 7B式代表点，不是所有LLM的固定维度。</div>
+  <table><thead><tr><th>负载</th><th class="num">Y / 段数</th><th>结构代表性</th><th class="num">周期</th><th class="num">事件</th><th class="num">平均有效槽/拍</th><th class="num">LOAD/ST/VEC/SCA/SFU</th><th class="num">4-Lane深度</th></tr></thead><tbody>
+    <tr><td>Softmax</td><td class="num">512 / 2</td><td>注意力归一化</td><td class="num">1,013</td><td class="num">1,088</td><td class="num">1.074</td><td class="num">128/128/512/128/192</td><td class="num">272/272/272/272</td></tr>
+    <tr><td>LogSoftmax</td><td class="num">512 / 2</td><td>对数域规约链</td><td class="num">953</td><td class="num">1,088</td><td class="num">1.142</td><td class="num">128/128/512/128/192</td><td class="num">272/272/272/272</td></tr>
+    <tr><td>LayerNorm</td><td class="num">768 / 3</td><td>BERT隐藏维归一化</td><td class="num">1,449</td><td class="num">2,374</td><td class="num">1.638</td><td class="num">198/192/1344/512/128</td><td class="num">594/594/593/593</td></tr>
+    <tr><td>RMSNorm</td><td class="num">4096 / 16</td><td>LLM规约与广播</td><td class="num">5,326</td><td class="num">7,440</td><td class="num">1.397</td><td class="num">1040/1024/4096/1152/128</td><td class="num">1860/1860/1860/1860</td></tr>
+    <tr><td>GELU</td><td class="num">3072 / 12</td><td>BERT FFN直接SFU</td><td class="num">3,095</td><td class="num">2,304</td><td class="num">0.744</td><td class="num">768/768/0/0/768</td><td class="num">576/576/576/576</td></tr>
+    <tr><td>SiLU</td><td class="num">11008 / 43</td><td>复合SFU+VECTOR</td><td class="num">15,105</td><td class="num">11,008</td><td class="num">0.729</td><td class="num">2752/2752/2752/0/2752</td><td class="num">2752/2752/2752/2752</td></tr>
+    <tr><td>Bias+GELU</td><td class="num">3072 / 12</td><td>参数复用的融合激活</td><td class="num">4,455</td><td class="num">3,084</td><td class="num">0.692</td><td class="num">780/768/768/0/768</td><td class="num">771/771/771/771</td></tr>
+    <tr><td>Bias+SiLU</td><td class="num">11008 / 43</td><td>Bias、扇出与复合激活</td><td class="num">22,909</td><td class="num">13,803</td><td class="num">0.603</td><td class="num">2795/2752/5504/0/2752</td><td class="num">3451/3451/3451/3450</td></tr>
+    <tr><td>SwiGLU</td><td class="num">11008 / 43</td><td>双输入门控MLP</td><td class="num">18,241</td><td class="num">16,512</td><td class="num">0.905</td><td class="num">5504/2752/5504/0/2752</td><td class="num">4128/4128/4128/4128</td></tr>
+    <tr><td>GeGLU</td><td class="num">3072 / 12</td><td>GELU门控对照</td><td class="num">4,132</td><td class="num">3,840</td><td class="num">0.929</td><td class="num">1536/768/768/0/768</td><td class="num">960/960/960/960</td></tr>
+  </tbody></table>
+  <p>合计执行76,678拍、62,541个有效payload事件，平均每拍0.816个有效槽。低于1并非编码丢失，而是SFU流水延迟和DAG依赖产生的空拍；这也说明该池确实适合研究“逐周期VLIW低槽利用率”。</p>
+
+  <h2>5. 压缩方法和公平比较</h2>
+  <h3>5.1 Candidate A：普通纵向压缩</h3>
+  <p>每拍保存5-bit槽有效mask；LOAD、STORE、VECTOR、SCALAR、SFU各有一条34-bit有效事件流，NOP不进入payload SRAM。每个Bank有独立读指针，mask某位为1时该指针递增。</p>
+  <ol>
+    <li><strong>A-每函数对称padding：</strong>对每个函数，先找五类槽事件数中的最大值；五个payload Bank都pad到该值，再向上补成2的幂。10个函数保留独立块与独立Config宏，替换粒度最强。</li>
+    <li><strong>A-10函数合并padding：</strong>先分别合并10个函数的五类槽流，再找五个总事件数的最大值；五Bank统一补到该最大值及2的幂。减少程序边界管理，但任何替换都改变整个池的容量约束。</li>
+  </ol>
+  <div class="callout"><strong>EOP边界：</strong>Candidate A允许5槽同拍，mask=<code>11111</code>是合法数据，因此不能同时把它当EOP。本实验使用程序描述符中的固定执行长度结束，Config仍为5 bit。4-slot永远不会出现5槽同拍，所以可继续把<code>11111</code>用作带内EOP。</div>
+
+  <h3>5.2 4-slot共享Bank</h3>
+  <p>每拍把有效槽按固定顺序LOAD→STORE→VECTOR→SCALAR→SFU排列。第r个有效事件写入 <code>lane=(phase+r) mod 4</code>，拍末 <code>phase=(phase+popcount(mask)) mod 4</code>。解码端用同一mask、phase和前缀计数恢复目标槽；无效Bank独立门控。这样不同功能槽共享容量，而不是把VECTOR空余空间永久锁死在VECTOR Bank。</p>
+
+  <h3>5.3 5-slot性能基线</h3>
+  <p>Candidate A重新以 <code>max_issue_slots=5, priority=index</code>调度，4-slot以 <code>max_issue_slots=4, priority=index</code>调度。10例逐项周期完全相同。5槽同拍只在LogSoftmax出现2拍、LayerNorm出现3拍；4-slot移动这5拍的一个事件后未延长关键路径。因此当前结论不是建立在“强行让A也只发4槽”之上。</p>
+
+  <h2>6. 每负载压缩与硬件开销</h2>
+  <p>下表的深度均先取逻辑最大值再补2的幂。面积为仓库已有32 nm、1RW CACTI点的复用/拼接筛选值，并加前端GE面积；不是目标工艺签核结果。</p>
+  <table><thead><tr><th>负载</th><th class="num">Config深度</th><th class="num">A payload<br>5×深度</th><th class="num">4-slot payload<br>4×深度</th><th class="num">A bit</th><th class="num">4-slot bit</th><th class="num">bit变化</th><th class="num">A总面积</th><th class="num">4-slot总面积</th><th class="num">面积变化</th></tr></thead><tbody>
+    <tr><td>Softmax</td><td class="num">1024</td><td class="num">5×512</td><td class="num">4×512</td><td class="num">92,160</td><td class="num">74,752</td><td class="num">−18.89%</td><td class="num">0.02936</td><td class="num">0.02836</td><td class="num">−3.39%</td></tr>
+    <tr><td>LogSoftmax</td><td class="num">1024</td><td class="num">5×512</td><td class="num">4×512</td><td class="num">92,160</td><td class="num">74,752</td><td class="num">−18.89%</td><td class="num">0.02936</td><td class="num">0.02836</td><td class="num">−3.39%</td></tr>
+    <tr><td>LayerNorm</td><td class="num">2048</td><td class="num">5×2048</td><td class="num">4×1024</td><td class="num">358,400</td><td class="num">149,504</td><td class="num">−58.29%</td><td class="num">0.09548</td><td class="num">0.04669</td><td class="num">−51.10%</td></tr>
+    <tr><td>RMSNorm</td><td class="num">8192</td><td class="num">5×4096</td><td class="num">4×2048</td><td class="num">737,280</td><td class="num">319,488</td><td class="num">−56.67%</td><td class="num">0.18649</td><td class="num">0.09243</td><td class="num">−50.44%</td></tr>
+    <tr><td>GELU</td><td class="num">4096</td><td class="num">5×1024</td><td class="num">4×1024</td><td class="num">194,560</td><td class="num">159,744</td><td class="num">−17.89%</td><td class="num">0.05518</td><td class="num">0.05003</td><td class="num">−9.33%</td></tr>
+    <tr><td>SiLU</td><td class="num">16384</td><td class="num">5×4096</td><td class="num">4×4096</td><td class="num">778,240</td><td class="num">638,976</td><td class="num">−17.89%</td><td class="num">0.20196</td><td class="num">0.17205</td><td class="num">−14.81%</td></tr>
+    <tr><td>Bias+GELU</td><td class="num">8192</td><td class="num">5×1024</td><td class="num">4×1024</td><td class="num">215,040</td><td class="num">180,224</td><td class="num">−16.19%</td><td class="num">0.06267</td><td class="num">0.05752</td><td class="num">−8.22%</td></tr>
+    <tr><td>Bias+SiLU</td><td class="num">32768</td><td class="num">5×8192</td><td class="num">4×4096</td><td class="num">1,556,480</td><td class="num">720,896</td><td class="num">−53.68%</td><td class="num">0.40273</td><td class="num">0.20297</td><td class="num">−49.60%</td></tr>
+    <tr><td>SwiGLU</td><td class="num">32768</td><td class="num">5×8192</td><td class="num">4×8192</td><td class="num">1,556,480</td><td class="num">1,277,952</td><td class="num">−17.89%</td><td class="num">0.40273</td><td class="num">0.33885</td><td class="num">−15.86%</td></tr>
+    <tr><td>GeGLU</td><td class="num">8192</td><td class="num">5×2048</td><td class="num">4×1024</td><td class="num">389,120</td><td class="num">180,224</td><td class="num">−53.68%</td><td class="num">0.10631</td><td class="num">0.05752</td><td class="num">−45.89%</td></tr>
+  </tbody></table>
+  <p>单负载收益呈现两个层次：若A与4-slot落在相同payload深度档，bit收益基本只是5 Bank变4 Bank，面积收益仅3.39%–15.86%；若共享后跨过2倍深度边界，LayerNorm、RMSNorm、Bias+SiLU、GeGLU的面积收益达到45.89%–51.10%。这证明创新点必须表述为<strong>跨异构槽共享容量并跨越物理SRAM深度量化边界</strong>，不能只说“少一个Bank”。</p>
+
+  <h2>7. 10负载池的两种纵向参考与4-slot</h2>
+  <table><thead><tr><th>组织</th><th>Config组织</th><th>Payload组织</th><th class="num">分配bit</th><th class="num">占174-bit原始池</th><th class="num">CACTI SRAM面积</th><th class="num">前端逻辑</th><th class="num">SRAM+逻辑面积</th></tr></thead><tbody>
+    <tr><td>A：每函数对称padding</td><td>10个函数各自补2次幂</td><td>每函数5×自身最高槽深度</td><td class="num">5,969,920</td><td class="num">26.18%</td><td class="num">1.56043</td><td class="num">540 GE / 0.00137</td><td class="num">1.56180</td></tr>
+    <tr><td>A：10函数合并padding</td><td>5×131072</td><td>5×34×32768</td><td class="num">6,225,920</td><td class="num">27.30%</td><td class="num">1.60544</td><td class="num">612 GE / 0.00156</td><td class="num">1.60699</td></tr>
+    <tr><td>4-slot：每函数分块敏感性</td><td>10个函数各自补2次幂</td><td>每函数4×自身最高Lane深度</td><td class="num">3,776,512</td><td class="num">16.56%</td><td class="num">1.02264</td><td class="num">2,124 GE / 0.00540</td><td class="num">1.02804</td></tr>
+    <tr><td><strong>4-slot：10函数合并</strong></td><td>5×131072</td><td><strong>4×34×16384</strong></td><td class="num"><strong>2,883,584</strong></td><td class="num"><strong>12.64%</strong></td><td class="num"><strong>0.79054</strong></td><td class="num">2,160 GE / 0.00549</td><td class="num"><strong>0.79603</strong></td></tr>
+  </tbody></table>
+  <div class="formula">10负载有效事件总数 = 62,541
+四Lane合并逻辑深度 = 15,636 / 15,636 / 15,635 / 15,634
+四个物理Bank统一取整 = 4 × 16,384
+
+相对 A-每函数对称：bit −51.70%，SRAM+前端面积 −49.03%
+相对 A-合并对称：  bit −53.68%，SRAM+前端面积 −50.46%</div>
+  <p>这里出现“A合并反而比A每函数分块略大”，原因不是合并本身增加事件，而是幂次量化：五个合并槽全部被推到32768档；逐函数分块虽然宏数更多，但若干小函数仍停留在512/1024/2048档。4-slot合并后每Lane约15636，刚好压在16384以内，因此池级共享获益明显。</p>
+
+  <h2>8. Logic开销如何估算</h2>
+  <table><thead><tr><th>逻辑</th><th>Candidate A</th><th>4-slot</th></tr></thead><tbody>
+    <tr><td>状态计数器</td><td>Config PC + 5个slot指针，每bit按6 GE筛选。</td><td>Config PC + 4个Lane指针 + 2-bit phase，每bit按6 GE。</td></tr>
+    <tr><td>Mask/Bank使能</td><td>约60 GE。</td><td>约180 GE，包括mask译码、前缀计数和四Bank读使能。</td></tr>
+    <tr><td>34-bit路由</td><td>专属Bank直达对应slot，不计跨槽scatter。</td><td>4-to-5 scatter按 <code>5×34×9=1530 GE</code>保守上界。</td></tr>
+    <tr><td>合并池总计</td><td><strong>612 GE</strong></td><td><strong>2160 GE</strong>，增加1548 GE。</td></tr>
+  </tbody></table>
+  <p>按32 nm NAND2等效面积2.54144 μm²/GE，4-slot前端约0.00549 mm²，A约0.00156 mm²。增加的逻辑远小于约0.815 mm²的筛选SRAM面积差，但这不能替代RTL综合，因为路由布线、扇出、同步SRAM输出流水和深宏Bank选择逻辑尚未计入。</p>
+
+  <h2>9. 结论、风险与下一步</h2>
+  <div class="callout goodbox"><strong>本轮支持4-slot继续推进。</strong>扩展到更接近LLM的RMSNorm、Bias融合和门控MLP后，四Lane仍能逐拍精确恢复；更重要的是，池级结果不再只由Softmax/LayerNorm/GELU三例支撑。10例中既有低收益的同深度档案例，也有跨深度档的高收益案例，能清楚解释收益来源。</div>
+  <ol>
+    <li><strong>当前最强证据：</strong>10例无周期损失；4-Lane深度几乎完美均衡；合并池相对两种指定A基线均约减半面积。</li>
+    <li><strong>最大方法学风险：</strong>池级约50%收益强烈依赖2次幂宏边界和所选函数组合。论文必须补“移除一个负载”“改变Y”“随机程序池组合”的敏感性分析，报告收益分布而非只报当前池。</li>
+    <li><strong>面积风险：</strong>超过CACTI现有最大点的深度采用4096-depth payload、8192-depth Config宏拼接；未计深Bank选择与跨宏输出MUX。应尽快用目标SRAM compiler获得34×8192/16384/32768和5×32768/131072真实宏，或明确规定由多个浅宏构成的物理Bank。</li>
+    <li><strong>数值语义风险：</strong>本轮验证的是DAG拓扑、ISA可编码和调度恢复，不是FP16/BF16误差。RMSNorm沿用原LayerNorm的BF16平方/规约与sqrt校正路径，需要用PyTorch/高精度参考做误差和溢出测试。</li>
+    <li><strong>模型覆盖风险：</strong>LogSoftmax是结构代表而非主流推理热点；Bias+SiLU也不是所有模型都显式存在。后续可加入Residual+RMSNorm（已经有可调度DAG）替换其中之一做敏感性分析。</li>
+    <li><strong>硬件下一步：</strong>用现有Config/Lane流建立参数化RTL，逐周期比较五槽输出；实现ready/valid stall下Config PC、phase和四个指针同时保持；综合Candidate A与4-slot同接口版本。</li>
+  </ol>
+  <p><strong>建议的论文表述：</strong>不要写成“为LLM增加几个非线性函数”或“4 Bank比5 Bank小”；应写成：在固定周期配置流下，将异构功能槽的稀疏事件以phase条带方式共享到四个可门控Bank，并通过编译期4-slot约束消除不可编码的五事件周期；对包含归一化、直接激活、Bias融合和门控MLP的程序池，在保持周期的同时降低由槽隔离和SRAM深度量化造成的容量碎片。</p>
+
+  <h2>10. 复现实验</h2>
+  <div class="formula">cd /home/scratch.qinhaoy_gpu_5/gb21b/hw/nvgpu_gb21y/promotion_kpi/compress-vliw-latest-2026-09-02
+
+# 完整实验（约数分钟，取决于机器）
+/bin/python3.11 -u experiments/llm_nonlinear_174bit_extension_study.py
+
+# 只跑9类新增函数的短/长回归
+/bin/python3.11 experiments/llm_nonlinear_174bit_extension_study.py --regression-only
+
+# 不重调度，只由现有JSON重算硬件汇总
+/bin/python3.11 experiments/llm_nonlinear_174bit_extension_study.py --reuse-existing</div>
+  <p class="small">说明：工作区自带的 <code>.python-deps</code> 是macOS二进制轮子，当前Linux环境不能加载。新脚本在仅需调度映射表时提供了最小pandas兼容层，因此无需安装第三方包；原调度器文件保持不变。</p>
+</main></body></html>
