@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>四篇小论文串联为博士学位论文的叙事框架</title>
+  <style>
+    :root{--ink:#182235;--muted:#68758a;--line:#dce4ee;--blue:#2459b7;--green:#08784a;--amber:#9a5700;--red:#a43129;--violet:#6b43b5;--bg:#edf1f6}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.72 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+    main{max-width:1200px;margin:24px auto 72px;padding:43px 54px;background:#fff;border-radius:14px;box-shadow:0 8px 30px #17304c17}
+    h1{font-size:31px;line-height:1.28;margin:0 0 9px}h2{font-size:23px;margin:42px 0 14px;padding-bottom:8px;border-bottom:2px solid #e7edf5}h3{font-size:18px;margin:27px 0 8px}p{margin:8px 0 12px}.meta,.small{color:var(--muted)}
+    .lead{font-size:17px;background:#f5f8fe;border-left:5px solid var(--blue);padding:16px 18px;border-radius:9px}.callout{border:1px solid #b9cbea;background:#f6f8fe;border-radius:10px;padding:14px 17px;margin:14px 0}.callout.good{border-color:#a6d7c0;background:#f2fbf6}.callout.warn{border-color:#edc188;background:#fff9f1}.callout.bad{border-color:#e9b5b2;background:#fff7f6}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin:18px 0}.card{border:1px solid var(--line);border-radius:10px;padding:14px;background:#fbfcfe}.card b{display:block;font-size:20px;margin:2px 0}.card small{color:var(--muted)}
+    table{width:100%;border-collapse:collapse;margin:12px 0 20px;font-size:14px}th,td{border:1px solid var(--line);padding:9px 10px;vertical-align:top}th{background:#edf2f8;text-align:left}tbody tr:nth-child(even){background:#fafbfd}.num{text-align:right;white-space:nowrap}
+    code{background:#eff3f8;padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}.formula{white-space:pre-wrap;background:#111827;color:#eef4ff;padding:14px 17px;border-radius:9px;font:13px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace}
+    .flow{display:grid;grid-template-columns:1fr 60px 1fr;gap:10px;align-items:center;margin:18px 0}.box{border:1px solid var(--line);border-radius:10px;padding:13px;background:#fafbfd}.merge{grid-column:1/4;text-align:center}.arrow{text-align:center;font-size:25px;color:#7d8ba0}.tag{display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:700}.tag.best{background:#dcf5e8;color:#05603a}.tag.ok{background:#e4edff;color:#234d9b}.tag.risk{background:#fff0d9;color:#8f4b00}
+    ul,ol{padding-left:24px}li{margin:5px 0}a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}.goodtxt{color:var(--green)}.warntxt{color:var(--amber)}.badtxt{color:var(--red)}
+    @media(max-width:850px){main{margin:0;padding:25px 15px;border-radius:0}.grid{grid-template-columns:1fr 1fr}.flow{display:block}.arrow{padding:5px}table{display:block;overflow-x:auto}}
+  </style>
+</head>
+<body><main>
+  <h1>四篇小论文串联为博士学位论文的叙事框架</h1>
+  <p class="meta">基于三篇论文原文与第四篇174-bit VLIW/4-slot实验重新梳理｜2026-09-03</p>
+
+  <p class="lead"><strong>推荐结论：</strong>最稳固的总叙事不是“两个VLIW工作加两个非线性工作”，也不是把四篇文章按发表顺序拼接，而是<strong>面向结构可预知复杂计算的多层次资源解耦</strong>。四篇论文分别解除运算与粗粒度任务、函数与固定电路、计算单元与固定角色、逻辑指令槽与物理存储Bank之间的固定绑定；共同采用离线分析或编译，把复杂性从运行时转移到软件侧，使硬件保持确定、简单和高效。</p>
+
+  <div class="grid">
+    <div class="card">第一层<b>运算依赖解耦</b><small>OOLU：operation graph</small></div>
+    <div class="card">第二层<b>函数实现解耦</b><small>SMM-FSM：参数化拟合</small></div>
+    <div class="card">第三层<b>执行资源解耦</b><small>FRV：FUV资源重构</small></div>
+    <div class="card">第四层<b>指令存储解耦</b><small>4-slot：跨槽共享Bank</small></div>
+  </div>
+
+  <h2>1. 四篇论文的准确定位</h2>
+  <table><thead><tr><th>编号</th><th>论文/工作</th><th>核心问题</th><th>核心方法</th><th>在大论文中的角色</th></tr></thead><tbody>
+    <tr><td>第一篇</td><td><a href="../../Revised_Paper_TC_2024_08_0644.pdf">OOLU：稀疏LU分解VLIW加速器</a></td><td>矩阵列/元素级依赖过粗，掩盖可并行的细粒度运算。</td><td>把数值分解转换为operation-level task-flow graph，通过资源和存储冲突感知的静态调度生成VLIW。</td><td>建立“细粒度计算图＋离线静态调度＋简单硬件执行”的方法基础。</td></tr>
+    <tr><td>第二篇</td><td><a href="../../Highly_Efficient_Module_Design_for_General_Multivariate_Nonlinear_Functions_Using_Stochastic_Computing.pdf">SMM-FSM：随机计算通用多变量非线性模块</a></td><td>传统LUT、Taylor、CORDIC或固定随机计算结构无法兼顾复杂函数覆盖与低硬件开销。</td><td>输入空间分段、仿射归一化、分段参数配置；利用K–A表示组合多个单变量SMM-FSM。</td><td>建立“函数不应与固定电路绑定，而应由离线参数配置到统一硬件”的函数级可重构思想。</td></tr>
+    <tr><td>第三篇</td><td><a href="../../Revised_Paper_TVLSI_00472_2026.pdf">FRV-SFU-VLIW：可重构非线性函数加速器</a></td><td>非线性DAG同时包含Vector、Scalar、Reduction、SFU和访存，固定资源划分会造成资源失衡。</td><td>primitive DAG、静态多模式调度、RFU Function Unit Virtualization、逐周期VLIW。</td><td>前两条探索路线的系统汇合点：用图调度组织可编程非线性执行。</td></tr>
+    <tr><td>第四篇</td><td><a href="llm_nonlinear_174bit_extension_and_compression_study_2026-09-03.html">174-bit VLIW的4-slot共享Bank压缩</a></td><td>逐周期VLIW平均槽利用率低，普通纵向压缩仍因功能槽隔离产生Bank容量碎片。</td><td>编译期最多4-slot调度、5-bit target mask、phase条带化四条payload流、Bank门控和精确周期恢复。</td><td>补齐控制面：解决可编程架构生成的宽静态指令流如何低开销存储和逐拍供给。</td></tr>
+  </tbody></table>
+
+  <h2>2. 推荐主线：从固定绑定到多层次可重构映射</h2>
+  <h3>2.1 大论文应回答的总问题</h3>
+  <div class="callout good"><strong>对于计算结构能够在运行前获知，但依赖关系不规则、函数形式多样、操作类型异构的复杂计算，如何把复杂性转移到离线建模和编译阶段，在保持硬件确定性执行的条件下，逐层消除固定绑定造成的并行度损失、功能覆盖不足、计算资源闲置和指令存储浪费？</strong></div>
+
+  <h3>2.2 四篇论文共同的“结构可预知”前提</h3>
+  <table><thead><tr><th>工作</th><th>运行前已知的结构</th><th>软件侧完成的工作</th><th>运行时硬件承担的工作</th></tr></thead><tbody>
+    <tr><td>OOLU</td><td>稀疏矩阵非零模式在多次Newton和瞬态迭代间基本不变。</td><td>符号分解、operation graph、调度和数据映射。</td><td>顺序读取VLIW并驱动Bank、Crossbar和PE。</td></tr>
+    <tr><td>SMM-FSM</td><td>目标函数、定义域、误差要求在模块配置前已知。</td><td>分段、拟合、归一化和参数生成。</td><td>读取分段参数并执行随机状态转移和累加。</td></tr>
+    <tr><td>FRV-SFU-VLIW</td><td>非线性DAG、primitive延迟、寄存器和执行资源约束已知。</td><td>DAG构建、FUV模式分析、周期精确调度。</td><td>每拍执行一条预生成VLIW，不做动态调度。</td></tr>
+    <tr><td>4-slot</td><td>完整逐周期指令trace在程序安装前已知。</td><td>限制发射宽度、事件抽取、Bank条带化和地址生成。</td><td>mask译码、按需读Bank并确定性恢复五个逻辑槽。</td></tr>
+  </tbody></table>
+  <p>因此，四篇工作最深层的一致性不是应用相同，也不是都用了VLIW，而是同一种软硬件分工：</p>
+  <div class="formula">运行前：复杂的结构分析、函数拟合、资源搜索、调度和存储映射
+                         ↓
+运行时：规则、确定、低控制开销的硬件执行
+
+总原则：Offline complexity → Online simplicity</div>
+
+  <h3>2.3 四种“解除固定绑定”</h3>
+  <table><thead><tr><th>原有绑定</th><th>造成的浪费</th><th>解除绑定的方法</th><th>收益</th></tr></thead><tbody>
+    <tr><td>Operation ↔ 矩阵列/元素</td><td>必须等待整个元素或列完成，局部已就绪运算不能提前执行。</td><td>OOLU把更新、除法等操作独立成图节点，根据真实数据依赖调度。</td><td>暴露跨列、跨元素的细粒度并行性。</td></tr>
+    <tr><td>Nonlinear function ↔ 固定电路</td><td>函数变化需要重新设计硬件，复杂或非单调函数难以覆盖。</td><td>SMM-FSM把函数差异转换为分段和参数表差异。</td><td>统一、全数字、可重新配置的函数逼近。</td></tr>
+    <tr><td>RFU ↔ 固定Vector角色</td><td>SFU繁忙时Vector RFU闲置，Vector繁忙时过多SFU又浪费面积。</td><td>FRV通过FUV把部分RFU重构为特殊函数二次多项式后端，由编译器选择模式。</td><td>降低异构非线性DAG中的“dark silicon”与资源失衡。</td></tr>
+    <tr><td>Payload event ↔ 固定slot Bank</td><td>VECTOR Bank可能接近容量上限，SCALAR/SFU Bank却留下无法互借的空间。</td><td>第四篇把五类有效事件条带化到四个共享Bank，再按mask和phase恢复。</td><td>在保持周期的同时降低Bank容量碎片和指令存储面积。</td></tr>
+  </tbody></table>
+
+  <h2>3. 两条前期路线如何在第三篇汇合</h2>
+  <div class="flow">
+    <div class="box"><strong>第一篇：控制与调度路线</strong><br>应用 → 细粒度operation graph → 静态资源调度 → VLIW流</div>
+    <div class="arrow">＋</div>
+    <div class="box"><strong>第二篇：函数与数据通路路线</strong><br>目标非线性函数 → 离线分解/拟合 → 参数化统一硬件</div>
+    <div class="box merge"><strong>第三篇：系统汇合</strong><br>非线性函数 → primitive DAG → FUV资源配置＋静态多模式调度 → FRV-SFU-VLIW</div>
+    <div class="arrow merge">↓</div>
+    <div class="box merge"><strong>第四篇：系统补全</strong><br>宽而稀疏的逐周期VLIW → 跨槽共享Bank → 精确周期指令供给</div>
+  </div>
+  <p>第三篇不是把SMM-FSM直接塞入VLIW。正确关系是：第一篇解决“怎样组织细粒度操作”，第二篇解决“怎样让函数实现可配置”，第三篇将这两个问题意识汇合为面向非线性DAG的可编程执行系统，并选择确定性FP16/BF16轻量SFU满足高吞吐需求。</p>
+
+  <h2>4. 第一篇与第四篇之间的真实连接</h2>
+  <p>第一篇并不需要在第四篇中重新研究LU，但它已经明确暴露了VLIW控制规模问题：</p>
+  <ul>
+    <li>16个PE、32个BRAM Bank的示例VLIW达到832 bit。</li>
+    <li>论文指出指令宽度随PE和Bank数增加，需要软件避免过长指令。</li>
+    <li>FPGA实现中，指令存储与矩阵数据合计消耗60.39%的BRAM。</li>
+    <li>大矩阵需要从DDR/HBM流式提供指令，带宽成为扩展约束。</li>
+    <li>Future Work明确提出instruction compression，以降低VLIW宽度并支持ASIC及更大规模部署。</li>
+  </ul>
+  <p>因此，大论文可以说第一篇揭示了宽静态控制流随并行资源扩展的问题，第三篇在结构更规则的五槽异构VLIW中再次暴露逐周期NOP和instruction footprint，第四篇最终针对这一类问题建立Bank共享与精确恢复方法。</p>
+  <div class="callout warn"><strong>边界必须写清楚：</strong>第四篇目前直接验证的是第三篇174-bit非线性VLIW，不能宣称已经验证OOLU的832-bit、PE-scaled指令。第一篇在大论文中提供问题来源和方法学铺垫，不需要重新开展LU方向实验。</div>
+
+  <h2>5. 建议的大论文章节组织</h2>
+  <table><thead><tr><th>章节</th><th>建议标题</th><th>承担的叙事任务</th></tr></thead><tbody>
+    <tr><td>第1章</td><td>绪论</td><td>提出结构可预知但依赖不规则、操作异构的复杂计算；说明固定绑定在四个层次造成的浪费。</td></tr>
+    <tr><td>第2章</td><td>图驱动可重构加速的统一方法框架</td><td>定义计算图、离线映射、配置时间尺度、静态指令流和软硬件边界，建立全篇共同术语。</td></tr>
+    <tr><td>第3章</td><td>面向稀疏矩阵计算的运算级依赖解耦与VLIW调度</td><td>对应OOLU；证明细粒度图和静态调度可从不规则依赖中释放并行性。</td></tr>
+    <tr><td>第4章</td><td>面向通用非线性函数的分段参数化随机计算架构</td><td>对应SMM-FSM；把可重构性从任务调度推进到函数实现。</td></tr>
+    <tr><td>第5章</td><td>面向非线性DAG的执行资源虚拟化VLIW架构</td><td>对应FRV-SFU-VLIW；汇合图调度与非线性可配置执行，处理Vector/SFU资源失衡。</td></tr>
+    <tr><td>第6章</td><td>面向低槽利用率VLIW的共享Bank压缩与周期精确恢复</td><td>对应第四篇；处理系统可编程性带来的指令存储和供给代价。</td></tr>
+    <tr><td>第7章</td><td>多层次资源解耦的统一分析</td><td>从配置粒度、配置时间尺度、性能、面积、能耗、通用性和运行时开销横向比较四篇工作。</td></tr>
+    <tr><td>第8章</td><td>总结与展望</td><td>总结从依赖、函数、执行资源到指令存储的完整演进。</td></tr>
+  </tbody></table>
+  <p>第2章和第7章非常重要。没有这两个综合章节，四篇论文仍可能看起来像论文合集；加入统一抽象和横向分析后，四篇工作才真正构成体系。</p>
+
+  <h2>6. 四种候选叙事的比较</h2>
+  <table><thead><tr><th>叙事</th><th>核心组织方式</th><th>优点</th><th>主要风险</th><th>建议</th></tr></thead><tbody>
+    <tr><td><span class="tag best">首选</span><br><strong>多层次资源解耦</strong></td><td>运算依赖 → 函数实现 → 执行资源 → 指令存储。</td><td>四篇都有不可替代的位置；抽象统一且不需要虚构技术继承。</td><td>需要第2章明确“结构可预知”和“固定绑定”两个统一概念。</td><td>最适合作为总思想。</td></tr>
+    <tr><td><span class="tag ok">推荐组合</span><br><strong>从计算图到指令供给</strong></td><td>计算表示 → 映射调度 → 执行数据通路 → 指令存储。</td><td>系统层次清楚，第三篇和第四篇衔接最自然。</td><td>SMM-FSM不是FRV-SFU的直接前身，需要按替代设计点描述。</td><td>适合作为章节组织方法。</td></tr>
+    <tr><td><span class="tag risk">可行但较弱</span><br><strong>以非线性处理为主</strong></td><td>SMM-FSM → FRV-SFU-VLIW → LLM函数扩展与指令压缩。</td><td>第二、三、四篇应用域集中，第四篇当前实验也直接支持。</td><td>第一篇稀疏LU容易变成孤立的方法学前传；论文题目不能只写非线性函数。</td><td>可作备选，不建议作为最终总线。</td></tr>
+    <tr><td><span class="tag risk">风险较高</span><br><strong>VLIW架构演进</strong></td><td>OOLU VLIW → FRV异构VLIW → 4-slot压缩。</td><td>第一、三、四篇连接直接，第一篇Future Work已提出压缩。</td><td>第二篇没有VLIW；把它描述成第三篇SFU前身会被质疑。</td><td>不建议单独作为主线。</td></tr>
+  </tbody></table>
+
+  <h2>7. 非线性主线的正确写法</h2>
+  <p>如果最终仍希望突出非线性处理，可以把第二篇和第三篇定义为两个互补设计点，而不是前后代产品：</p>
+  <table><thead><tr><th>维度</th><th>SMM-FSM</th><th>FRV-SFU-VLIW</th></tr></thead><tbody>
+    <tr><td>目标</td><td>任意单变量/多变量函数拟合和低面积。</td><td>Transformer常见非线性DAG的高吞吐可编程执行。</td></tr>
+    <tr><td>表示</td><td>随机比特流。</td><td>FP16/BF16确定性计算。</td></tr>
+    <tr><td>扩展方法</td><td>改变分段、状态机和参数。</td><td>利用已有primitive构建新DAG并重新编译。</td></tr>
+    <tr><td>优势</td><td>拟合一般性强、结构紧凑。</td><td>执行周期短、适合静态调度与系统集成。</td></tr>
+    <tr><td>代价</td><td>随机序列导致精度—延迟—能量权衡。</td><td>产生宽而稀疏的逐周期VLIW，需要第四篇解决指令开销。</td></tr>
+  </tbody></table>
+
+  <h2>8. 推荐题目与摘要核心句</h2>
+  <h3>8.1 首选题目</h3>
+  <div class="callout good"><strong>《面向结构可预知复杂计算的多层次资源解耦与可重构加速方法研究》</strong></div>
+  <p>其他可选题目：</p>
+  <ul>
+    <li>《面向不规则与非线性计算的图驱动可重构加速架构研究》</li>
+    <li>《从计算图到指令供给：复杂计算加速器的软硬件协同设计》</li>
+    <li>《面向复杂计算的可配置数据通路与静态控制流协同优化》</li>
+  </ul>
+
+  <h3>8.2 可直接用于摘要或绪论的核心句</h3>
+  <div class="formula">本文针对结构在运行前可知、但依赖关系不规则且操作类型异构的复杂计算，研究图驱动的软硬件协同加速方法。本文依次从运算依赖、非线性函数实现、执行资源角色和指令存储组织四个层次解除固定绑定，将复杂的依赖分析、函数拟合、资源配置和指令映射转移到离线软件阶段，在保持运行时确定性执行的同时，提高计算并行度、函数可编程性、执行资源利用率和指令存储效率。</div>
+
+  <h2>9. 四篇之间可直接使用的过渡逻辑</h2>
+  <h3>第一篇 → 第二篇</h3>
+  <p>第一篇表明，对运行前结构可知的不规则计算，细粒度表示和离线优化能够显著简化硬件并释放并行性。但仅优化依赖调度还不能解决计算功能随应用变化的问题，因此进一步研究函数级可配置硬件。</p>
+  <h3>第二篇 → 第三篇</h3>
+  <p>第二篇证明了通过离线参数生成可以在统一硬件上覆盖多样非线性函数，但随机序列存在明显的精度—延迟权衡。对于Transformer等需要高吞吐且包含规约、逐元素、SFU和数据搬移的非线性DAG，需要进一步采用确定性数值表示、细粒度DAG和可重构执行资源。</p>
+  <h3>第三篇 → 第四篇</h3>
+  <p>第三篇通过FUV和静态多模式调度提高了计算资源利用率，但它每周期读取完整VLIW，未使用槽填充NOP；论文已经依靠tiling在指令存储与周期之间折中。这说明计算数据通路得到优化后，指令存储和供给成为下一层瓶颈，因而需要4-slot共享Bank压缩。</p>
+  <h3>全篇收束</h3>
+  <p>四篇工作依次回答“算什么操作”“怎样表示函数”“由哪些资源执行”“如何低成本提供控制”四个问题，形成从计算表达、执行组织到控制存储的完整软硬件协同链条。</p>
+
+  <h2>10. 必须避免的叙事错误</h2>
+  <div class="callout bad">
+    <ol>
+      <li><strong>不能说SMM-FSM演化成FRV-SFU。</strong>两者数值表示、目标和硬件路径不同，是互补设计点。</li>
+      <li><strong>不能把稀疏LU称为非线性函数计算。</strong>SPICE外层有非线性迭代，但第一篇直接加速的是数值LU分解。</li>
+      <li><strong>不能宣称第四篇已经验证OOLU压缩。</strong>当前直接证据来自第三篇174-bit VLIW和非线性/LLM负载。</li>
+      <li><strong>不能只把“VLIW”当共同点。</strong>第二篇不是VLIW；真正共同的是离线结构提取、配置化映射和在线确定性执行。</li>
+      <li><strong>不能把第四篇写成第三篇的附属工程优化。</strong>它解决的是逻辑槽与物理存储绑定导致的一般性容量碎片问题，并补齐控制面。</li>
+    </ol>
+  </div>
+
+  <h2>11. 最终建议</h2>
+  <p class="lead"><strong>总思想采用“多层次资源解耦”，章节结构采用“从计算图到指令供给”。</strong>第一篇和第二篇作为两条互补的前期探索路线，第三篇作为汇合点，第四篇作为系统层面的收束。这样既保留第一篇和第二篇的独立学术价值，又能让第三、第四篇形成强连续性，而且不需要引入SMM-FSM+SFU或重新研究LU等已被导师否定的方向。</p>
+</main></body></html>
