@@ -1,38 +1,28 @@
 `timescale 1ns/1ps
 `default_nettype none
 
-// -----------------------------------------------------------------------------
-// Testbench for exp3_2slot2lane_top (rtl/plan.md section 6.1) -- pool mode only
-//
-//   iverilog -g2012 -o simv rtl/sim/tb_exp3_2slot2lane.v \
-//       rtl/src/exp3_2slot2lane_top.v rtl/src/cfg_pair_codebook.v \
-//       rtl/src/sram_8192x5_wrapper.v rtl/src/sram_4096x34_wrapper.v \
-//       rtl/src/ts1n28hpcphvtb8192x5m8swbasod_180a_ffg0p88v0p99v0c.v \
-//       rtl/src/ts1n28hpcphvtb4096x34m8swbasod_180a_ffg0p88v0p99v0c.v
-//   vvp simv +DATA=rtl/data +OUT=rtl/out/pool/rtl_out_e3_pool.txt
-//
-// Pool flow identical to tb_exp1_candidate_a; read-count checks: config reads
-// == cfg_total (one per cycle incl. the EOP entry) and lane l reads ==
-// lane_totals[l] (exact per-lane gating).
-// -----------------------------------------------------------------------------
-
-module tb_exp3_2slot2lane;
+// 最简 E4 testbench（2slot4lane，程序池模式，相对路径，无 plusarg）。
+// 当前目录 = 仓库根。读 rtl/data/e4_pool_*.memh，结果写当前目录 rtl_out_e4.txt。
+// 整池一次装入 5 个宏（config + 4 Lane），逐程序复位前端、按描述符切换。
+module tb_exp4_simple;
 
     localparam integer CFG_DEPTH     = 8192;
-    localparam integer LANE_DEPTH    = 4096;
+    localparam integer LANE_DEPTH    = 2048;
     localparam real    CLK_PERIOD_NS = 1.000;
 
     reg                    clk;
     reg                    rst_n;
     reg                    load_en;
-    reg  [1:0]             load_sel;
+    reg  [2:0]             load_sel;
     reg  [12:0]            load_addr;
     reg  [33:0]            load_wdata;
     reg                    start;
     reg  [12:0]            cfg_base;
     reg  [13:0]            prog_len;
-    reg  [11:0]            lane_base0;
-    reg  [11:0]            lane_base1;
+    reg  [10:0]            lane_base0;
+    reg  [10:0]            lane_base1;
+    reg  [10:0]            lane_base2;
+    reg  [10:0]            lane_base3;
 
     wire [1:0]  load_mem_fmt;
     wire [19:0] load_mem_addr;
@@ -69,7 +59,7 @@ module tb_exp3_2slot2lane;
     wire        eop;
     wire        done;
 
-    exp3_2slot2lane_top dut (
+    exp4_2slot4lane_top dut (
         .clk           (clk),
         .rst_n         (rst_n),
         .load_en       (load_en),
@@ -81,6 +71,8 @@ module tb_exp3_2slot2lane;
         .prog_len      (prog_len),
         .lane_base0    (lane_base0),
         .lane_base1    (lane_base1),
+        .lane_base2    (lane_base2),
+        .lane_base3    (lane_base3),
         .load_mem_fmt  (load_mem_fmt),
         .load_mem_addr (load_mem_addr),
         .load_gpr_fmt  (load_gpr_fmt),
@@ -117,9 +109,6 @@ module tb_exp3_2slot2lane;
         .done           (done)
     );
 
-    // ------------------------------------------------------------------
-    // Container reassembly from field ports (same as tb_exp0_uncompressed)
-    // ------------------------------------------------------------------
     function [33:0] pack_ls;
         input [1:0]  mem_fmt;
         input [19:0] mem_addr;
@@ -172,40 +161,37 @@ module tb_exp3_2slot2lane;
         end
     endfunction
 
-    // ------------------------------------------------------------------
-    // Clock / data / output plumbing
-    // ------------------------------------------------------------------
     initial begin
         clk = 1'b0;
         forever #(CLK_PERIOD_NS/2.0) clk = ~clk;
     end
 
-    reg  [4:0]    cfg_imem   [0:CFG_DEPTH-1];
+    reg  [5:0]    cfg_imem   [0:CFG_DEPTH-1];
     reg  [33:0]   lane0_imem [0:LANE_DEPTH-1];
     reg  [33:0]   lane1_imem [0:LANE_DEPTH-1];
+    reg  [33:0]   lane2_imem [0:LANE_DEPTH-1];
+    reg  [33:0]   lane3_imem [0:LANE_DEPTH-1];
     reg  [31:0]   pool_meta [0:63];
-    reg  [1023:0] data_dir;
-    reg  [1023:0] out_path;
     integer       out_fd;
     integer       i;
     integer       p;
     integer       n_prog;
     integer       cfg_total;
-    integer       lane_total [0:1];
+    integer       lane_total [0:3];
     integer       emit_count;
     integer       cfg_reads;
-    integer       lane_reads [0:1];
+    integer       lane_reads [0:3];
     integer       timeout;
     integer       pool_errors;
 
-    // energy statistics: actual macro read cycles (hierarchical probes)
     always @(posedge clk) begin
         if (rst_n && dut.cfg_cen && !dut.cfg_wen) cfg_reads = cfg_reads + 1;
         if (rst_n && dut.lane0_cen && !dut.lane0_wen) lane_reads[0] = lane_reads[0] + 1;
         if (rst_n && dut.lane1_cen && !dut.lane1_wen) lane_reads[1] = lane_reads[1] + 1;
+        if (rst_n && dut.lane2_cen && !dut.lane2_wen) lane_reads[2] = lane_reads[2] + 1;
+        if (rst_n && dut.lane3_cen && !dut.lane3_wen) lane_reads[3] = lane_reads[3] + 1;
     end
 
-    // capture one output line per accepted cycle
     always @(posedge clk) begin
         if (rst_n) begin
             #0.200;
@@ -229,9 +215,6 @@ module tb_exp3_2slot2lane;
         end
     end
 
-    // ------------------------------------------------------------------
-    // helper tasks
-    // ------------------------------------------------------------------
     task do_reset;
         begin
             rst_n = 1'b0;
@@ -244,7 +227,7 @@ module tb_exp3_2slot2lane;
     endtask
 
     task do_load_macro;
-        input [1:0]   sel;
+        input [2:0]   sel;
         input integer n;
         begin
             for (i = 0; i < n; i = i + 1) begin
@@ -252,9 +235,11 @@ module tb_exp3_2slot2lane;
                 load_sel   = sel;
                 load_addr  = i[12:0];
                 case (sel)
-                    2'd0: load_wdata = {29'b0, cfg_imem[i]};
-                    2'd1: load_wdata = lane0_imem[i];
-                    2'd2: load_wdata = lane1_imem[i];
+                    3'd0: load_wdata = {28'b0, cfg_imem[i]};
+                    3'd1: load_wdata = lane0_imem[i];
+                    3'd2: load_wdata = lane1_imem[i];
+                    3'd3: load_wdata = lane2_imem[i];
+                    3'd4: load_wdata = lane3_imem[i];
                     default: load_wdata = 34'b0;
                 endcase
                 @(negedge clk);
@@ -262,101 +247,90 @@ module tb_exp3_2slot2lane;
         end
     endtask
 
-    task do_run_one;
-        input integer meta_idx;
-        integer len;
-        begin
-            cfg_base   = pool_meta[meta_idx][12:0];
-            prog_len   = pool_meta[meta_idx + 1][13:0];
-            lane_base0 = pool_meta[meta_idx + 2][11:0];
-            lane_base1 = pool_meta[meta_idx + 3][11:0];
-            len        = pool_meta[meta_idx + 1];
-            emit_count = 0;
-            @(negedge clk);
-            start = 1'b1;
-            @(negedge clk);
-            start = 1'b0;
-            timeout = 10 * len + 1000;
-            while (!done && timeout > 0) begin
-                @(negedge clk);
-                timeout = timeout - 1;
-            end
-            if (!done) begin
-                $display("ERROR: watchdog timeout, done not asserted");
-                $fdisplay(out_fd, "# ERROR: watchdog timeout");
-                pool_errors = pool_errors + 1;
-            end
-            @(negedge clk);
-            if (emit_count != len) begin
-                $display("ERROR: emitted %0d cycles, expected %0d", emit_count, len);
-                pool_errors = pool_errors + 1;
-            end
-        end
-    endtask
-
-    // ------------------------------------------------------------------
-    // main flow (pool mode)
-    // ------------------------------------------------------------------
     initial begin
-        if (!$value$plusargs("DATA=%s", data_dir)) begin
-            $display("ERROR: missing +DATA=<dir> plusarg");
-            $finish;
-        end
-        if (!$value$plusargs("OUT=%s", out_path)) begin
-            $display("ERROR: missing +OUT=<path> plusarg");
+        // 相对仓库根目录读池数据
+        $readmemh("rtl/data/e4_pool_meta.hex", pool_meta);
+        n_prog        = pool_meta[0];
+        cfg_total     = pool_meta[1];
+        lane_total[0] = pool_meta[2];
+        lane_total[1] = pool_meta[3];
+        lane_total[2] = pool_meta[4];
+        lane_total[3] = pool_meta[5];
+        $readmemh("rtl/data/e4_pool_config6.memh", cfg_imem, 0, cfg_total-1);
+        $readmemh("rtl/data/e4_pool_lane0.memh", lane0_imem, 0, lane_total[0]-1);
+        $readmemh("rtl/data/e4_pool_lane1.memh", lane1_imem, 0, lane_total[1]-1);
+        $readmemh("rtl/data/e4_pool_lane2.memh", lane2_imem, 0, lane_total[2]-1);
+        $readmemh("rtl/data/e4_pool_lane3.memh", lane3_imem, 0, lane_total[3]-1);
+
+        out_fd = $fopen("rtl_out_e4.txt", "w");
+        if (out_fd == 0) begin
+            $display("ERROR: cannot open rtl_out_e4.txt");
             $finish;
         end
 
         emit_count  = 0;
         cfg_reads   = 0;
         lane_reads[0] = 0; lane_reads[1] = 0;
+        lane_reads[2] = 0; lane_reads[3] = 0;
         pool_errors = 0;
         rst_n       = 1'b0;
         load_en     = 1'b0;
-        load_sel    = 2'd0;
+        load_sel    = 3'd0;
         load_addr   = 13'd0;
         load_wdata  = 34'd0;
         start       = 1'b0;
         cfg_base    = 13'd0;
         prog_len    = 14'd0;
-        lane_base0  = 12'd0; lane_base1 = 12'd0;
+        lane_base0  = 11'd0; lane_base1 = 11'd0;
+        lane_base2  = 11'd0; lane_base3 = 11'd0;
 
-        out_fd = $fopen(out_path, "w");
-        if (out_fd == 0) begin
-            $display("ERROR: cannot open %0s", out_path);
-            $finish;
-        end
-
-        // ---- read pool meta and images ----
-        $readmemh({data_dir, "/e3_pool_meta.hex"}, pool_meta);
-        n_prog        = pool_meta[0];
-        cfg_total     = pool_meta[1];
-        lane_total[0] = pool_meta[2];
-        lane_total[1] = pool_meta[3];
-        $readmemh({data_dir, "/e3_pool_config5.memh"}, cfg_imem, 0, cfg_total-1);
-        $readmemh({data_dir, "/e3_pool_lane0.memh"}, lane0_imem, 0, lane_total[0]-1);
-        $readmemh({data_dir, "/e3_pool_lane1.memh"}, lane1_imem, 0, lane_total[1]-1);
-
-        // ---- load all three macros once ----
+        // 整池一次装入 5 个宏
         do_reset;
-        do_load_macro(2'd0, cfg_total);
-        do_load_macro(2'd1, lane_total[0]);
-        do_load_macro(2'd2, lane_total[1]);
+        do_load_macro(3'd0, cfg_total);
+        do_load_macro(3'd1, lane_total[0]);
+        do_load_macro(3'd2, lane_total[1]);
+        do_load_macro(3'd3, lane_total[2]);
+        do_load_macro(3'd4, lane_total[3]);
         load_en = 1'b0;
 
-        // ---- run programs one by one ----
+        // 逐程序切换运行
         for (p = 0; p < n_prog; p = p + 1) begin
             $fdisplay(out_fd, "# prog %0d", p);
             do_reset;
-            do_run_one(4 + 4 * p);
+            cfg_base   = pool_meta[6 + 6*p][12:0];
+            prog_len   = pool_meta[6 + 6*p + 1][13:0];
+            lane_base0 = pool_meta[6 + 6*p + 2][10:0];
+            lane_base1 = pool_meta[6 + 6*p + 3][10:0];
+            lane_base2 = pool_meta[6 + 6*p + 4][10:0];
+            lane_base3 = pool_meta[6 + 6*p + 5][10:0];
+            emit_count = 0;
+            @(negedge clk);
+            start = 1'b1;
+            @(negedge clk);
+            start = 1'b0;
+            timeout = 10 * prog_len + 1000;
+            while (!done && timeout > 0) begin
+                @(negedge clk);
+                timeout = timeout - 1;
+            end
+            @(negedge clk);
+            if (!done) begin
+                $display("ERROR: prog %0d watchdog timeout", p);
+                pool_errors = pool_errors + 1;
+            end
+            if (emit_count != prog_len) begin
+                $display("ERROR: prog %0d emitted %0d, expected %0d",
+                         p, emit_count, prog_len);
+                pool_errors = pool_errors + 1;
+            end
         end
 
-        // ---- exact-gating read-count checks ----
+        // 精确门控读次数校验
         if (cfg_reads != cfg_total) begin
             $display("ERROR: config reads %0d != cfg_total %0d", cfg_reads, cfg_total);
             pool_errors = pool_errors + 1;
         end
-        for (p = 0; p < 2; p = p + 1) begin
+        for (p = 0; p < 4; p = p + 1) begin
             if (lane_reads[p] != lane_total[p]) begin
                 $display("ERROR: lane %0d reads %0d != total %0d",
                          p, lane_reads[p], lane_total[p]);
@@ -365,12 +339,14 @@ module tb_exp3_2slot2lane;
         end
 
         $fclose(out_fd);
-        $display("[tb] E3 POOL programs=%0d cfg_reads=%0d lane_reads=%0d/%0d errors=%0d",
-                 n_prog, cfg_reads, lane_reads[0], lane_reads[1], pool_errors);
+        $display("[tb] E4 POOL programs=%0d cfg_reads=%0d lane_reads=%0d/%0d/%0d/%0d errors=%0d",
+                 n_prog, cfg_reads,
+                 lane_reads[0], lane_reads[1], lane_reads[2], lane_reads[3],
+                 pool_errors);
         if (pool_errors == 0) begin
-            $display("[tb] PASS: E3 pool run completed, %0d programs", n_prog);
+            $display("[tb] PASS: E4 pool run completed, %0d programs", n_prog);
         end else begin
-            $display("[tb] FAIL: E3 pool run had %0d errors", pool_errors);
+            $display("[tb] FAIL: E4 pool run had %0d errors", pool_errors);
         end
         $finish;
     end

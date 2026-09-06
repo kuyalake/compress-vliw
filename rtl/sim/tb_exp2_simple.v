@@ -1,22 +1,10 @@
 `timescale 1ns/1ps
 `default_nettype none
 
-// -----------------------------------------------------------------------------
-// Testbench for exp2_adaptive_4slot_top (rtl/plan.md section 6.1) -- pool mode
-//
-//   iverilog -g2012 -o simv rtl/sim/tb_exp2_adaptive_4slot.v \
-//       rtl/src/exp2_adaptive_4slot_top.v \
-//       rtl/src/sram_8192x5_wrapper.v rtl/src/sram_2048x34_wrapper.v \
-//       rtl/src/ts1n28hpcphvtb8192x5m8swbasod_180a_ffg0p88v0p99v0c.v \
-//       rtl/src/ts1n28hpcphvtb2048x34m8swbasod_180a_ffg0p88v0p99v0c.v
-//   vvp simv +DATA=rtl/data +OUT=rtl/out/pool/rtl_out_e2_pool.txt
-//
-// Pool flow identical to tb_exp1_candidate_a; read-count checks: config reads
-// == cfg_total (one per cycle incl. the EOP entry) and lane l reads ==
-// lane_totals[l] (exact per-lane gating).
-// -----------------------------------------------------------------------------
-
-module tb_exp2_adaptive_4slot;
+// 最简 E2 testbench（4slot 自适应四 Lane，程序池模式，相对路径，无 plusarg）。
+// 当前目录 = 仓库根。读 rtl/data/e2_pool_*.memh，结果写当前目录 rtl_out_e2.txt。
+// 整池一次装入 5 个宏（config + 4 Lane），逐程序复位前端、按描述符切换。
+module tb_exp2_simple;
 
     localparam integer CFG_DEPTH     = 8192;
     localparam integer LANE_DEPTH    = 2048;
@@ -121,9 +109,6 @@ module tb_exp2_adaptive_4slot;
         .done           (done)
     );
 
-    // ------------------------------------------------------------------
-    // Container reassembly from field ports (same as tb_exp0_uncompressed)
-    // ------------------------------------------------------------------
     function [33:0] pack_ls;
         input [1:0]  mem_fmt;
         input [19:0] mem_addr;
@@ -176,9 +161,6 @@ module tb_exp2_adaptive_4slot;
         end
     endfunction
 
-    // ------------------------------------------------------------------
-    // Clock / data / output plumbing
-    // ------------------------------------------------------------------
     initial begin
         clk = 1'b0;
         forever #(CLK_PERIOD_NS/2.0) clk = ~clk;
@@ -190,8 +172,6 @@ module tb_exp2_adaptive_4slot;
     reg  [33:0]   lane2_imem [0:LANE_DEPTH-1];
     reg  [33:0]   lane3_imem [0:LANE_DEPTH-1];
     reg  [31:0]   pool_meta [0:63];
-    reg  [1023:0] data_dir;
-    reg  [1023:0] out_path;
     integer       out_fd;
     integer       i;
     integer       p;
@@ -204,7 +184,6 @@ module tb_exp2_adaptive_4slot;
     integer       timeout;
     integer       pool_errors;
 
-    // energy statistics: actual macro read cycles (hierarchical probes)
     always @(posedge clk) begin
         if (rst_n && dut.cfg_cen && !dut.cfg_wen) cfg_reads = cfg_reads + 1;
         if (rst_n && dut.lane0_cen && !dut.lane0_wen) lane_reads[0] = lane_reads[0] + 1;
@@ -213,7 +192,6 @@ module tb_exp2_adaptive_4slot;
         if (rst_n && dut.lane3_cen && !dut.lane3_wen) lane_reads[3] = lane_reads[3] + 1;
     end
 
-    // capture one output line per accepted cycle
     always @(posedge clk) begin
         if (rst_n) begin
             #0.200;
@@ -237,9 +215,6 @@ module tb_exp2_adaptive_4slot;
         end
     end
 
-    // ------------------------------------------------------------------
-    // helper tasks
-    // ------------------------------------------------------------------
     task do_reset;
         begin
             rst_n = 1'b0;
@@ -272,50 +247,24 @@ module tb_exp2_adaptive_4slot;
         end
     endtask
 
-    task do_run_one;
-        input integer meta_idx;
-        integer len;
-        begin
-            cfg_base   = pool_meta[meta_idx][12:0];
-            prog_len   = pool_meta[meta_idx + 1][13:0];
-            lane_base0 = pool_meta[meta_idx + 2][10:0];
-            lane_base1 = pool_meta[meta_idx + 3][10:0];
-            lane_base2 = pool_meta[meta_idx + 4][10:0];
-            lane_base3 = pool_meta[meta_idx + 5][10:0];
-            len        = pool_meta[meta_idx + 1];
-            emit_count = 0;
-            @(negedge clk);
-            start = 1'b1;
-            @(negedge clk);
-            start = 1'b0;
-            timeout = 10 * len + 1000;
-            while (!done && timeout > 0) begin
-                @(negedge clk);
-                timeout = timeout - 1;
-            end
-            if (!done) begin
-                $display("ERROR: watchdog timeout, done not asserted");
-                $fdisplay(out_fd, "# ERROR: watchdog timeout");
-                pool_errors = pool_errors + 1;
-            end
-            @(negedge clk);
-            if (emit_count != len) begin
-                $display("ERROR: emitted %0d cycles, expected %0d", emit_count, len);
-                pool_errors = pool_errors + 1;
-            end
-        end
-    endtask
-
-    // ------------------------------------------------------------------
-    // main flow (pool mode)
-    // ------------------------------------------------------------------
     initial begin
-        if (!$value$plusargs("DATA=%s", data_dir)) begin
-            $display("ERROR: missing +DATA=<dir> plusarg");
-            $finish;
-        end
-        if (!$value$plusargs("OUT=%s", out_path)) begin
-            $display("ERROR: missing +OUT=<path> plusarg");
+        // 相对仓库根目录读池数据
+        $readmemh("rtl/data/e2_pool_meta.hex", pool_meta);
+        n_prog        = pool_meta[0];
+        cfg_total     = pool_meta[1];
+        lane_total[0] = pool_meta[2];
+        lane_total[1] = pool_meta[3];
+        lane_total[2] = pool_meta[4];
+        lane_total[3] = pool_meta[5];
+        $readmemh("rtl/data/e2_pool_config5.memh", cfg_imem, 0, cfg_total-1);
+        $readmemh("rtl/data/e2_pool_lane0.memh", lane0_imem, 0, lane_total[0]-1);
+        $readmemh("rtl/data/e2_pool_lane1.memh", lane1_imem, 0, lane_total[1]-1);
+        $readmemh("rtl/data/e2_pool_lane2.memh", lane2_imem, 0, lane_total[2]-1);
+        $readmemh("rtl/data/e2_pool_lane3.memh", lane3_imem, 0, lane_total[3]-1);
+
+        out_fd = $fopen("rtl_out_e2.txt", "w");
+        if (out_fd == 0) begin
+            $display("ERROR: cannot open rtl_out_e2.txt");
             $finish;
         end
 
@@ -335,27 +284,7 @@ module tb_exp2_adaptive_4slot;
         lane_base0  = 11'd0; lane_base1 = 11'd0;
         lane_base2  = 11'd0; lane_base3 = 11'd0;
 
-        out_fd = $fopen(out_path, "w");
-        if (out_fd == 0) begin
-            $display("ERROR: cannot open %0s", out_path);
-            $finish;
-        end
-
-        // ---- read pool meta and images ----
-        $readmemh({data_dir, "/e2_pool_meta.hex"}, pool_meta);
-        n_prog        = pool_meta[0];
-        cfg_total     = pool_meta[1];
-        lane_total[0] = pool_meta[2];
-        lane_total[1] = pool_meta[3];
-        lane_total[2] = pool_meta[4];
-        lane_total[3] = pool_meta[5];
-        $readmemh({data_dir, "/e2_pool_config5.memh"}, cfg_imem, 0, cfg_total-1);
-        $readmemh({data_dir, "/e2_pool_lane0.memh"}, lane0_imem, 0, lane_total[0]-1);
-        $readmemh({data_dir, "/e2_pool_lane1.memh"}, lane1_imem, 0, lane_total[1]-1);
-        $readmemh({data_dir, "/e2_pool_lane2.memh"}, lane2_imem, 0, lane_total[2]-1);
-        $readmemh({data_dir, "/e2_pool_lane3.memh"}, lane3_imem, 0, lane_total[3]-1);
-
-        // ---- load all five macros once ----
+        // 整池一次装入 5 个宏
         do_reset;
         do_load_macro(3'd0, cfg_total);
         do_load_macro(3'd1, lane_total[0]);
@@ -364,14 +293,39 @@ module tb_exp2_adaptive_4slot;
         do_load_macro(3'd4, lane_total[3]);
         load_en = 1'b0;
 
-        // ---- run programs one by one ----
+        // 逐程序切换运行
         for (p = 0; p < n_prog; p = p + 1) begin
             $fdisplay(out_fd, "# prog %0d", p);
             do_reset;
-            do_run_one(6 + 6 * p);
+            cfg_base   = pool_meta[6 + 6*p][12:0];
+            prog_len   = pool_meta[6 + 6*p + 1][13:0];
+            lane_base0 = pool_meta[6 + 6*p + 2][10:0];
+            lane_base1 = pool_meta[6 + 6*p + 3][10:0];
+            lane_base2 = pool_meta[6 + 6*p + 4][10:0];
+            lane_base3 = pool_meta[6 + 6*p + 5][10:0];
+            emit_count = 0;
+            @(negedge clk);
+            start = 1'b1;
+            @(negedge clk);
+            start = 1'b0;
+            timeout = 10 * prog_len + 1000;
+            while (!done && timeout > 0) begin
+                @(negedge clk);
+                timeout = timeout - 1;
+            end
+            @(negedge clk);
+            if (!done) begin
+                $display("ERROR: prog %0d watchdog timeout", p);
+                pool_errors = pool_errors + 1;
+            end
+            if (emit_count != prog_len) begin
+                $display("ERROR: prog %0d emitted %0d, expected %0d",
+                         p, emit_count, prog_len);
+                pool_errors = pool_errors + 1;
+            end
         end
 
-        // ---- exact-gating read-count checks ----
+        // 精确门控读次数校验
         if (cfg_reads != cfg_total) begin
             $display("ERROR: config reads %0d != cfg_total %0d", cfg_reads, cfg_total);
             pool_errors = pool_errors + 1;

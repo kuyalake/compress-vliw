@@ -321,54 +321,47 @@ selected[s] = 0：非 OP 字段寄存器保持（写使能关断）；OP 字段�
 
 ## 6. Testbench 与校验
 
-### 6.1 `rtl/sim/tb_expN_*.v`（每方案一个，结构统一）
+### 6.1 `rtl/sim/tb_expN_simple.v`（每方案一个，结构统一）
 
-1. 时钟/复位；`+DATA=<dir>` plusarg 指定数据目录；`+POOL=1` 进入程序池模式。
-2. **装载阶段**：`load_en=1`，按 manifest 深度把 memh 逐项写入各宏（tb 内 `$readmemh` 到临时数组 → 逐地址驱动装载口）。池模式下整池镜像只装这一次。
-3. **运行阶段**：单程序模式直接 `start`（基址 0）；池模式逐程序：写 `# prog <k>` 分段标记 → 复位前端（宏内容保持）→ 驱动 `{prog_base, prog_len}` → `start` → 等 `done`。每拍若 `slot_valid`，tb 按 §3.2 打包公式把五个槽的字段端口重组为 34-bit 容器（重组是无损拼接，字段端口的任何保持错误都会反映到容器），连同 `eop` 以 hex 追加写入输出文件。
-4. **结束**：`eop` 后检查 `done` 拉高；watchdog 超时（如 10×T 拍）报错；同时输出各宏实际读使能拍数统计（能耗用；池模式应等于总字数 5515，即每指令恰好一次读）。
+全部**程序池模式**、**相对仓库根路径**、**无 plusarg**：
+
+1. 时钟/复位；从 `rtl/data/eN_pool_meta.hex` 读池描述（程序数、各宏总字数、逐程序基址/长度），从 `rtl/data/eN_pool_*.memh` 读整池镜像。
+2. **装载阶段**：`load_en=1`，整池镜像逐地址写入各宏（只装这一次）。
+3. **运行阶段**：逐程序：写 `# prog <k>` 分段标记 → 复位前端（宏内容保持）→ 驱动描述符 → `start` → 等 `done`。每拍若 `slot_valid`，tb 按 §3.2 打包公式把五槽字段端口无损重组为 34-bit 容器，连同 `eop` 以 hex 追加写入当前目录 `rtl_out_eN.txt`。
+4. **结束**：每程序检查 `done` 与发射拍数；并校验各宏实际读使能拍数 == 池 meta 中的精确总数（门控正确性）；watchdog 超时报错。
 
 ### 6.2 `rtl/tools/check_rtl_output.py`
 
-- 输入：`rtl_out.txt` + `golden.txt`（+ manifest）。
+- 输入：`rtl_out_eN.txt` + 对应族的 golden（+ manifest）。
 - 逐拍逐槽比对；报告首个不匹配的拍号、槽名、期望/实际；检查总拍数一致、EOP 位置正确、EOP 后无多余输出。golden 已含保持语义，故比对同时验证：有效槽字段全对、无效槽 OP=0 且非 OP 字段精确保持（任何无效拍的字段毛刺/误写都会被捕获）。
-- **池模式**（`--pool --map e0_pool_map.txt --data rtl/data [--raw]`）：按 `# prog <k>` 标记切分段，按 map 把第 k 段与对应 case 的 golden 比对；段缺失/多余/段内不匹配均报错。
+- **池模式**（`--pool --map eN_pool_map.txt --data rtl/data [--golden-name ...]`）：按 `# prog <k>` 标记切分段，按 map 把第 k 段与对应 case 的 golden 比对；段缺失/多余/段内不匹配均报错。golden 按调度族选：E0/E1 用 `golden_issue5.txt`（默认），E2 用 `golden_issue4.txt`，E3/E4 用 `golden_issue2.txt`。
 - 退出码 0/1，供 CI；`--verbose` 打印前 N 拍对照表。
-- 一次运行覆盖：E0 双口径（HOLD_EN=1/0）+ E1–E4 仅保持口径；每方案 3 case 池回归，全过才算通过。
+- 一次运行覆盖：五方案各 3 case 池回归（均为保持口径），全过才算通过。
 
 ### 6.3 在 ModelSim/Questa 中运行（另一台机器）
 
-文件全部为可移植 Verilog-2001/2005 + 标准系统任务，无 iverilog 专有构造，可直接使用。一键脚本 `rtl/sim/run_e0_modelsim.sh`（与 `run_e0.sh` 同结构），手工流程：
+文件全部为可移植 Verilog-2001/2005 + 标准系统任务，无仿真器专有构造。按 §6.4 的最简约定运行：用户自己的 tcl 只做 `vlib/vlog/vsim/run` 四步，tb 为 `tb_expN_simple.v`，相对仓库根读数据、无需 plusarg。
 
-```bash
-vlib work
-vlog +define+UNIT_DELAY +define+SRAM_TIMING_SIM_INPUT_DELAY \
-    rtl/src/ts1n28hpcphvtb8192x144m4swbasod_180a_ffg0p88v0p99v0c.v \
-    rtl/src/ts1n28hpcphvtb8192x27m4swbasod_180a_ffg0p88v0p99v0c.v \
-    rtl/src/sram_8192x171_wrapper.v \
-    rtl/src/exp0_uncompressed_top.v \
-    rtl/sim/tb_exp0_uncompressed.v
-vsim -c -GHOLD_EN=1 work.tb_exp0_uncompressed \
-    "+DATA=rtl/data/softmax_x64" "+OUT=rtl/out/softmax_x64/rtl_out_e0.txt" \
-    -do "run -all; quit -f"
-python3 rtl/tools/check_rtl_output.py --rtl rtl/out/softmax_x64/rtl_out_e0.txt \
-    --golden rtl/data/softmax_x64/golden_issue5.txt --case softmax_x64
-```
+要点：
 
-**Windows + ModelSim GUI 流程**（脚本自定位，任意当前目录可用）：
+1. **宏模型 define**：功能仿真加 `+define+UNIT_DELAY`（跳过时序检查、加速，并避免寄存器输出在时钟沿后 delta 时间变化引发的 $setuphold 告警）；做带时序检查的仿真时去掉它（顶层已为宏输入预留 `SRAM_TIMING_SIM_INPUT_DELAY` 0.120ns 延迟钩子，与 timing_check 模块同纪律）。
+2. **装载可移植**：tb 经顶层 load 口逐地址写，不 `$readmemh` 进宏内部数组，跨仿真器可移植。
+3. 后续功耗分析（M6）：ModelSim 下用 `power add -r` / SAIF 导出，tb 无需改动。
 
-1. 启动 ModelSim；
-2. Transcript 输入 `do {<仓库路径>/rtl/sim/run_e0_modelsim.do}`（路径含空格用花括号），或菜单 Tools → TCL → Execute Macro 选择该文件；
-3. 脚本自动：建 work 库 → 编译一次 → 3 case × 2 口径依次 `vsim -G` + `run -all` → 每组跑完调 Python 校验（无 python 则跳过并提示手工校验）；
-4. 结果看 Transcript 中的 PASS/FAIL；输出文件在 `rtl/out/<case>/`。
+### 6.4 对用户的最简交付格式（2026-09-06 用户明确要求，务必遵守）
 
-与 iverilog 流程的差异点：
+每个实验只给用户提供两项，**不做多余解释**：
 
-1. **参数覆盖**：iverilog 的 `-P tb.HOLD_EN=0` → ModelSim 在 elaboration 时用 `vsim -GHOLD_EN=0`，**无需重新编译**（一次 vlog，多次 vsim）。
-2. **宏模型 define**：功能仿真加 `+define+UNIT_DELAY`（跳过时序检查、加速、避免寄存器输出在时钟沿后 delta 时间变化引发的 $setuphold 告警）；做带时序检查的仿真时去掉 `UNIT_DELAY`、保留 `SRAM_TIMING_SIM_INPUT_DELAY`（顶层已为宏输入预留 0.120ns 延迟钩子，与 timing_check 模块同纪律）。
-3. **装载可移植**：tb 经顶层 load 口逐地址写，不 `$readmemh` 进宏内部数组，无层次路径依赖。
-4. **路径**：含空格路径需整体加引号；服务器上建议用无空格路径。
-5. 后续功耗分析（M6）：ModelSim 下用 `power add -r` / SAIF 导出，tb 无需改动。
+1. **必须包含的文件路径清单**（相对仓库根，逐条列出）；
+2. **仿真跑完后跑 Python 校验的命令**（一条）。
+
+**最简 testbench 约定**（`rtl/sim/tb_expN_simple.v`）：
+
+- 用户的 ModelSim 当前目录 = **仓库根**（`rtl/` 的上一级）；
+- tb 一律用**相对仓库根**的路径读数据（`rtl/data/eN_pool_*.memh`），**不用任何 plusarg**；
+- 一律**程序池模式**：整池镜像一次装入，逐程序复位前端、按描述符切换；
+- 结果写到当前目录 `rtl_out_eN.txt`（含 `# prog <k>` 分段标记）；
+- 用户自己的 tcl 只需四步：`vlib work` → `vlog +define+UNIT_DELAY <宏模型> <wrapper> <顶层> <tb>` → `vsim work.tb_expN_simple` → `run -all`。
 
 ---
 

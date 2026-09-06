@@ -1,24 +1,11 @@
 `timescale 1ns/1ps
 `default_nettype none
 
-// -----------------------------------------------------------------------------
-// Testbench for exp0_uncompressed_top (rtl/plan.md section 6.1)
-//
-//   iverilog ... -o simv rtl/sim/tb_exp0_uncompressed.v \
-//       rtl/src/exp0_uncompressed_top.v rtl/src/sram_8192x171_wrapper.v \
-//       rtl/src/ts1n28hpcphvtb8192x144m4swbasod_180a_ffg0p88v0p99v0c.v \
-//       rtl/src/ts1n28hpcphvtb8192x27m4swbasod_180a_ffg0p88v0p99v0c.v
-//   vvp simv +DATA=rtl/data/softmax_x64 +OUT=rtl/out/softmax_x64/rtl_out_e0.txt
-//
-// Flow: reset -> load the 171-bit image through the DUT load port -> start ->
-// every slot_valid cycle reassemble the five 34-bit containers from the field
-// outputs and append them (hex) to the output file -> expect eop/done.
-// -----------------------------------------------------------------------------
-
-module tb_exp0_uncompressed;
-
-    // override at compile time: iverilog -P tb_exp0_uncompressed.HOLD_EN=0
-    parameter HOLD_EN = 1;
+// 最简 E0 testbench（程序池模式，相对路径，无 plusarg）。
+// 当前目录 = 仓库根（rtl 的上一级）。读 rtl/data/e0_pool_*.memh，
+// 结果写到当前目录 rtl_out_e0.txt（含 "# prog <k>" 分段标记）。
+// 整池镜像只装一次，三个程序按描述符 {prog_base, prog_len} 逐个切换运行。
+module tb_exp0_simple;
 
     localparam integer ADDR_WIDTH    = 13;
     localparam integer DATA_WIDTH    = 171;
@@ -69,7 +56,7 @@ module tb_exp0_uncompressed;
     wire        eop;
     wire        done;
 
-    exp0_uncompressed_top #(.HOLD_EN(HOLD_EN)) dut (
+    exp0_uncompressed_top #(.HOLD_EN(1)) dut (
         .clk           (clk),
         .rst_n         (rst_n),
         .load_en       (load_en),
@@ -114,10 +101,6 @@ module tb_exp0_uncompressed;
         .done           (done)
     );
 
-    // ------------------------------------------------------------------
-    // Container reassembly from field ports (must match the encoder and
-    // the golden generator in gen_rtl_streams.py).
-    // ------------------------------------------------------------------
     function [33:0] pack_ls;
         input [1:0]  mem_fmt;
         input [19:0] mem_addr;
@@ -170,39 +153,28 @@ module tb_exp0_uncompressed;
         end
     endfunction
 
-    // ------------------------------------------------------------------
-    // Clock / data / output plumbing
-    // ------------------------------------------------------------------
     initial begin
         clk = 1'b0;
         forever #(CLK_PERIOD_NS/2.0) clk = ~clk;
     end
 
     reg  [DATA_WIDTH-1:0] imem [0:DEPTH-1];
-    reg  [31:0]           meta [0:0];
     reg  [31:0]           pool_meta [0:15];
-    reg  [1023:0]         data_dir;
-    reg  [1023:0]         out_path;
     integer               out_fd;
     integer               i;
     integer               p;
     integer               n_prog;
     integer               total_words;
-    integer               prog_cycles;
     integer               emit_count;
     integer               read_cycles;
     integer               timeout;
-    integer               pool_mode;
     integer               pool_errors;
 
-    // energy statistic: count actual macro read cycles (hierarchical probe)
+    // 宏实际读次数统计（能耗用）
     always @(posedge clk) begin
-        if (rst_n && dut.mem_cen && !dut.mem_wen) begin
-            read_cycles = read_cycles + 1;
-        end
+        if (rst_n && dut.mem_cen && !dut.mem_wen) read_cycles = read_cycles + 1;
     end
 
-    // capture one output line per accepted cycle
     always @(posedge clk) begin
         if (rst_n) begin
             #0.200;
@@ -226,9 +198,6 @@ module tb_exp0_uncompressed;
         end
     end
 
-    // ------------------------------------------------------------------
-    // helper tasks
-    // ------------------------------------------------------------------
     task do_reset;
         begin
             rst_n = 1'b0;
@@ -240,64 +209,16 @@ module tb_exp0_uncompressed;
         end
     endtask
 
-    task do_load;
-        input integer n;
-        begin
-            for (i = 0; i < n; i = i + 1) begin
-                load_en    = 1'b1;
-                load_addr  = i[ADDR_WIDTH-1:0];
-                load_wdata = imem[i];
-                @(negedge clk);
-            end
-            load_en    = 1'b0;
-            load_addr  = {ADDR_WIDTH{1'b0}};
-            load_wdata = {DATA_WIDTH{1'b0}};
-        end
-    endtask
-
-    task do_run_one;
-        input [12:0] base;
-        input [13:0] len;
-        begin
-            emit_count = 0;
-            prog_base  = base;
-            prog_len   = len;
-            @(negedge clk);
-            start = 1'b1;
-            @(negedge clk);
-            start = 1'b0;
-            timeout = 10 * len + 1000;
-            while (!done && timeout > 0) begin
-                @(negedge clk);
-                timeout = timeout - 1;
-            end
-            if (!done) begin
-                $display("ERROR: watchdog timeout, done not asserted");
-                $fdisplay(out_fd, "# ERROR: watchdog timeout");
-                pool_errors = pool_errors + 1;
-            end
-            @(negedge clk);
-            if (emit_count != len) begin
-                $display("ERROR: emitted %0d cycles, expected %0d", emit_count, len);
-                pool_errors = pool_errors + 1;
-            end
-        end
-    endtask
-
-    // ------------------------------------------------------------------
-    // main flow: single-program mode (default) or program-pool mode (+POOL=1)
-    // ------------------------------------------------------------------
     initial begin
-        if (!$value$plusargs("DATA=%s", data_dir)) begin
-            $display("ERROR: missing +DATA=<dir> plusarg");
+        // 相对仓库根目录读池数据
+        $readmemh("rtl/data/e0_pool_meta.hex", pool_meta);
+        n_prog      = pool_meta[0];
+        total_words = pool_meta[1];
+        $readmemh("rtl/data/e0_pool_instr171.memh", imem, 0, total_words-1);
+        out_fd = $fopen("rtl_out_e0.txt", "w");
+        if (out_fd == 0) begin
+            $display("ERROR: cannot open rtl_out_e0.txt");
             $finish;
-        end
-        if (!$value$plusargs("OUT=%s", out_path)) begin
-            $display("ERROR: missing +OUT=<path> plusarg");
-            $finish;
-        end
-        if (!$value$plusargs("POOL=%d", pool_mode)) begin
-            pool_mode = 0;
         end
 
         emit_count  = 0;
@@ -311,52 +232,54 @@ module tb_exp0_uncompressed;
         prog_base   = 13'd0;
         prog_len    = 14'd0;
 
-        out_fd = $fopen(out_path, "w");
-        if (out_fd == 0) begin
-            $display("ERROR: cannot open %0s", out_path);
-            $finish;
+        // 整池镜像只装一次
+        do_reset;
+        @(negedge clk);
+        for (i = 0; i < total_words; i = i + 1) begin
+            load_en    = 1'b1;
+            load_addr  = i[ADDR_WIDTH-1:0];
+            load_wdata = imem[i];
+            @(negedge clk);
+        end
+        load_en    = 1'b0;
+        load_addr  = {ADDR_WIDTH{1'b0}};
+        load_wdata = {DATA_WIDTH{1'b0}};
+
+        // 逐程序切换运行（每程序前复位前端，宏内容保持）
+        for (p = 0; p < n_prog; p = p + 1) begin
+            $fdisplay(out_fd, "# prog %0d", p);
+            do_reset;
+            prog_base  = pool_meta[2 + 2*p][12:0];
+            prog_len   = pool_meta[3 + 2*p][13:0];
+            emit_count = 0;
+            @(negedge clk);
+            start = 1'b1;
+            @(negedge clk);
+            start = 1'b0;
+            timeout = 10 * prog_len + 1000;
+            while (!done && timeout > 0) begin
+                @(negedge clk);
+                timeout = timeout - 1;
+            end
+            @(negedge clk);
+            if (!done) begin
+                $display("ERROR: prog %0d watchdog timeout", p);
+                pool_errors = pool_errors + 1;
+            end
+            if (emit_count != prog_len) begin
+                $display("ERROR: prog %0d emitted %0d, expected %0d",
+                         p, emit_count, prog_len);
+                pool_errors = pool_errors + 1;
+            end
         end
 
-        if (pool_mode) begin
-            // ---- program pool: load once, then run program by program ----
-            $readmemh({data_dir, "/e0_pool_meta.hex"}, pool_meta);
-            n_prog      = pool_meta[0];
-            total_words = pool_meta[1];
-            $readmemh({data_dir, "/e0_pool_instr171.memh"}, imem, 0, total_words-1);
-            do_reset;
-            do_load(total_words);
-            for (p = 0; p < n_prog; p = p + 1) begin
-                $fdisplay(out_fd, "# prog %0d", p);
-                // reset the front-end between programs; the macro keeps its
-                // contents (it has no reset), so the pool stays resident.
-                do_reset;
-                do_run_one(pool_meta[2 + 2*p], pool_meta[3 + 2*p]);
-            end
-            $fclose(out_fd);
-            $display("[tb] POOL programs=%0d total_words=%0d macro_read_cycles=%0d errors=%0d",
-                     n_prog, total_words, read_cycles, pool_errors);
-            if (pool_errors == 0) begin
-                $display("[tb] PASS: pool run completed, %0d programs", n_prog);
-            end else begin
-                $display("[tb] FAIL: pool run had %0d errors", pool_errors);
-            end
+        $fclose(out_fd);
+        $display("[tb] E0 POOL programs=%0d total_words=%0d read_cycles=%0d errors=%0d",
+                 n_prog, total_words, read_cycles, pool_errors);
+        if (pool_errors == 0) begin
+            $display("[tb] PASS: E0 pool run completed, %0d programs", n_prog);
         end else begin
-            // ---- single program at base 0 ----
-            $readmemh({data_dir, "/e0_meta.hex"}, meta);
-            prog_cycles = meta[0];
-            $readmemh({data_dir, "/e0_instr171.memh"}, imem, 0, prog_cycles-1);
-            do_reset;
-            do_load(prog_cycles);
-            do_run_one(13'd0, prog_cycles[13:0]);
-            $fclose(out_fd);
-            $display("[tb] case data=%0s T=%0d emitted=%0d macro_read_cycles=%0d done=%0b",
-                     data_dir, prog_cycles, emit_count, read_cycles, done);
-            if (pool_errors == 0) begin
-                $display("[tb] PASS: emitted %0d cycles (expected %0d)",
-                         emit_count, prog_cycles);
-            end else begin
-                $display("[tb] FAIL: pool_errors=%0d", pool_errors);
-            end
+            $display("[tb] FAIL: E0 pool run had %0d errors", pool_errors);
         end
         $finish;
     end
