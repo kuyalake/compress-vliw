@@ -26,6 +26,40 @@
           128,
           192
         ]
+      },
+      "e2": {
+        "config_entries": 969,
+        "lane_depths": [
+          272,
+          272,
+          272,
+          272
+        ],
+        "source_schedule": "analysis_output_issue124_four_lane_174/sweep/softmax_x64_y512_mode2_index",
+        "mode": 2,
+        "cycles": 969
+      },
+      "e3": {
+        "config_entries": 996,
+        "lane_depths": [
+          544,
+          544
+        ],
+        "source_schedule": "analysis_output_issue2_174_priority/softmax_x64_y512_mode1_index",
+        "mode": 1,
+        "cycles": 996
+      },
+      "e4": {
+        "config_entries": 996,
+        "lane_depths": [
+          272,
+          272,
+          272,
+          272
+        ],
+        "source_schedule": "analysis_output_issue2_174_priority/softmax_x64_y512_mode1_index",
+        "mode": 1,
+        "cycles": 996
       }
     },
     {
@@ -48,6 +82,40 @@
           512,
           128
         ]
+      },
+      "e2": {
+        "config_entries": 1450,
+        "lane_depths": [
+          594,
+          594,
+          593,
+          593
+        ],
+        "source_schedule": "analysis_output_issue124_four_lane_174/sweep/layernorm_x64_y768_mode0_index",
+        "mode": 0,
+        "cycles": 1450
+      },
+      "e3": {
+        "config_entries": 1516,
+        "lane_depths": [
+          1187,
+          1187
+        ],
+        "source_schedule": "analysis_output_issue2_174_priority/layernorm_x64_y768_mode0_index",
+        "mode": 0,
+        "cycles": 1516
+      },
+      "e4": {
+        "config_entries": 1516,
+        "lane_depths": [
+          594,
+          594,
+          593,
+          593
+        ],
+        "source_schedule": "analysis_output_issue2_174_priority/layernorm_x64_y768_mode0_index",
+        "mode": 0,
+        "cycles": 1516
       }
     },
     {
@@ -70,6 +138,40 @@
           0,
           768
         ]
+      },
+      "e2": {
+        "config_entries": 3096,
+        "lane_depths": [
+          576,
+          576,
+          576,
+          576
+        ],
+        "source_schedule": "analysis_output_issue124_four_lane_174/sweep/gelu_x64_y3072_mode2_index",
+        "mode": 2,
+        "cycles": 3096
+      },
+      "e3": {
+        "config_entries": 3096,
+        "lane_depths": [
+          1152,
+          1152
+        ],
+        "source_schedule": "analysis_output_issue2_174_priority/gelu_x64_y3072_mode2_index",
+        "mode": 2,
+        "cycles": 3096
+      },
+      "e4": {
+        "config_entries": 3096,
+        "lane_depths": [
+          576,
+          576,
+          576,
+          576
+        ],
+        "source_schedule": "analysis_output_issue2_174_priority/gelu_x64_y3072_mode2_index",
+        "mode": 2,
+        "cycles": 3096
       }
     }
   ],
@@ -161,6 +263,154 @@
           512,
           128,
           192
+        ]
+      }
+    ]
+  },
+  "pool_e2": {
+    "config_total": 5515,
+    "lane_totals": [
+      1442,
+      1442,
+      1441,
+      1441
+    ],
+    "run_order": [
+      "gelu_x64",
+      "softmax_x64",
+      "layernorm_x64"
+    ],
+    "programs": [
+      {
+        "pos": 0,
+        "case": "gelu_x64",
+        "cfg_base": 2419,
+        "len": 3096,
+        "lane_bases": [
+          866,
+          866,
+          865,
+          865
+        ]
+      },
+      {
+        "pos": 1,
+        "case": "softmax_x64",
+        "cfg_base": 0,
+        "len": 969,
+        "lane_bases": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "pos": 2,
+        "case": "layernorm_x64",
+        "cfg_base": 969,
+        "len": 1450,
+        "lane_bases": [
+          272,
+          272,
+          272,
+          272
+        ]
+      }
+    ]
+  },
+  "pool_e3": {
+    "config_total": 5608,
+    "lane_totals": [
+      2883,
+      2883
+    ],
+    "run_order": [
+      "gelu_x64",
+      "softmax_x64",
+      "layernorm_x64"
+    ],
+    "programs": [
+      {
+        "pos": 0,
+        "case": "gelu_x64",
+        "cfg_base": 2512,
+        "len": 3096,
+        "lane_bases": [
+          1731,
+          1731
+        ]
+      },
+      {
+        "pos": 1,
+        "case": "softmax_x64",
+        "cfg_base": 0,
+        "len": 996,
+        "lane_bases": [
+          0,
+          0
+        ]
+      },
+      {
+        "pos": 2,
+        "case": "layernorm_x64",
+        "cfg_base": 996,
+        "len": 1516,
+        "lane_bases": [
+          544,
+          544
+        ]
+      }
+    ]
+  },
+  "pool_e4": {
+    "config_total": 5608,
+    "lane_totals": [
+      1442,
+      1442,
+      1441,
+      1441
+    ],
+    "run_order": [
+      "gelu_x64",
+      "softmax_x64",
+      "layernorm_x64"
+    ],
+    "programs": [
+      {
+        "pos": 0,
+        "case": "gelu_x64",
+        "cfg_base": 2512,
+        "len": 3096,
+        "lane_bases": [
+          866,
+          866,
+          865,
+          865
+        ]
+      },
+      {
+        "pos": 1,
+        "case": "softmax_x64",
+        "cfg_base": 0,
+        "len": 996,
+        "lane_bases": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "pos": 2,
+        "case": "layernorm_x64",
+        "cfg_base": 996,
+        "len": 1516,
+        "lane_bases": [
+          272,
+          272,
+          272,
+          272
         ]
       }
     ]

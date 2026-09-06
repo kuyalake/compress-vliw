@@ -18,11 +18,13 @@
 //
 // Program pool: descriptor {cfg_base, prog_len, slot_base0..4} latched at
 // start; pointers start at the slot bases. No backpressure.
+//
+// Output stage is HOLD-only (2026-09-06): an invalid slot clears only its OP
+// field to 0 and holds the other fields; the HOLD_EN=0 caliber is not
+// implemented for E1 in this batch.
 // -----------------------------------------------------------------------------
 
-module exp1_candidate_a_top #(
-    parameter HOLD_EN = 1
-) (
+module exp1_candidate_a_top (
     input  wire         clk,
     input  wire         rst_n,
     // load port: load_sel 0 = config macro, 1..5 = payload bank slot 0..4
@@ -279,12 +281,8 @@ module exp1_candidate_a_top #(
                     load_gpr_fmt  <= pay0_rdata[11:10];
                     load_gpr_addr <= pay0_rdata[9:2];
                     load_optype   <= pay0_rdata[1:0];
-                end else if (HOLD_EN) begin
-                    load_optype   <= 2'b00;
                 end else begin
-                    load_mem_fmt  <= 2'b0;  load_mem_addr <= 20'b0;
-                    load_gpr_fmt  <= 2'b0;  load_gpr_addr <= 8'b0;
-                    load_optype   <= 2'b0;
+                    load_optype   <= 2'b00;   // hold other fields
                 end
                 // STORE (bank 1)
                 if (mask_c[1]) begin
@@ -293,12 +291,8 @@ module exp1_candidate_a_top #(
                     store_gpr_fmt  <= pay1_rdata[11:10];
                     store_gpr_addr <= pay1_rdata[9:2];
                     store_optype   <= pay1_rdata[1:0];
-                end else if (HOLD_EN) begin
-                    store_optype   <= 2'b00;
                 end else begin
-                    store_mem_fmt  <= 2'b0;  store_mem_addr <= 20'b0;
-                    store_gpr_fmt  <= 2'b0;  store_gpr_addr <= 8'b0;
-                    store_optype   <= 2'b0;
+                    store_optype   <= 2'b00;
                 end
                 // VECTOR (bank 2)
                 if (mask_c[2]) begin
@@ -310,13 +304,8 @@ module exp1_candidate_a_top #(
                     vector_src0    <= pay2_rdata[12:5];
                     vector_mask    <= pay2_rdata[4];
                     vector_optype  <= pay2_rdata[3:0];
-                end else if (HOLD_EN) begin
-                    vector_optype  <= 4'b0000;
                 end else begin
-                    vector_half    <= 2'b0;  vector_imm    <= 1'b0;
-                    vector_connect <= 2'b0;  vector_dst    <= 8'b0;
-                    vector_src1    <= 8'b0;  vector_src0   <= 8'b0;
-                    vector_mask    <= 1'b0;  vector_optype <= 4'b0;
+                    vector_optype  <= 4'b0000;
                 end
                 // SCALAR (bank 3)
                 if (mask_c[3]) begin
@@ -327,13 +316,8 @@ module exp1_candidate_a_top #(
                     scalar_src0    <= pay3_rdata[12:5];
                     scalar_mask    <= pay3_rdata[4];
                     scalar_optype  <= pay3_rdata[3:0];
-                end else if (HOLD_EN) begin
-                    scalar_optype  <= 4'b0000;
                 end else begin
-                    scalar_imm     <= 1'b0;  scalar_connect <= 1'b0;
-                    scalar_dst     <= 8'b0;  scalar_src1   <= 8'b0;
-                    scalar_src0    <= 8'b0;  scalar_mask   <= 1'b0;
-                    scalar_optype  <= 4'b0;
+                    scalar_optype  <= 4'b0000;
                 end
                 // SFU (bank 4)
                 if (mask_c[4]) begin
@@ -343,12 +327,8 @@ module exp1_candidate_a_top #(
                     sfu_is_vector  <= pay4_rdata[12];
                     sfu_rounds     <= pay4_rdata[11:4];
                     sfu_optype     <= pay4_rdata[3:0];
-                end else if (HOLD_EN) begin
-                    sfu_optype     <= 4'b0000;
                 end else begin
-                    sfu_borrow     <= 2'b0;  sfu_dst       <= 8'b0;
-                    sfu_src        <= 8'b0;  sfu_is_vector <= 1'b0;
-                    sfu_rounds     <= 8'b0;  sfu_optype    <= 4'b0;
+                    sfu_optype     <= 4'b0000;
                 end
             end
         end

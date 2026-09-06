@@ -9,7 +9,7 @@
 为五种指令存储/供给组织分别实现**顶层模块（指令 fetch + 解码）**，要求：
 
 - 逐周期恢复五槽 VLIW 字段，**接口输出为各字段（field-level），寄存器输出**；
-- **统一低翻转输出级**（沿用既有 plan §8/§13 设计）：槽有效时全部字段装载新 payload；槽无效时**仅 OP 字段清 0（NOP），其余字段保持上一有效值**——五方案（含 E0/E1）全部启用，属正交公共优化，不计入任何单一方案收益；
+- **统一低翻转输出级**（沿用既有 plan §8/§13 设计）：槽有效时全部字段装载新 payload；槽无效时**仅 OP 字段清 0（NOP），其余字段保持上一有效值**——五方案（含 E0/E1）全部启用，属正交公共优化，不计入任何单一方案收益。**E1–E4 只实现保持口径（无 HOLD_EN 参数）；仅 E0 保留 HOLD_EN 双口径**用于论文消融（忠实再现原平台）；
 - 每拍一条指令（II=1，零停顿供给），自由运行，**无背压**；
 - 复用已生成并经 28nm 综合的 SRAM wrapper（`rtl/src/sram_*_wrapper.v`）；
 - 每个实验配独立 testbench + Python 解码校验脚本，按「保持语义 golden」逐周期逐 bit 比对（见 §6）。
@@ -189,7 +189,7 @@ selected[s] = 0：非 OP 字段寄存器保持（写使能关断）；OP 字段�
 - 复位后全部字段寄存器为 0；EOP 拍五槽均无效（OP 全 0、其余保持）+ `eop=1`。
 - 行为等价声明：无效槽的保持字段不参与执行（下游只看 OP），故输出不再与原 trace 逐 bit 相同；golden 按同一保持语义精确生成（§6），校验仍是全字段逐拍逐 bit。
 - 成本口径：字段保持寄存器相对普通寄存器每 bit 多 1–2 GE 的使能逻辑，5 槽合计约 +250 GE；五方案公共，不影响相对比较。综合时应对非 OP 字段寄存器组自动识别为时钟门控/使能触发器。
-- **论文口径与 `HOLD_EN` 参数**：五个顶层统一带 `parameter HOLD_EN = 1`；`HOLD_EN=0` 时字段寄存器退化为每拍直接装载（无效槽输出存储侧全 0 容器，行为仍正确）。论文主表用全方案 `HOLD_EN=1`（能耗差全部归因于存储组织）；消融行用 E0 `HOLD_EN=0` 忠实再现原平台，把总改善分解为 hold 贡献 + 压缩贡献。hold 属已有技术（TACO 2018），不得主张新颖性；对 E0 启用 hold 是保守方向（压缩收益被低估而非高估）。
+- **论文口径与 `HOLD_EN` 参数**：E0 顶层带 `parameter HOLD_EN = 1`（`HOLD_EN=0` 时字段寄存器退化为每拍直接装载，无效槽输出存储侧全 0 容器），用于论文消融行忠实再现原平台，把总改善分解为 hold 贡献 + 压缩贡献。**E1–E4 顶层只实现保持口径（无 HOLD_EN 参数，2026-09-06 与用户确认）**：压缩方案的无效槽本无存储数据可言，保持语义是唯一良定义行为。hold 属已有技术（TACO 2018），不得主张新颖性；对 E0 启用 hold 是保守方向（压缩收益被低估而非高估）。
 
 ---
 
@@ -201,9 +201,9 @@ selected[s] = 0：非 OP 字段寄存器保持（写使能关断）；OP 字段�
 |---|---|---|
 | E0 | 新增（从 174-bit 字丢 [3:1] 保留位） | `e0_instr171.memh`（43 hex/行）、`golden.txt` |
 | E1 | 新增（mask + 每槽事件流，逻辑平凡） | `e1_config5.memh`（T−1 项）、`e1_slot{0..4}.memh`、`golden.txt`；池：`e1_pool_config5.memh`、`e1_pool_slot{0..4}.memh`、`e1_pool_meta.hex`、`e1_pool_map.txt` |
-| E2 | 复用 `issue124_adaptive_four_lane_study.encode_rotating_lanes` | `e2_config5.memh`（T 项，末项 `1f`）、`e2_lane{0..3}.memh`、`golden.txt` |
-| E3 | 复用 `issue2_lane_study.encode_two_lane` | `e3_config5.memh`（T 项，末项 `1f`）、`e3_lane{0..1}.memh`、`golden.txt` |
-| E4 | 复用 `four_lane_mapping_study.encode_program(policy="general_symmetric")` | `e4_config6.memh`（T 项，末项 `3f`）、`e4_lane{0..3}.memh`、`golden.txt` |
+| E2 | 复用 `issue124_adaptive_four_lane_study.encode_rotating_lanes` | `e2_config5.memh`（T 项，末项 `1f`）、`e2_lane{0..3}.memh`、`golden_issue4.txt`（max-4 族 golden）；池：`e2_pool_config5.memh`、`e2_pool_lane{0..3}.memh`、`e2_pool_meta.hex`、`e2_pool_map.txt` |
+| E3 | 复用 `issue2_lane_study.encode_two_lane` | `e3_config5.memh`（T 项，末项 `1f`）、`e3_lane{0..1}.memh`、`golden_issue2.txt`（max-2 族 golden）；池：`e3_pool_config5.memh`、`e3_pool_lane{0..1}.memh`、`e3_pool_meta.hex`、`e3_pool_map.txt`；另生成 `rtl/src/cfg_pair_codebook.v` |
+| E4 | 复用 `four_lane_mapping_study.encode_program(policy="general_symmetric")` | `e4_config6.memh`（T 项，末项 `3f`）、`e4_lane{0..3}.memh`、`golden_issue2.txt`（与 E3 共用）；池：`e4_pool_config6.memh`、`e4_pool_lane{0..3}.memh`、`e4_pool_meta.hex`、`e4_pool_map.txt` |
 
 另外生成：
 
@@ -245,6 +245,7 @@ selected[s] = 0：非 OP 字段寄存器保持（写使能关断）；OP 字段�
 - **池与接口（E1 单独接口，2026-09-06 已实现）**：装载口带 `load_sel[2:0]`（0=config，1–5=payload 槽 0–4）；程序描述符 = `{cfg_base, prog_len, slot_base0..4}`（5 个槽基址各 11-bit），`start` 时锁存，槽指针从槽基址起步。池布局：config 宏按 case 顺序连续排放（968+1449+3095=5512 ≤ 8192），每个 payload 宏内按 case 顺序连续排放（LOAD 1094 / STORE 1088 / VECTOR 1856 / SCALAR 640 / SFU 1088 ≤ 2048）。
 - **注意**：**mask=`11111` 是合法数据**（A 允许 5 槽同拍），绝不能当 EOP；本批 max-5 调度的 layernorm_x64 即含 3 拍 5 槽同发，该边界会被实际覆盖。EOP 只能由指令计数器 `== prog_len-1` 产生。
 - **精确门控校验**（tb 内置）：池运行全程 config 读次数必须 == 5512（=Σ(T−1)），Bank s 读次数必须 == 该槽事件总数（1094/1088/1856/640/1088）——多一次少一次都算错。
+- **输出级**：E1 顶层只实现保持语义（无 HOLD_EN 参数）；无效槽 OP 清 0、其余字段保持。
 
 ### 5.3 E2 4slot 自适应四 Lane（`exp2_adaptive_4slot_top`）
 
@@ -257,6 +258,11 @@ selected[s] = 0：非 OP 字段寄存器保持（写使能关断）；OP 字段�
   4. **4→5 散布网络**（拍 C）：槽 s 有效时其源 Lane = `(phase + rank(s)) mod 4`，`rank(s) = popcount(mask & ((1<<s)−1))`（前缀计数，5 个微型逻辑）；`selected[s] = mask[s]`，有效槽字段 ← `lane_q[(phase+rank(s)) mod 4]` 的对应字段（5× 34-bit 4:1 mux 后接 §3.4 字段写使能）；无效槽仅 OP 清 0；
   5. **带内 EOP**：mask=`11111` → 全槽 NOP、eop=1、全部 `cen=0`、phase 保持。
 - **时序**：3 拍骨架。关键路径①内含 popcount + mod-4 比较，为该方案主路径；散布 mux 在拍 C（路径②）。
+- **已实现细节（2026-09-06，一次通过）**：
+  - 拍 B 的前缀 popcount 链（`pre1..pre4`）同时供 popcount（lane 使能）与拍 C 的 rank 计算，不重复造加法器；
+  - **phase 以 2-bit 流水线寄存器 `phase_c` 送到拍 C**（而不是寄存 5×2-bit 选择信号，省 8 个 DFF）；拍 C 的选择信号由 `mask_c`/`phase_c`（均为寄存器、拍初即稳）组合产生，与 payload Q 的到达并行，不进关键路径——拍 C 关键路径只剩「宏 Q → 4:1 mux → 字段寄存器」；
+  - EOP 在拍 B 从数据发现（`cfg_rdata==11111`）：当拍全部 lane `cen=0`、phase/指针保持、`mask_c<=0`，EOP 标记随流水线到拍 C 置 `eop/done`；
+  - config 每程序读 T 项（含 EOP 项），池总读 5515；lane 读精确门控 1442/1442/1441/1441。
 - **注意**：编码器已断言无 5 槽同拍（`11111` 不歧义）；`phase` 与 4 个指针是**一组状态**，每拍末必须基于同一份 mask 原子更新（任一寄存器用错一拍的前递值即静默错位）；EOP 拍不得推进 phase/指针。
 
 ### 5.4 E3 2slot2lane（`exp3_2slot2lane_top`）
@@ -270,6 +276,7 @@ selected[s] = 0：非 OP 字段寄存器保持（写使能关断）；OP 字段�
   4. 分发（拍 C）：`selected[s] = (valid0 && slot0==s) || (valid1 && slot1==s)`；有效槽字段 ← 对应 Lane 字的字段（5× 34-bit 3:1 mux + 10 个 3-bit 比较器，后接 §3.4 字段写使能）；无效槽仅 OP 清 0；
   5. 带内 EOP：码=31 → 全 NOP + eop。
 - **时序**：3 拍骨架；拍 B 关键路径 = config Q → 译码表（约 4–6 级门）→ payload CEN/A。
+- **已实现细节（2026-09-06，一次通过）**：拍 B 用脚本生成的 `cfg_pair_codebook` 译出 `{valid0, slot0, valid1, slot1}` 并**寄存 8-bit 译码后控制**送拍 C（拍 C 纯 mux，不进 LUT）；码 31 译码为全无效 → EOP 拍 Lane 自动不读、指针不动；`is_eop` 仅用于产生 eop 标记。池：config 5608（=ΣT 含 EOP 项）、Lane 读 2883/2883 精确门控；max-2 index 周期 996/1516/3096（softmax 在 max-2 下 mode1 最优，与 max-5 的 mode2 不同——按族各自选 mode）。
 - **注意**：编码器的「单事件进较浅 Lane」均衡规则只影响编码（流深度均衡），解码端无需感知；码 31 只能出现在末项。
 
 ### 5.5 E4 2slot4lane（`exp4_2slot4lane_top`）
@@ -282,7 +289,8 @@ selected[s] = 0：非 OP 字段寄存器保持（写使能关断）；OP 字段�
   3. **4× 11-bit Lane 指针**；使能 `en(2g)=valid0 & group==g`、`en(2g+1)=valid1 & group==g`；
   4. 分发（拍 C）：`selected[s] = (valid0&&slot0==s) || (valid1&&slot1==s)`；有效槽字段 ← `lane_q[{group,1'b0}]` 或 `lane_q[{group,1'b1}]` 的对应字段（后接 §3.4 字段写使能）；无效槽仅 OP 清 0；
   5. 带内 EOP：码=63。
-- **时序**：3 拍骨架；拍 B 路径 = config Q → ROM + group 译码 → 4 个 CEN。
+- **时序**：3 拍骨架；拍 B 路径 = config Q → 译码表 + group 译码 → 4 个 CEN。
+- **已实现细节（2026-09-06，一次通过）**：拍 B 用 `cfg_rdata[4:0]` 喂与 E3 共用的 `cfg_pair_codebook`，group=`cfg_rdata[5]`；Lane 使能 `en(2g+j)=valid_j & (group==g)`；译码后控制 `{valid0,slot0,valid1,slot1,group}` 寄存 9 DFF 送拍 C；拍 C 每槽 4:1 mux（源 Lane = `{group_c, hit0?0:1}`）。EOP=63（local=31 译码全无效 → Lane 自动不读）；码 31 保留不出现。池：config 5608、Lane 读 1442/1442/1441/1441 精确门控；与 E3 共用 `golden_issue2.txt`（同 max-2 族）。编码器 Lane 均衡状态**逐程序重置**（每程序独立描述符执行）。
 - **注意**：单事件周期可落 4 条 Lane 中任意一条（编码器按深度均衡选择），解码严格按 `{group, local}` 即可，无需额外状态；无 phase 寄存器（与 E2 的本质区别）。
 
 ### 5.6 各方案状态/逻辑量一览
@@ -326,7 +334,7 @@ selected[s] = 0：非 OP 字段寄存器保持（写使能关断）；OP 字段�
 - 逐拍逐槽比对；报告首个不匹配的拍号、槽名、期望/实际；检查总拍数一致、EOP 位置正确、EOP 后无多余输出。golden 已含保持语义，故比对同时验证：有效槽字段全对、无效槽 OP=0 且非 OP 字段精确保持（任何无效拍的字段毛刺/误写都会被捕获）。
 - **池模式**（`--pool --map e0_pool_map.txt --data rtl/data [--raw]`）：按 `# prog <k>` 标记切分段，按 map 把第 k 段与对应 case 的 golden 比对；段缺失/多余/段内不匹配均报错。
 - 退出码 0/1，供 CI；`--verbose` 打印前 N 拍对照表。
-- 一次运行覆盖：3 case × 5 方案单程序 + 3 组池回归，全过才算通过。
+- 一次运行覆盖：E0 双口径（HOLD_EN=1/0）+ E1–E4 仅保持口径；每方案 3 case 池回归，全过才算通过。
 
 ### 6.3 在 ModelSim/Questa 中运行（另一台机器）
 
@@ -394,3 +402,5 @@ python3 rtl/tools/check_rtl_output.py --rtl rtl/out/softmax_x64/rtl_out_e0.txt \
 1. E0/E1 用 `MAX_ISSUE_SLOTS=5` 原生调度；E2 用 max-4；E3/E4 用 max-2。
 2. 顶层无背压、无握手，自由运行。
 3. `rtl/data/` 的 memh 入库，便于复现。
+4. **E1–E4 只实现保持口径**（顶层无 HOLD_EN 参数，无效槽 OP 清 0、其余字段保持）；仅 E0 保留 HOLD_EN 双口径作论文消融。
+5. E0 支持程序池：整池镜像一次装入、按描述符 `{prog_base, prog_len}` 切换；E1 池描述符为 `{cfg_base, prog_len, slot_base0..4}`。

@@ -151,6 +151,9 @@ def main():
     ap.add_argument("--data", help="data root dir (pool mode)")
     ap.add_argument("--raw", action="store_true",
                     help="pool mode: compare against golden_raw_issue5.txt")
+    ap.add_argument("--golden-name",
+                    help="pool mode: golden file name per case "
+                         "(default golden_issue5.txt; --raw overrides)")
     args = ap.parse_args()
 
     if args.pool:
@@ -196,7 +199,12 @@ def main_pool(args):
         print("FAIL: %s" % exc)
         return 1
 
-    golden_name = "golden_raw_issue5.txt" if args.raw else "golden_issue5.txt"
+    if args.raw:
+        golden_name = "golden_raw_issue5.txt"
+    elif args.golden_name:
+        golden_name = args.golden_name
+    else:
+        golden_name = "golden_issue5.txt"
     total_errors = 0
     for pos in sorted(pos_to_case):
         case = pos_to_case[pos]
