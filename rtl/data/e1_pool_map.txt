@@ -1,0 +1,3 @@
+0 gelu_x64
+1 softmax_x64
+2 layernorm_x64

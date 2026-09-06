@@ -1,0 +1,168 @@
+{
+  "batch": 1,
+  "priority_strategy": "index",
+  "schedule_family": {
+    "e0": "max5",
+    "note": "E0/E1=max5, E2=max4, E3/E4=max2"
+  },
+  "cases": [
+    {
+      "case": "softmax_x64",
+      "mode": 2,
+      "cycles": 969,
+      "files": {
+        "e0_memh": "rtl/data/softmax_x64/e0_instr171.memh",
+        "e0_meta": "rtl/data/softmax_x64/e0_meta.hex",
+        "golden_issue5": "rtl/data/softmax_x64/golden_issue5.txt",
+        "golden_raw_issue5": "rtl/data/softmax_x64/golden_raw_issue5.txt"
+      },
+      "source_schedule": "analysis_output_issue5_174_priority/softmax_x64_y512_mode2_index",
+      "e1": {
+        "config_entries": 968,
+        "slot_events": [
+          128,
+          128,
+          512,
+          128,
+          192
+        ]
+      }
+    },
+    {
+      "case": "layernorm_x64",
+      "mode": 0,
+      "cycles": 1450,
+      "files": {
+        "e0_memh": "rtl/data/layernorm_x64/e0_instr171.memh",
+        "e0_meta": "rtl/data/layernorm_x64/e0_meta.hex",
+        "golden_issue5": "rtl/data/layernorm_x64/golden_issue5.txt",
+        "golden_raw_issue5": "rtl/data/layernorm_x64/golden_raw_issue5.txt"
+      },
+      "source_schedule": "analysis_output_issue5_174_priority/layernorm_x64_y768_mode0_index",
+      "e1": {
+        "config_entries": 1449,
+        "slot_events": [
+          198,
+          192,
+          1344,
+          512,
+          128
+        ]
+      }
+    },
+    {
+      "case": "gelu_x64",
+      "mode": 2,
+      "cycles": 3096,
+      "files": {
+        "e0_memh": "rtl/data/gelu_x64/e0_instr171.memh",
+        "e0_meta": "rtl/data/gelu_x64/e0_meta.hex",
+        "golden_issue5": "rtl/data/gelu_x64/golden_issue5.txt",
+        "golden_raw_issue5": "rtl/data/gelu_x64/golden_raw_issue5.txt"
+      },
+      "source_schedule": "analysis_output_issue5_174_priority/gelu_x64_y3072_mode2_index",
+      "e1": {
+        "config_entries": 3095,
+        "slot_events": [
+          768,
+          768,
+          0,
+          0,
+          768
+        ]
+      }
+    }
+  ],
+  "pool": {
+    "image": "rtl/data/e0_pool_instr171.memh",
+    "meta": "rtl/data/e0_pool_meta.hex",
+    "map": "rtl/data/e0_pool_map.txt",
+    "total_words": 5515,
+    "layout_order": [
+      "softmax_x64",
+      "layernorm_x64",
+      "gelu_x64"
+    ],
+    "run_order": [
+      "gelu_x64",
+      "softmax_x64",
+      "layernorm_x64"
+    ],
+    "programs": [
+      {
+        "pos": 0,
+        "case": "gelu_x64",
+        "base": 2419,
+        "len": 3096
+      },
+      {
+        "pos": 1,
+        "case": "softmax_x64",
+        "base": 0,
+        "len": 969
+      },
+      {
+        "pos": 2,
+        "case": "layernorm_x64",
+        "base": 969,
+        "len": 1450
+      }
+    ]
+  },
+  "pool_e1": {
+    "config_total": 5512,
+    "slot_totals": [
+      1094,
+      1088,
+      1856,
+      640,
+      1088
+    ],
+    "run_order": [
+      "gelu_x64",
+      "softmax_x64",
+      "layernorm_x64"
+    ],
+    "programs": [
+      {
+        "pos": 0,
+        "case": "gelu_x64",
+        "cfg_base": 2417,
+        "len": 3096,
+        "slot_bases": [
+          326,
+          320,
+          1856,
+          640,
+          320
+        ]
+      },
+      {
+        "pos": 1,
+        "case": "softmax_x64",
+        "cfg_base": 0,
+        "len": 969,
+        "slot_bases": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "pos": 2,
+        "case": "layernorm_x64",
+        "cfg_base": 968,
+        "len": 1450,
+        "slot_bases": [
+          128,
+          128,
+          512,
+          128,
+          192
+        ]
+      }
+    ]
+  }
+}
