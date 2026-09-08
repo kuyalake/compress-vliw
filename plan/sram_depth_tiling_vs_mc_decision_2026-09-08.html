@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>三个模型程序池的深 SRAM：已有宏拼接还是 MC 专用宏</title>
+  <style>
+    :root{--ink:#172033;--muted:#5d6678;--line:#d9dfeb;--bg:#f5f7fb;--card:#fff;--blue:#174ea6;--good:#0b6b3a;--warn:#9a5a00;--bad:#a12828}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.7 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+    main{max-width:1220px;margin:0 auto;padding:34px 28px 70px}.hero{background:linear-gradient(135deg,#102a56,#185ea8);color:#fff;border-radius:18px;padding:30px 34px;box-shadow:0 12px 30px #163a6b22}
+    h1{font-size:30px;line-height:1.28;margin:0 0 12px}h2{font-size:23px;margin:38px 0 14px;border-bottom:2px solid #d9e2f2;padding-bottom:7px}h3{font-size:18px;margin:26px 0 8px}p{margin:8px 0}code{background:#eef2f8;padding:1px 5px;border-radius:4px}.hero code{background:#ffffff25}
+    .lead{font-size:17px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}.card,.callout{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:17px 19px}.card b{font-size:20px;display:block;color:var(--blue)}
+    .good{color:var(--good);font-weight:700}.warn{color:var(--warn);font-weight:700}.bad{color:var(--bad);font-weight:700}.callout.goodbox{border-left:5px solid var(--good)}.callout.warnbox{border-left:5px solid var(--warn)}
+    table{width:100%;border-collapse:collapse;background:#fff;margin:10px 0 4px;font-size:14px}th,td{border:1px solid var(--line);padding:8px 9px;vertical-align:top}th{background:#eaf0f9;text-align:left}.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.note{font-size:13px;color:var(--muted);margin:5px 2px 18px}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#101827;color:#e8eef8;border-radius:10px;padding:15px;overflow:auto;white-space:pre-wrap}.tag{display:inline-block;padding:1px 8px;border-radius:999px;background:#e8f2ff;color:#174ea6;font-weight:700;font-size:13px}
+    ul,ol{padding-left:24px}.small{font-size:13px;color:var(--muted)}
+    @media(max-width:850px){main{padding:18px 12px}.grid{grid-template-columns:1fr}.hero{padding:22px}table{display:block;overflow:auto}}
+  </style>
+</head>
+<body><main>
+  <section class="hero">
+    <h1>三个模型程序池的深 SRAM：已有宏拼接还是 MC 专用宏</h1>
+    <p class="lead"><strong>面向 28 nm、1 GHz 的软件预评估与实现决策（2026-09-08）</strong></p>
+    <p>输入为 <code>model_pool_compression_study_2026-09-08.html</code> 的 BERT、LLaMA、SD-UNet 三个程序池；对 E0（未压缩）、E1（纵向压缩）和 E2（4-slot）逐个判断深 SRAM 的实现方法。</p>
+  </section>
+
+  <div class="grid">
+    <div class="card"><span class="tag">直接结论</span><b>优先送 MC：32768×5</b>它同时改善面积/漏电，并消除 E2 控制路径上的两级深度选择。</div>
+    <div class="card"><span class="tag">时序备选</span><b>同时申请：16384×34</b>软件 PPA 不占优；只有当 LLaMA E2 的拼接版本在 1 GHz 不能收敛时才切换。</div>
+    <div class="card"><span class="tag">建议拼接</span><b>其余深度先用现有宏</b>尤其 8192×34 及 E0 的宽字深存储，不值得为第一轮实验新增专用宏。</div>
+  </div>
+
+  <div class="callout goodbox"><strong>最实用的下一步：</strong>先写一套参数化 depth-tiling wrapper，完成三个程序池的全部功能仿真；同时让 MC 生成 <strong>32768×5</strong>，并把 <strong>16384×34</strong> 作为 E2-LLaMA 的时序保险。不要等待 MC 才开始 RTL。</div>
+
+  <h2>1. 三个程序池到底需要哪些 SRAM</h2>
+  <table>
+    <thead><tr><th>程序池</th><th>方案</th><th>所需逻辑 SRAM</th><th>现有宏能否直接覆盖</th><th>需要的深度拼接</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="3"><strong>BERT</strong><br>7667 周期</td><td>E0</td><td>171×8192（RTL 实际字宽）</td><td>是：8192×144 + 8192×27 并行拼宽</td><td>不需要</td></tr>
+      <tr><td>E1</td><td>1×(5×8192) + 5×(34×4096)</td><td>全部已有</td><td>不需要</td></tr>
+      <tr><td>E2</td><td>1×(5×8192) + 4×(34×2048)</td><td>全部已有</td><td>不需要</td></tr>
+      <tr><td rowspan="3"><strong>SD-UNet</strong><br>11684 周期</td><td>E0</td><td>171×16384</td><td>否</td><td>2 组 8192×171</td></tr>
+      <tr><td>E1</td><td>1×(5×16384) + 5×(34×8192)</td><td>否</td><td>config 2 片；每个 payload 2 片 4096×34</td></tr>
+      <tr><td>E2</td><td>1×(5×16384) + 4×(34×4096)</td><td>payload 已有</td><td>仅 config 2 片</td></tr>
+      <tr><td rowspan="3"><strong>LLaMA</strong><br>30704 周期</td><td>E0</td><td>171×32768</td><td>否</td><td>4 组 8192×171</td></tr>
+      <tr><td>E1</td><td>1×(5×32768) + 5×(34×16384)</td><td>否</td><td>config 4 片；每个 payload 4 片 4096×34</td></tr>
+      <tr><td>E2</td><td>1×(5×32768) + 4×(34×16384)</td><td>否</td><td>config 4 片；每个 payload 4 片 4096×34</td></tr>
+    </tbody>
+  </table>
+  <p class="note"><strong>表头说明：</strong>“逻辑 SRAM”是 RTL 希望看到的宽度×深度；“直接覆盖”表示无需增加深度选择器；“深度拼接”表示用地址高位选择一片现有宏，低位送入宏内地址。计划文件用 174 bit 描述原始 VLIW；当前 E0 RTL 丢弃 3 个保留位，只实际存 5×34+EOP=171 bit，因此硬件表使用 171 bit。</p>
+
+  <h2>2. 软件模型怎样计算</h2>
+  <h3>2.1 两种实现</h3>
+  <div class="mono">两片深度拼接（例：2×4096×34 → 8192×34）
+
+地址高位 ──► 片选译码 ──► 只使能一片 SRAM
+地址低位 ──────────────► 两片 SRAM 的地址口
+                               ┌─ SRAM 0 Q ─┐
+延迟一拍的地址高位 ───────────►│  2:1 MUX   ├─► 34-bit Q
+                               └─ SRAM 1 Q ─┘
+
+专用深宏（例：MC 直接生成 8192×34）
+
+完整地址 ──► 单个 SRAM ──► 34-bit Q</div>
+  <p>拼接必须满足三个细节：每周期只打开被选中的一片（否则动态功耗会乘以片数）；地址高位必须延迟到与 SRAM 的同步读数据同拍；4 片时输出选择器要做成平衡的两级 2:1 树，不能写成优先级链。</p>
+
+  <h3>2.2 面积、功耗与时序口径</h3>
+  <ul>
+    <li><strong>SRAM：</strong>HP CACTI 32 nm、1RW 口、0.9 V；它是 MC 前筛模型，不是 TSMC 28 nm memory compiler 的签核数字。</li>
+    <li><strong>拼接逻辑：</strong>2:1 mux 近似 3 个 NAND2 gate-equivalent/bit，再计入片选译码与片选寄存器；NAND2 面积取 2.54144 µm²。功耗以 0.5–2.0 fF/GE 和 1–20 nW/GE 给出区间。</li>
+    <li><strong>动态读功耗：</strong>config 每功能周期读一次；payload 按真实 trace 的有效事件数读，保留 E1/E2 的精确 CEN 门控；推理执行期不含程序装载写功耗。</li>
+    <li><strong>1 GHz：</strong>周期为 1 ns。现有宏的 tCD 来自仓库 Verilog timing model：8192×144 为 0.744 ns、8192×27 为 0.6267 ns、8192×5 为 0.4979 ns、4096×34 为 0.5177 ns、2048×34 为 0.3855 ns。</li>
+  </ul>
+  <div class="callout warnbox"><strong>边界：</strong>现有 Verilog 文件名显示的是特定快角模型，CACTI 也不是目标工艺签核模型。因此本报告可以决定“先做哪种 RTL、优先向 MC 要哪些宏”，不能替代 MC datasheet、目标 PVT 的 .lib STA 和布局布线后的 1 GHz 签核。</div>
+
+  <h2>3. 每一种深宏的定量比较</h2>
+  <table>
+    <thead><tr><th>目标形状</th><th>现有宏拼法</th><th class="num">拼接面积<br>(mm²)</th><th class="num">专用宏面积<br>(mm²)</th><th class="num">专用 vs 拼接</th><th class="num">拼接读能量<br>(pJ/次)</th><th class="num">专用读能量<br>(pJ/次)</th><th class="num">专用宏访问<br>(ns)</th><th>判断</th></tr></thead>
+    <tbody>
+      <tr><td>171×16384</td><td>2×(8192×144+8192×27)</td><td class="num">0.8337</td><td class="num">0.8325</td><td class="num">−0.2%</td><td class="num">47.1–47.7</td><td class="num">59.9</td><td class="num bad">1.053</td><td class="good">拼接</td></tr>
+      <tr><td>171×32768</td><td>4×(8192×144+8192×27)</td><td class="num">1.6688</td><td class="num">1.6144</td><td class="num">−3.3%</td><td class="num">47.5–49.4</td><td class="num">94.1</td><td class="num bad">1.498</td><td class="good">拼接；必要时加一级流水</td></tr>
+      <tr><td>5×16384</td><td>2×8192×5</td><td class="num">0.0310</td><td class="num">0.0282</td><td class="num good">−8.9%</td><td class="num">3.70–3.73</td><td class="num">5.28</td><td class="num">0.285</td><td class="warn">拼接优先；MC 可选</td></tr>
+      <tr><td>5×32768</td><td>4×8192×5</td><td class="num">0.0620</td><td class="num">0.0580</td><td class="num good">−6.4%</td><td class="num">3.71–3.80</td><td class="num">6.32</td><td class="num">0.372</td><td class="good">优先 MC</td></tr>
+      <tr><td>34×8192</td><td>2×4096×34</td><td class="num">0.0682</td><td class="num">0.0745</td><td class="num bad">+9.2%</td><td class="num">6.27–6.41</td><td class="num">8.90</td><td class="num">0.407</td><td class="good">拼接</td></tr>
+      <tr><td>34×16384</td><td>4×4096×34</td><td class="num">0.1367</td><td class="num">0.1400</td><td class="num bad">+2.4%</td><td class="num">6.36–6.76</td><td class="num">13.82</td><td class="num">0.529</td><td class="warn">拼接 PPA 更好；MC 作时序备选</td></tr>
+    </tbody>
+  </table>
+  <p class="note"><strong>表头说明：</strong>面积包含拼接输出 mux/片选逻辑的筛选估计；“读能量”只计算一次逻辑读访问，拼接时只有一片 SRAM 被 CEN 使能；“专用宏访问”是 CACTI access time，不是 foundry .lib 的 tCD。“专用 vs 拼接”为负表示专用宏面积更小，为正表示更大。</p>
+
+  <h3>3.1 为什么 E0 的深宽宏不建议送 MC</h3>
+  <p>171×16384/32768 看似减少宏个数，但 CACTI 的单宏访问时间已经达到 1.053/1.498 ns。cycle time 小于 1 ns 只说明内部阵列可流水地连续接收请求，<strong>不等于数据能在一个 1 ns 周期内返回</strong>。要使用这类宏，往往仍需增加输出流水级。另一方面 E0 只是论文 baseline，不值得优先投入两种深度×两种宽度（144/27）的 MC 生成、验证和 floorplan 工作。因此：</p>
+  <ul>
+    <li>SD-UNet E0：两组 8192×171 深度拼接；</li>
+    <li>LLaMA E0：四组 8192×171，平衡 4:1 树；若 STA 不过，在 E0 输出后单独增加一级寄存器。E0 仍可保持每周期一条指令的吞吐，只增加固定启动延迟；比较时要报告 latency 差异。</li>
+  </ul>
+
+  <h3>3.2 为什么 32768×5 最值得 MC</h3>
+  <p>它虽然只有 5 bit 宽，却是每周期必读的 config。四片拼接要在 config Q 与 mask/popcount/enable 译码之间增加两级选择器；这条路径还要产生下一拍 payload 的地址和 CEN，是 E2 的控制关键路径。专用 32768×5 在模型中面积低 6.4%、漏电约低 12%，并完全删除这两级 mux。单次读能量会从约 3.76 pJ 上升到 6.32 pJ，但这是用约 2.6 mW 动态功耗换取更清楚的 1 GHz 路径和更少的宏实例。</p>
+
+  <h3>3.3 为什么 16384×34 只能算“时序保险”</h3>
+  <p>四片 4096×34 的拼接模型面积更小，单次有效读能量也只有专用深宏的大约一半。E1 中 payload Q 后面只需送入固定 slot，因此应直接拼接。E2 中情况不同：数据先经过深度选择器，再经过 lane→slot 的 4:1 散布 mux，形成两段 mux 级联。专用 16384×34 能删除前一段，可能解决 LLaMA E2 的 1 GHz 闭合问题。故正确流程不是直接选择 MC，而是<strong>拼接版与 MC 版并行保留，用实际 STA slack 决胜</strong>。</p>
+
+  <h2>4. 三个程序池的存储子系统面积与功耗</h2>
+  <p>下表的功耗是“CACTI 漏电 + 按实际 trace 读次数得到的动态读功耗”，假定 1 GHz 连续执行；不包含解码主逻辑、时钟树和程序装载写功耗。</p>
+
+  <h3>4.1 BERT：完全复用已有宏</h3>
+  <table>
+    <thead><tr><th>方案</th><th>实现</th><th class="num">SRAM+拼接面积 (mm²)</th><th class="num">活动功耗 (mW)</th><th>结论</th></tr></thead>
+    <tbody><tr><td>E0</td><td>现有 8192×144 + 8192×27</td><td class="num">0.4162</td><td class="num">80.09</td><td>直接使用</td></tr><tr><td>E1</td><td>现有 8192×5 + 5×4096×34</td><td class="num">0.1852</td><td class="num">32.08</td><td>直接使用</td></tr><tr><td>E2</td><td>现有 8192×5 + 4×2048×34</td><td class="num">0.0872</td><td class="num">17.66</td><td>直接使用</td></tr></tbody>
+  </table>
+  <p class="note"><strong>表头说明：</strong>“实现”列列出物理宏组成；面积和活动功耗均为软件模型值。BERT 不需要任何深度扩展，因此不存在拼接/专用宏二选一。</p>
+
+  <h3>4.2 SD-UNet：两片拼接已足够</h3>
+  <table>
+    <thead><tr><th>方案</th><th class="num">全部拼接面积</th><th class="num">全部专用宏面积</th><th class="num">全部拼接功耗</th><th class="num">全部专用宏功耗</th><th>建议</th></tr></thead>
+    <tbody><tr><td>E0</td><td class="num">0.8337</td><td class="num">0.8325</td><td class="num">113.50–114.15</td><td class="num">126.26</td><td>拼接</td></tr><tr><td>E1</td><td class="num">0.3720</td><td class="num">0.4005</td><td class="num">56.19–56.40</td><td class="num">57.94</td><td>拼接</td></tr><tr><td>E2</td><td class="num">0.1668</td><td class="num">0.1640</td><td class="num">31.06–31.10</td><td class="num">32.54</td><td>config 先拼接；STA 不过再要 16384×5</td></tr></tbody>
+  </table>
+  <p class="note"><strong>表头说明：</strong>“全部拼接”表示所有超过现有深度的逻辑 SRAM 都用现有宏扩展；“全部专用宏”表示每种深度由一个 CACTI 深宏代理。面积单位 mm²、功耗单位 mW。功耗区间来自拼接逻辑的门等效电容/漏电范围。</p>
+
+  <h3>4.3 LLaMA：config 优先 MC，payload 用 STA 决策</h3>
+  <table>
+    <thead><tr><th>方案与构造</th><th class="num">面积 (mm²)</th><th class="num">活动功耗 (mW)</th><th>意义</th></tr></thead>
+    <tbody>
+      <tr><td>E0：4 组现有 8192×171</td><td class="num">1.6688</td><td class="num">180.30–182.24</td><td>推荐的 baseline 实现</td></tr>
+      <tr><td>E0：专用 171×32768</td><td class="num">1.6144</td><td class="num">239.04</td><td>访问代理 1.498 ns，不推荐单周期实现</td></tr>
+      <tr><td>E1：全部拼接</td><td class="num">0.7453</td><td class="num">101.05–101.61</td><td>PPA 最好</td></tr>
+      <tr><td>E1：仅 config 用 MC 32768×5</td><td class="num good">0.7413</td><td class="num">102.83–103.30</td><td>面积略优，控制路径更简单</td></tr>
+      <tr><td>E1：config 与 payload 均用 MC</td><td class="num">0.7579</td><td class="num">104.49</td><td>没有 PPA 优势</td></tr>
+      <tr><td><strong>E2：全部拼接</strong></td><td class="num">0.6087</td><td class="num good">84.34–84.89</td><td>PPA 最好，但要验证 mux 级联</td></tr>
+      <tr><td><strong>E2：仅 config 用 MC 32768×5</strong></td><td class="num good">0.6047</td><td class="num">86.11–86.57</td><td><strong>第一推荐实现</strong></td></tr>
+      <tr><td>E2：config 与 payload 均用 MC</td><td class="num">0.6179</td><td class="num">89.05</td><td>时序优先的 fallback</td></tr>
+    </tbody>
+  </table>
+  <p class="note"><strong>表头说明：</strong>“仅 config 用 MC”仍用四片 4096×34 拼成每条 16384×34 payload；“均用 MC”表示 config=32768×5 且每条 payload=16384×34。面积只含 SRAM 与拼接胶合逻辑；功耗采用 LLaMA 程序池真实读率：config 每拍一次，payload 仅在该 lane 有事件时读取。</p>
+
+  <h2>5. 最终逐宏决策清单</h2>
+  <table>
+    <thead><tr><th>目标宏</th><th>首选</th><th>优先级</th><th>原因</th><th>切换条件</th></tr></thead>
+    <tbody>
+      <tr><td>16384×171（物理上 144+27）</td><td class="good">2 深度拼接</td><td>P0</td><td>MC 几乎不省面积，读能量更高，访问代理超过 1 ns；且只服务 E0 baseline。</td><td>不建议切换；必要时给 E0 增加固定流水级。</td></tr>
+      <tr><td>32768×171（物理上 144+27）</td><td class="good">4 深度拼接</td><td>P0</td><td>专用宽深宏读能量和访问时间明显变差；MC 与集成成本高。</td><td>若 4:1 mux STA 不过，先加流水，不先做深宽 MC。</td></tr>
+      <tr><td>16384×5</td><td class="good">2×8192×5</td><td>P0</td><td>仅一个 5-bit 2:1 mux；专用宏虽省约 9% 本宏面积，但系统绝对收益很小、读能量更高。</td><td>SD-UNet E2 的 config→enable 路径出现负 slack 时再生成。</td></tr>
+      <tr><td><strong>32768×5</strong></td><td class="good"><strong>MC 专用宏</strong></td><td><strong>P0-MC</strong></td><td>面积/漏电均改善，并去掉控制关键路径的两级 mux；E1/E2 共用同一种宏。</td><td>若 MC 不支持 5-bit，申请 8-bit 物理宽度、只用低 5 bit，并重新比较 .lib/PPA。</td></tr>
+      <tr><td>8192×34</td><td class="good">2×4096×34</td><td>P0</td><td>拼接在模型中面积低约 9%、读能量低约 30%；只增加一级 34-bit mux。</td><td>通常无需切换。</td></tr>
+      <tr><td><strong>16384×34</strong></td><td class="warn"><strong>拼接主版本 + MC 备选</strong></td><td><strong>P1-MC</strong></td><td>拼接 PPA 更好；但 LLaMA E2 还要接 4:1 lane 散布，时序风险最高。</td><td>拼接 E2 在目标 PVT 下 WNS&lt;0，或裕量&lt;0.10 ns 时采用 MC。</td></tr>
+    </tbody>
+  </table>
+  <p class="note"><strong>表头说明：</strong>P0 是立即实施；P0-MC 是第一批必须申请的 memory compiler 输出；P1-MC 是与 RTL 并行准备的保险。“切换条件”给出什么时候应从当前首选改用另一实现。</p>
+
+  <h2>6. 1 GHz 实现与验证步骤</h2>
+  <ol>
+    <li><strong>先完成通用 depth wrapper。</strong>支持 1/2/4 个深度 tile、同步读、延迟片选、单片 CEN 门控、平衡输出 mux；用参数锁定实际宏，避免综合把宏内容推平。</li>
+    <li><strong>做连续跨页仿真。</strong>重点检查地址 8191→8192、16383→16384、24575→24576；连续每拍读，不能有气泡、重复或丢指令。程序 EOP 恰好落在边界前后也要覆盖。</li>
+    <li><strong>先综合三个最高风险 wrapper。</strong>171×32768 拼接、5×32768 拼接、E2 的 4×(34×16384 拼接)+散布路径。约束 1.0 ns，报告 WNS/TNS 与具体 startpoint/endpoint。</li>
+    <li><strong>获取 MC 数据。</strong>第一批请求 32768×5（或 8）；同时请求 16384×34 作为时序备选。必须拿到 datasheet、所有 signoff PVT .lib、LEF、GDS、功耗模型与 Verilog model。</li>
+    <li><strong>做 apples-to-apples 综合。</strong>同一顶层、同一程序池、同一 PVT、同一时钟和 IO delay，分别替换 tile wrapper 与 MC wrapper；若只比较裸宏 tCD，会漏掉 E2 的下游散布逻辑。</li>
+    <li><strong>用真实活动率做功耗。</strong>从三个程序池仿真导出 SAIF/VCD；确认未选 tile 的 CEN 不活动且 Q 保持。分别报告 leakage、internal、switching，不只报一个 total。</li>
+  </ol>
+
+  <h2>7. 可复现实验文件</h2>
+  <ul>
+    <li>软件模型：<code>experiments/sram_depth_tiling_vs_mc_study_2026_09_08.py</code></li>
+    <li>机器可读结果：<code>analysis_output_sram_depth_mc_2026-09-08/sram_depth_tiling_vs_mc_results.json</code></li>
+    <li>输入统计：<code>analysis_output_model_pool_2026-09-08/model_pool_compression_results.json</code></li>
+    <li>当前报告：<code>plan/sram_depth_tiling_vs_mc_decision_2026-09-08.html</code></li>
+  </ul>
+  <div class="callout goodbox"><strong>一句话决策：</strong>三个程序池可以立即用现有宏全部跑起来；真正值得第一批专门生成的是 <strong>32768×5</strong>。<strong>16384×34</strong>应作为 LLaMA-E2 的 1 GHz 时序保险，而不是因为面积或功耗更好；其他深宏先拼接。</div>
+  <p class="small">本报告未执行 git commit 或 push。CACTI 数字只用于架构选择，论文最终表格须由目标 MC 与 STA/功耗签核结果替换。</p>
+</main></body></html>

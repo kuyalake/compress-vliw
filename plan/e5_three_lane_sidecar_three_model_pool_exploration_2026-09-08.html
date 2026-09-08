@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>E5 三主道＋小侧道：三个模型程序池的复现实验、PPA 预估与方案修正</title>
+  <style>
+    :root{--ink:#172033;--muted:#5f6b7a;--line:#d8e0ea;--bg:#eef3f8;--blue:#175cd3;--green:#067647;--amber:#b54708;--red:#b42318;--violet:#6941c6}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.75 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+    main{max-width:1240px;margin:24px auto 80px;background:#fff;padding:44px 55px;border-radius:15px;box-shadow:0 8px 34px #23395d18}
+    h1{font-size:30px;line-height:1.32;margin:0 0 10px}h2{font-size:22px;margin:43px 0 15px;padding-bottom:8px;border-bottom:2px solid #e8edf4}h3{font-size:18px;margin:27px 0 9px}h4{font-size:16px;margin:21px 0 7px}
+    p{margin:8px 0 13px}a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}code{background:#eef2f7;border-radius:4px;padding:1px 5px;overflow-wrap:anywhere}
+    .meta{color:var(--muted);margin-bottom:19px}.lead{font-size:16.5px;background:#f5f8ff;border-left:5px solid var(--blue);padding:16px 18px;border-radius:8px}
+    .box{border:1px solid #bfd0e8;background:#f7faff;border-radius:10px;padding:15px 18px;margin:15px 0}.goodbox{border-color:#a9dac4;background:#f3fbf7}.warnbox{border-color:#efc492;background:#fff9f2}.badbox{border-color:#efaaa4;background:#fff5f4}.violetbox{border-color:#c8b7ef;background:#faf8ff}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.stat{border:1px solid var(--line);border-radius:10px;padding:14px;background:#fbfcfe}.stat b{display:block;font-size:21px;margin:3px 0}.stat small{color:var(--muted);font-size:12.5px}
+    table{width:100%;border-collapse:collapse;margin:12px 0 7px;font-size:13.35px}th,td{border:1px solid var(--line);padding:9px 10px;vertical-align:top}th{background:#edf2f8;text-align:left}tbody tr:nth-child(even){background:#fafbfd}.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+    .table-note{margin:6px 2px 22px;padding:9px 12px;background:#f8fafc;border-left:3px solid #98a2b3;color:#475467;font-size:13px}.small{font-size:12.8px;color:var(--muted)}
+    .tag{display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:700;white-space:nowrap}.go{background:#dff6ea;color:#05603a}.cond{background:#fff0d9;color:#8f4300}.no{background:#fee4e2;color:#912018}.info{background:#e6efff;color:#174ea6}
+    .good{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}
+    .formula,.flow{white-space:pre-wrap;background:#101828;color:#eef4ff;padding:15px 17px;border-radius:9px;font:13px/1.72 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.example{border:1px solid var(--line);background:#fbfcfe;border-radius:10px;padding:14px 17px;margin:14px 0}
+    ul,ol{padding-left:24px}li{margin:5px 0}.toc{columns:2;column-gap:34px;border:1px solid var(--line);background:#fafbfd;border-radius:10px;padding:16px 28px}.toc li{break-inside:avoid}
+    @media(max-width:880px){main{margin:0;padding:24px 15px;border-radius:0}.toc{columns:1}.grid{grid-template-columns:1fr 1fr}table{display:block;overflow-x:auto}}@media print{body{background:#fff}main{margin:0;max-width:none;box-shadow:none;padding:25px}}
+  </style>
+</head>
+<body><main>
+  <h1>E5 三主道＋小侧道：三个模型程序池的复现实验、PPA 预估与方案修正</h1>
+  <div class="meta">2026-09-08 ｜ 最新 main commit：<code>344c9f0c1705b1cf544c2081f894cab7518a481d</code> ｜ 11 个工作项重新调度 ｜ 22/22 原基线往返验证通过 ｜ E2/E5 三池逐 bit 新验证通过 ｜ 未执行 git push</div>
+
+  <p class="lead"><strong>核心结论：</strong>“E1 的槽专属 Bank → E2 的槽/存储 Lane 解耦 → 去掉无性能价值的五槽峰值 → 用三主道和浅侧道吸收低频峰值”是一条有逻辑的论文故事，但 <strong>2026-09-07 文档中的原始 E5 不能原样作为最终方案</strong>。在最新三个模型池上，原始 E5 只对 LLaMA 有效；在 BERT 和 SD-UNet 中，三条主道跨入下一档 SRAM 深度，面积分别比 E2 高 32.6% 和 52.1%。本次提出并验证的 <strong>E5-B 容量平衡侧道</strong>用一个额外 Config bit，把少量普通周期的一个事件也放入侧道，在不改调度、不增周期的情况下，使三个池的预估面积相对 E2 分别下降 <strong>10.1%、22.3%、9.8%</strong>。</p>
+
+  <div class="grid">
+    <div class="stat"><small>最新池基线验证</small><b class="good">22 / 22</b><small>Candidate A 与 E2 全部 bit-exact</small></div>
+    <div class="stat"><small>E5 新验证</small><b class="good">3 / 3 池</b><small>E5-R 与 E5-B 均逐周期逐槽恢复</small></div>
+    <div class="stat"><small>max-5 → max-4</small><b class="good">0 周期</b><small>三个程序池均无性能损失</small></div>
+    <div class="stat"><small>原始 E5 反例</small><b class="bad">2 / 3 池</b><small>BERT、SD-UNet 主道深度翻倍</small></div>
+  </div>
+
+  <ol class="toc">
+    <li><a href="#answer">先回答：这个故事是否成立</a></li>
+    <li><a href="#plain">小白版解释 E0/E1/E2/E5</a></li>
+    <li><a href="#setup">数据、程序池与复现方法</a></li>
+    <li><a href="#step1">第一层：槽/Lane 解耦的收益</a></li>
+    <li><a href="#step2">第二层：去掉五槽峰值</a></li>
+    <li><a href="#cliff">第三层：原始 E5 的深度悬崖</a></li>
+    <li><a href="#e5b">修正版 E5-B 怎样工作</a></li>
+    <li><a href="#ppa">三池 E0/E1/E2/E5 面积功耗</a></li>
+    <li><a href="#rtl">硬件结构、时序和风险</a></li>
+    <li><a href="#paper">论文应当怎样写</a></li>
+    <li><a href="#next">下一步工作</a></li>
+    <li><a href="#files">文件与证据边界</a></li>
+  </ol>
+
+  <h2 id="answer">1. 先回答：三层故事成立，但第三层必须从 E5-R 修正为 E5-B</h2>
+  <table>
+    <thead><tr><th>论文中的层次</th><th>解决的问题</th><th>本轮证据</th><th>判断</th></tr></thead>
+    <tbody>
+      <tr><td>第一层：只存有效槽，槽和 Lane 解耦</td><td>Candidate A 的五个专属 Bank 事件数差异大，却为了通用替换而全部按最忙 Bank 定深。</td><td>E2 把所有有效事件均衡分到四个共享 Lane；BERT、SD-UNet 都跨到更浅的 SRAM 档。</td><td><span class="tag go">成立</span> 是最稳定的主贡献。</td></tr>
+      <tr><td>第二层：max-5 改成 max-4</td><td>五槽同拍极少，可通过静态调度利用其它空闲拍消化，从而少一个共享 Lane。</td><td>BERT 只有 5 拍、SD-UNet 只有 3 拍五槽同发，LLaMA 为 0；三池 max-4 周期与 max-5 完全相同。</td><td><span class="tag go">成立</span> 但结论仅覆盖本实验域。</td></tr>
+      <tr><td>第三层：原始 E5-R，只把四槽拍的第 4 个事件送侧道</td><td>希望把第四条深 Lane 换成很浅的侧道。</td><td>只在 LLaMA 池节省；BERT/SD-UNet 的三条主道被迫翻倍。</td><td><span class="tag no">不能直接使用</span> “四槽稀少”不是充分条件。</td></tr>
+      <tr><td>第三层修正：E5-B，容量平衡侧道</td><td>侧道除了接必需的第 4 个事件，还分担少量普通周期事件，使三条主道留在较浅一档。</td><td>三个池均保持原调度和原周期，逐 bit 恢复通过；预估面积相对 E2 为 −10.1%/−22.3%/−9.8%。</td><td><span class="tag cond">值得做 RTL</span> 软件证据正向，尚未综合。</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>“层次”是论文叙事顺序；“解决的问题”说明每一步为何存在；“本轮证据”只写本次实际统计或验证；“判断”区分已成立、已否定和仍需 RTL 的内容。</p>
+
+  <h2 id="plain">2. 小白版：E0、E1、E2、E5 到底分别是什么</h2>
+  <p>处理器每拍最多控制 LOAD、STORE、VECTOR、SCALAR、SFU 五类硬件。可以把一条 VLIW 想成一张五栏表格，每栏 34 bit。某栏本拍不工作，就是空栏（NOP）。</p>
+  <table>
+    <thead><tr><th>名字</th><th>存储方式</th><th>优点</th><th>问题</th></tr></thead>
+    <tbody>
+      <tr><td><strong>E0：不压缩</strong></td><td>每拍保存完整 174-bit 调度字，空栏也保存。</td><td>硬件最直接。</td><td>大量 NOP 占空间，每次读取整条宽字。</td></tr>
+      <tr><td><strong>E1：Candidate A 纵向压缩</strong></td><td>5-bit mask 表示哪些栏有效；五类槽各有自己的 34-bit Bank，只保存自己的有效操作。</td><td>删除 NOP，解码简单。</td><td>Bank 与槽绑定。VECTOR 很忙、SCALAR 很闲时，各 Bank 长短悬殊；为可替换性统一深度会浪费。</td></tr>
+      <tr><td><strong>E2：四条共享 Lane</strong></td><td>mask 不变；任何有效槽都可写入四条共享 Lane，用 phase 轮转均衡。静态调度保证每拍最多四个有效槽。</td><td>Lane 与槽语义解耦，负载均衡；比 E1 少一个 payload Bank。</td><td>四条 Lane 仍必须一样深；四槽同拍很少时，第四条深 Lane 看起来利用不足。</td></tr>
+      <tr><td><strong>E5-R：原始 E5</strong></td><td>前三个有效事件进入三条主道；仅四槽同拍时，第 4 个事件进入小侧道。</td><td>不加 Config bit；侧道访问极少。</td><td>主道承担几乎全部事件，单道平均负载从约 E/4 上升到 E/3，可能跨入两倍深的 SRAM。</td></tr>
+      <tr><td><strong>E5-B：本轮修正版</strong></td><td>四槽同拍仍必须用侧道；另外选择一些普通周期，把最高 rank 的一个事件送侧道。6-bit Config 中新增 <code>spill</code> 标志。</td><td>可以主动把三条主道压在目标深度内；不重新调度、不增加周期。</td><td>Config 多 1 bit；需要离线选择 spill 周期；mod-3 phase 和新 RTL 尚未综合。</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>“存储方式”是每个方案真实保存的数据；“优点/问题”说明为什么要从上一层继续演进。这里的“4slot”不是 4-bit 指令，也不是固定四种模板。</p>
+
+  <h2 id="setup">3. 实验设置和可复现性</h2>
+  <h3>3.1 最新程序池</h3>
+  <table>
+    <thead><tr><th>程序池</th><th>包含的非线性程序</th><th class="num">X</th><th class="num">总周期</th></tr></thead>
+    <tbody>
+      <tr><td>BERT</td><td>Softmax(512)、LayerNorm(768)、Bias+GELU(3072)、Tanh(768)</td><td class="num">64</td><td class="num">7,667</td></tr>
+      <tr><td>LLaMA</td><td>RMSNorm(4096)、Softmax(4096)、SwiGLU(11008)</td><td class="num">64</td><td class="num">30,704</td></tr>
+      <tr><td>SD-UNet</td><td>GroupNorm(1280)、SiLU(1280)、LayerNorm(768)、Softmax(1024)、GeGLU(3072)</td><td class="num">64</td><td class="num">11,684</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>每个“程序池”表示这些函数的指令可同时装入同一套存储；周期是各函数周期相加，并包含每个程序自己的 EOP 拍。三种方案都使用 index priority。</p>
+
+  <h3>3.2 本次实际做了什么</h3>
+  <ol>
+    <li>从 GitHub 新克隆 main 分支，固定 commit <code>344c9f0c1705b1cf544c2081f894cab7518a481d</code>。</li>
+    <li>读取 <a href="paper4_new_idea_three_lane_sidecar_2026-09-07.html"><code>paper4_new_idea_three_lane_sidecar_2026-09-07.html</code></a> 和 <a href="model_pool_compression_study_2026-09-08.html"><code>model_pool_compression_study_2026-09-08.html</code></a>。</li>
+    <li>仓库只提交了池汇总 JSON，没有提交所有逐周期 schedule，因此用最新 <code>schedule_v19_issue2_priority_174.py</code> 重新生成 11 个不同函数/尺寸的选定 max-5 与 max-4 schedule。</li>
+    <li>运行原有 <code>verify_model_pool.py</code>：Candidate A 与 E2 共 22 项全部逐 bit 往返通过。</li>
+    <li>新增独立脚本 <a href="../experiments/model_pool_e5_sidecar_ppa_study.py"><code>model_pool_e5_sidecar_ppa_study.py</code></a>；不修改原调度器。它编码、解码 E2、E5-R、E5-B，并逐周期比较五个 34-bit 槽和 EOP。</li>
+    <li>三池的 E2、E5-R、E5-B 全部 bit-exact；每个程序 EOP 后把 phase 归零，符合程序描述符启动语义。</li>
+  </ol>
+
+  <h2 id="step1">4. 第一层证据：为什么“槽和存储 Lane 解耦”有效</h2>
+  <table>
+    <thead><tr><th>池</th><th>E1 五个专属槽的实际事件数<br>L / S / V / Sc / SFU</th><th>E1 统一 payload 深度</th><th>E2 四条共享 Lane 的实际事件数</th><th>E2 统一 payload 深度</th><th>直观解释</th></tr></thead>
+    <tbody>
+      <tr><td>BERT</td><td>1298 / 1280 / 2624 / 640 / 1280</td><td class="num">4096</td><td>1781 / 1781 / 1780 / 1780</td><td class="num good">2048</td><td>VECTOR 把 E1 全部 Bank 顶到 4096；共享后四道都能放进 2048。</td></tr>
+      <tr><td>LLaMA</td><td>7568 / 4800 / 13696 / 3072 / 3968</td><td class="num">16384</td><td>8276 / 8276 / 8276 / 8276</td><td class="num">16384</td><td>共享后更均衡，但总事件量仍让 Lane 留在 16384；收益主要来自少一个 Bank。</td></tr>
+      <tr><td>SD-UNet</td><td>2640 / 1856 / 5696 / 1664 / 1664</td><td class="num">8192</td><td>3381 / 3381 / 3379 / 3379</td><td class="num good">4096</td><td>VECTOR 的 5696 让 E1 进入 8192；共享后压回 4096。</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>L/S/V/Sc/SFU 分别是 LOAD、STORE、VECTOR、SCALAR、SFU。事件数是实际有效操作数量；“统一深度”是为保证池中程序可替换、所有同类 Bank 采用相同 2 的幂深度。该表直接证明 E2 不是简单“少一个 Bank”，还消除了 E1 的槽间高度不均衡。</p>
+
+  <h2 id="step2">5. 第二层证据：禁止五槽并发为什么没有损失性能</h2>
+  <table>
+    <thead><tr><th>池</th><th>max-5 调度的槽占用分布：0 / 1 / 2 / 3 / 4 / 5</th><th class="num">五槽周期</th><th>max-4 调度的槽占用分布：0 / 1 / 2 / 3 / 4</th><th class="num">周期变化</th></tr></thead>
+    <tbody>
+      <tr><td>BERT</td><td>2652 / 3227 / 1507 / 232 / 40 / 5</td><td class="num">5</td><td>2652 / 3222 / 1512 / 232 / 45</td><td class="num good">0</td></tr>
+      <tr><td>LLaMA</td><td>7819 / 13977 / 7680 / 1133 / 92 / 0</td><td class="num">0</td><td>7819 / 13977 / 7680 / 1133 / 92</td><td class="num good">0</td></tr>
+      <tr><td>SD-UNet</td><td>3345 / 4278 / 3044 / 897 / 112 / 3</td><td class="num">3</td><td>3345 / 4275 / 3047 / 897 / 115</td><td class="num good">0</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>“0/1/…槽”表示该拍有多少个有效功能槽，不含 EOP。max-4 并不是简单把五槽拍强行拆成额外一拍；调度器利用原程序中的空闲空间重新安排依赖合法的操作，因此总周期没增加。这个结论只对表中三个程序池和当前参数成立，论文必须报告接纳域，不能声称任意程序都零损失。</p>
+
+  <h2 id="cliff">6. 原始 E5-R 为什么会在两个池中失败</h2>
+  <p>令 <code>E</code> 为池中所有有效事件数，<code>Q4</code> 为四槽同拍周期数。原始 E5 每个四槽拍只把第 4 个事件送侧道，因此：</p>
+  <div class="formula">E2 单 Lane 深度 D2 = pow2ceil( ceil(E / 4) )
+E5-R 主道事件数 Emain = E − Q4
+E5-R 单主道深度 Dmain = pow2ceil( ceil(Emain / 3) )
+E5-R 侧道深度 Dside = pow2ceil(Q4)
+
+原始 E5 不让主道变深的必要条件：E − Q4 ≤ 3 × D2</div>
+  <p>“四槽同拍很少”只保证 <code>Dside</code> 很浅，却意味着几乎所有事件仍要挤进三条主道。三条主道平均承担 <code>E/3</code>，比 E2 的 <code>E/4</code> 高约三分之一；一旦越过 2 的幂边界，主道深度直接翻倍。</p>
+  <table>
+    <thead><tr><th>池</th><th class="num">E</th><th class="num">Q4</th><th>E2 payload</th><th>E5-R payload</th><th class="num">容量变化</th><th>结果</th></tr></thead>
+    <tbody>
+      <tr><td>BERT</td><td class="num">7,122</td><td class="num">45（0.59%）</td><td>4 × 2048 = 8192 项</td><td>3 × 4096 + 64 = 12352 项</td><td class="num bad">+50.8%</td><td><code>7077 &gt; 3×2048</code>，主道翻倍。</td></tr>
+      <tr><td>LLaMA</td><td class="num">33,104</td><td class="num">92（0.30%）</td><td>4 × 16384 = 65536 项</td><td>3 × 16384 + 128 = 49280 项</td><td class="num good">−24.8%</td><td>主道没有跨档，原始 E5 成立。</td></tr>
+      <tr><td>SD-UNet</td><td class="num">13,520</td><td class="num">115（0.98%）</td><td>4 × 4096 = 16384 项</td><td>3 × 8192 + 128 = 24704 项</td><td class="num bad">+50.8%</td><td><code>13405 &gt; 3×4096</code>，主道翻倍。</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>“payload 项”是一项 34 bit；这里只比较 payload 容量，尚未加入 Config 和逻辑。百分比解释了为什么后面的 CACTI 面积同方向变化，但不会与面积百分比完全一样。</p>
+
+  <div class="box badbox"><strong>必须修改旧结论：</strong>原文基于旧 12-workload 合并池得到“E5 稳定省约 24%”，这个数字不能外推到最新三个模型池。决定 E5-R 成败的不是 Q4 比例单独一个指标，而是 <strong>Q4、总事件数和 E2 当前深度余量三者的组合</strong>。</div>
+
+  <h2 id="e5b">7. 修正版 E5-B：让侧道承担“容量溢出”，而不只承担四槽峰值</h2>
+  <h3>7.1 每拍怎样编码</h3>
+  <div class="flow">输入：E2 已经合法的 max-4 schedule
+
+若本拍有 4 个有效槽：
+  前 3 个 → 三条主道；第 4 个 → 侧道；spill=1（必须）
+
+若本拍有 1～3 个有效槽且被离线算法选中：
+  最高 rank 的事件 → 侧道；其余 → 三条主道；spill=1（可选）
+
+其它周期：
+  全部有效事件 → 三条主道；spill=0
+
+Config = {spill, 原 5-bit slot mask}
+三条主道内部继续轮转：lane = (phase3 + rank) mod 3
+每拍结束：phase3 = (phase3 + 主道事件数) mod 3</div>
+
+  <p>为了减少布线，本次没有允许任意事件进入侧道。可选 spill 只从“本拍最高有效槽是逻辑槽 3 或 4”的周期中选择；四槽周期的第 4 个事件天然也只可能是槽 3 或 4。因此侧道输出只需连接最后两个槽。三条主道仍可恢复五个槽。</p>
+
+  <h3>7.2 离线算法怎样选容量</h3>
+  <ol>
+    <li>枚举 2 的幂主道深度 <code>Dmain</code> 和侧道深度 <code>Dside</code>，要求 <code>Dside ≤ Dmain/2</code>，确保它确实是“小侧道”。</li>
+    <li>所有四槽周期必须进入侧道，因此侧道事件数至少为 <code>Q4</code>。</li>
+    <li>三条主道总容量为 <code>3×Dmain</code>；若总事件超出，侧道至少还要吸收 <code>E−3×Dmain</code> 个事件。</li>
+    <li>从合法候选周期中按程序顺序选择额外 spill；每个程序 EOP 后 phase 归零。若多程序 phase 重置使某条主道多出 1～2 项，就再 spill 少量事件直到三道都不越界。</li>
+    <li>对可行组合调用 CACTI，选择 SRAM 面积最小者；不是根据函数名字训练字典。</li>
+  </ol>
+
+  <table>
+    <thead><tr><th>池</th><th class="num">可选 spill 候选周期</th><th class="num">四槽必需侧道事件</th><th class="num">额外 spill</th><th>三主道实际事件</th><th class="num">侧道实际事件</th><th>E5-B payload</th><th class="num">vs E2 容量</th></tr></thead>
+    <tbody>
+      <tr><td>BERT</td><td class="num">1815</td><td class="num">45</td><td class="num">936</td><td>2048 / 2047 / 2046</td><td class="num">981</td><td>3×2048 + 1024</td><td class="num good">−12.5%</td></tr>
+      <tr><td>LLaMA</td><td class="num">6447</td><td class="num">92</td><td class="num">0</td><td>11004 / 11004 / 11004</td><td class="num">92</td><td>3×16384 + 128</td><td class="num good">−24.8%</td></tr>
+      <tr><td>SD-UNet</td><td class="num">3092</td><td class="num">115</td><td class="num">1120</td><td>4096 / 4095 / 4094</td><td class="num">1235</td><td>3×4096 + 2048</td><td class="num good">−12.5%</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>“候选周期”是最高有效槽为槽3/4、且不足四槽的周期；“额外 spill”不改变周期，只改变一个已有事件存在哪个 Bank；“实际事件”证明每条流都装得下。BERT/SD-UNet 多出的 3 个 spill 是为了处理每个程序 phase 独立归零造成的 1～2 项 Lane 偏差。</p>
+
+  <h2 id="ppa">8. 三个程序池的 E0/E1/E2/E5 软件 PPA 预估</h2>
+  <div class="box warnbox"><strong>先说明口径：</strong>以下不是 28nm RTL 综合结果。SRAM 使用 HP CACTI 32nm、单读写口、1 GHz；E1/E2/E5 的 Config 统一按物理 8-bit 端口做公平敏感性比较，逻辑上仍分别使用 5/6 bit。逻辑采用门当量和真实 schedule 翻转率估算，等效电容取 0.5–2.0 fF/GE、漏电取 1–20 nW/GE，因此功耗给区间。面积是“CACTI SRAM + 逻辑估算”。这些数字只能用于筛选方向，不能替代 SRAM compiler、RTL 综合和 SAIF/VCD 功耗。</div>
+
+  <h3>8.1 BERT 程序池</h3>
+  <table>
+    <thead><tr><th>方案</th><th>物理存储组织</th><th class="num">逻辑估算</th><th class="num">总面积 mm²</th><th class="num">活动功耗 mW</th><th class="num">运行全池一次的 SRAM 读能量 nJ</th><th class="num">面积 vs E2</th></tr></thead>
+    <tbody>
+      <tr><td>E0</td><td>1×174×8192</td><td class="num">279 GE</td><td class="num">0.419908</td><td class="num">80.982–81.014</td><td class="num">366.160</td><td class="num">+353.1%</td></tr>
+      <tr><td>E1</td><td>Config 8×8192；5×34×4096</td><td class="num">777 GE</td><td class="num">0.186733</td><td class="num">31.681–31.763</td><td class="num">69.163</td><td class="num">+101.5%</td></tr>
+      <tr><td><strong>E2</strong></td><td>Config 8×8192；4×34×2048</td><td class="num">2343 GE</td><td class="num"><strong>0.092672</strong></td><td class="num"><strong>17.326–17.636</strong></td><td class="num"><strong>53.916</strong></td><td class="num">基准</td></tr>
+      <tr><td>E5-R 原案</td><td>Config 8×8192；3×34×4096；1×34×64</td><td class="num">2065 GE</td><td class="num bad">0.122868</td><td class="num bad">23.428–23.710</td><td class="num bad">68.914</td><td class="num bad">+32.6%</td></tr>
+      <tr><td><strong>E5-B 修正</strong></td><td>Config 8×8192；3×34×2048；1×34×1024</td><td class="num">2091 GE</td><td class="num good"><strong>0.083319</strong></td><td class="num good"><strong>16.095–16.383</strong></td><td class="num good"><strong>52.010</strong></td><td class="num good"><strong>−10.1%</strong></td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>“物理存储组织”中的第一个数字是位宽、第二个是深度；“逻辑估算”包含共同前端、指针、phase、使能和散布网络；“活动功耗”包含 SRAM 漏电、按实际读次数算的动态读功耗以及逻辑功耗区间；最后一列统一以 E2 为基准。</p>
+
+  <h3>8.2 LLaMA 程序池</h3>
+  <table>
+    <thead><tr><th>方案</th><th>物理存储组织</th><th class="num">逻辑估算</th><th class="num">总面积 mm²</th><th class="num">活动功耗 mW</th><th class="num">运行全池一次的 SRAM 读能量 nJ</th><th class="num">面积 vs E2</th></tr></thead>
+    <tbody>
+      <tr><td>E0</td><td>1×174×32768</td><td class="num">279 GE</td><td class="num">1.643421</td><td class="num">226.603–226.635</td><td class="num">2530.197</td><td class="num">+163.5%</td></tr>
+      <tr><td>E1</td><td>Config 8×32768；5×34×16384</td><td class="num">849 GE</td><td class="num">0.759556</td><td class="num">105.089–105.172</td><td class="num">662.619</td><td class="num">+21.8%</td></tr>
+      <tr><td><strong>E2</strong></td><td>Config 8×32768；4×34×16384</td><td class="num">2427 GE</td><td class="num"><strong>0.623584</strong></td><td class="num"><strong>89.722–90.042</strong></td><td class="num"><strong>662.639</strong></td><td class="num">基准</td></tr>
+      <tr><td><strong>E5-R 原案</strong></td><td>Config 8×32768；3×34×16384；1×34×128</td><td class="num">2119 GE</td><td class="num good"><strong>0.484176</strong></td><td class="num good"><strong>74.381–74.669</strong></td><td class="num">661.416</td><td class="num good"><strong>−22.4%</strong></td></tr>
+      <tr><td>E5-B 修正</td><td>同上；保留第 6 个逻辑 Config bit，但本池不需额外 spill</td><td class="num">2139 GE</td><td class="num good">0.484227</td><td class="num good">74.381–74.668</td><td class="num">661.416</td><td class="num good">−22.3%</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>LLaMA 的 E2 四条 Lane 只有约 50.5% 容量利用率，改成三主道后仍留在 16384 深，因此原始 E5 已经足够；E5-B 的额外 bit 在统一 8-bit 物理端口下几乎不增加 SRAM，逻辑仅多约 20 GE。</p>
+
+  <h3>8.3 SD-UNet 程序池</h3>
+  <table>
+    <thead><tr><th>方案</th><th>物理存储组织</th><th class="num">逻辑估算</th><th class="num">总面积 mm²</th><th class="num">活动功耗 mW</th><th class="num">运行全池一次的 SRAM 读能量 nJ</th><th class="num">面积 vs E2</th></tr></thead>
+    <tbody>
+      <tr><td>E0</td><td>1×174×16384</td><td class="num">279 GE</td><td class="num">0.838267</td><td class="num">127.224–127.255</td><td class="num">710.222</td><td class="num">+394.9%</td></tr>
+      <tr><td>E1</td><td>Config 8×16384；5×34×8192</td><td class="num">813 GE</td><td class="num">0.401911</td><td class="num">57.722–57.804</td><td class="num">178.906</td><td class="num">+137.3%</td></tr>
+      <tr><td><strong>E2</strong></td><td>Config 8×16384；4×34×4096</td><td class="num">2373 GE</td><td class="num"><strong>0.169374</strong></td><td class="num"><strong>32.397–32.707</strong></td><td class="num"><strong>142.736</strong></td><td class="num">基准</td></tr>
+      <tr><td>E5-R 原案</td><td>Config 8×16384；3×34×8192；1×34×128</td><td class="num">2095 GE</td><td class="num bad">0.257601</td><td class="num bad">42.241–42.517</td><td class="num bad">177.969</td><td class="num bad">+52.1%</td></tr>
+      <tr><td><strong>E5-B 修正</strong></td><td>Config 8×16384；3×34×4096；1×34×2048</td><td class="num">2121 GE</td><td class="num good"><strong>0.152712</strong></td><td class="num good"><strong>30.099–30.380</strong></td><td class="num good"><strong>140.090</strong></td><td class="num good"><strong>−9.8%</strong></td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>SD-UNet 与 BERT 的现象一致：原始 E5 主道翻倍而失败；E5-B 用半深侧道吸收容量溢出，使三条主道保持 E2 的 4096 深。</p>
+
+  <h3>8.4 不应忽略的部署口径</h3>
+  <div class="box violetbox"><strong>如果一个物理核只需要“轮流替换”三个模型池，并统一按最大的 LLaMA 池定深：</strong>E2 为 <code>4×16384</code>；原始 E5-R 用 <code>3×16384 + 1×128</code> 已能容纳三个池，统一 8-bit Config 的预估面积约从 0.6236 mm² 降到 0.4842 mm²（−22.4%）。但这会让 BERT/SD-UNet 使用严重过量的存储。若三个池分别右定尺寸，或者将来需要多个池同时常驻，仍必须使用 E5-B 或重新求联合容量。论文必须先说清“分别定制、覆盖替换、同时常驻”是哪一种，不能混用最有利数字。</div>
+
+  <h3>8.5 为什么这些数字与已有 28nm RTL 表不同</h3>
+  <p>仓库已有的三程序小池（Softmax/LayerNorm/GELU X64）完成过 28nm RTL 综合：E0/E1/E2 分别为 289,077/96,268/80,364 µm²，39.41/6.029/5.44 mW。本节新表使用更大的 BERT/LLaMA/SD-UNet 池和 CACTI 32nm，并沿用最新软件文档的 174-bit E0；已有 RTL 为删去三个保留位后的 171-bit E0。因此只能比较同一张新表内的相对趋势，不能把新表绝对数与旧 28nm 数字直接拼接。</p>
+
+  <h2 id="rtl">9. E5-B 的硬件实现、关键路径和真实风险</h2>
+  <h3>9.1 推荐三拍流水</h3>
+  <table>
+    <thead><tr><th>流水阶段</th><th>做什么</th><th>相对 E2 的变化</th></tr></thead>
+    <tbody>
+      <tr><td>A：Config 地址</td><td>按 PC 读取 6-bit <code>{spill,mask[4:0]}</code>。</td><td>Config 多 1 bit；EOP 可定义为 <code>spill=0, mask=11111</code>。</td></tr>
+      <tr><td>B：Config 解码和 payload 地址</td><td>由 mask 得到有效槽顺序；<code>spill=1</code> 时最高 rank 送侧道；其余最多三个事件生成主道 enable。三主道指针和侧道指针前递。</td><td>mod-4 phase 改为三状态 phase；不能用简单低两位截断。</td></tr>
+      <tr><td>C：payload 返回和散布</td><td>三条主道经 3→5 散布；侧道只连逻辑槽3/4；mask 决定无效槽输出 NOP。</td><td>路由门当量预估约低于 E2 的完整 4→5；必须用综合确认线长和时序。</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>三个阶段与 E2 保持同样 II=1、固定三拍延迟。这里的“阶段”是流水位置，不代表一条指令需要停顿三次；流水填满后仍每拍输出一条完整 VLIW。</p>
+
+  <h3>9.2 mod-3 不需要除法器</h3>
+  <p>E2 的模 4 可以直接取低两位，E5 的模 3 是真实新增风险。但硬件不需要做通用除法：phase 只有 0、1、2 三种状态，主道事件数只有 0、1、2、3 四种情况，只需一个 3×4 的小真值表。主道事件数为 3 时 phase 不变；为 1/2 时按固定三状态跳转。应在 RTL 中写成明确 case 或组合加减，并综合检查 Config-Q 到 payload-CEN 的路径。</p>
+
+  <h3>9.3 E5-B 仍然是通用编码，不是 workload 字典</h3>
+  <ul>
+    <li>硬件不认识 Softmax、RMSNorm 或模型名字，只读取 mask 和 spill。</li>
+    <li>spill 周期由装载/编译工具根据目标 Bank 容量选择，类似链接器把代码段放入存储区，不需要运行时训练。</li>
+    <li>任何 max-4 程序都可编码；能否装入某个固定深度由容量接纳检查决定。</li>
+    <li>如果目标程序没有足够的槽3/4候选 spill，可以退回更深主道、允许侧道连接五槽，或判定该容量配置不接纳；不能静默破坏功能。</li>
+  </ul>
+
+  <h3>9.4 当前最主要的风险</h3>
+  <table>
+    <thead><tr><th>风险</th><th>为什么可能发生</th><th>下一步怎样关闭</th></tr></thead>
+    <tbody>
+      <tr><td>浅侧道不一定有合适 foundry SRAM 宏</td><td>128/1024/2048 深的 34-bit 宏可能需要 SCM、寄存器或多种 compiler 选项；最小宏面积可能吞掉软件容量收益。</td><td>先查真实 SRAM compiler 菜单；分别综合 SRAM、SCM、寄存器三种侧道实现。</td></tr>
+      <tr><td>mod-3 使能路径变慢</td><td>Config Q 到主道 CEN/地址是关键路径，E2 的 mod-4 更简单。</td><td>写 E5 RTL，使用三状态查表；目标 1 GHz，报告 slack。</td></tr>
+      <tr><td>E5-B 多一个 Config bit</td><td>如果 foundry 只有精确 5-bit 和 6-bit 宏，面积/能耗并非完全相同。</td><td>同时报告原生 5/6-bit 宏和统一 8-bit 端口；本报告主表已采用后者防止 CACTI 跳变。</td></tr>
+      <tr><td>额外 spill 不再“极罕见”</td><td>BERT/SD-UNet 侧道事件约占总周期 12.8%/10.6%，虽仍低频，但不是原始 Q4 的不到 1%。</td><td>论文用“容量平衡 overflow lane”，不要继续声称侧道只处理极罕见四槽拍。</td></tr>
+      <tr><td>控制流入口状态</td><td>分支/循环入口需要恢复三主道指针、侧道指针和 phase。</td><td>每个程序/基本块 descriptor 保存四个 base 和初始 phase；做随机切换与回跳仿真。</td></tr>
+      <tr><td>软件 PPA 误差</td><td>CACTI 32nm 与实际 28nm 宏、布局布线不同；门当量不是网表。</td><td>不得把本报告百分比写进摘要，直到 RTL+真实宏+SAIF/VCD 完成。</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>“风险”是当前尚未被实验关闭的部分；“原因”说明为什么软件正结果可能在硬件中反转；“关闭方法”是形成论文证据所需的具体动作。</p>
+
+  <h2 id="paper">10. 论文叙事和创新点应当怎样调整</h2>
+  <h3>10.1 推荐的完整叙事</h3>
+  <ol>
+    <li><strong>观察一：语义槽负载不均衡。</strong>纵向压缩虽然删除 NOP，但把存储 Bank 永久绑定到 LOAD/STORE/VECTOR/SCALAR/SFU，统一深度时受最忙槽支配。</li>
+    <li><strong>方法一：槽/Lane 解耦。</strong>有效操作进入可共享 payload Lane，mask+rank+phase 在固定周期内恢复语义槽，解决槽间高度不均衡。</li>
+    <li><strong>观察二：峰值 issue width 不等于有效 issue width。</strong>三个模型池的五槽同发只有 5/0/3 拍；max-4 静态调度保持周期不变，因此从五个存储端口降到四个。</li>
+    <li><strong>观察三：四槽同发低频，但单纯稀有侧道存在 SRAM 深度悬崖。</strong>原始 E5 在 2/3 池反而更差，说明“看直方图挑小侧道”不够。</li>
+    <li><strong>方法二：量化感知的容量平衡侧道。</strong>联合选择主/侧道深度和 spill 周期，使每拍仍至多三主+一侧、schedule 不变，同时避开 2 的幂容量台阶。</li>
+    <li><strong>硬件：确定性三拍恢复。</strong>无字典、无运行时仲裁、无可变解压延迟；通过 Config 的显式 spill bit 保留通用性。</li>
+  </ol>
+
+  <div class="box goodbox"><strong>比原始 E5 更像论文的地方：</strong>E5-B 的创新不再是“发现四槽拍少，所以把第四 Bank 做小”这一句经验性优化，而是<strong>把静态调度的逐周期端口约束、SRAM 离散深度和事件到 Bank 的映射联合起来</strong>。原始 E5-R 是一个重要消融：它在 BERT/SD-UNet 失败，反过来证明容量平衡算法不可缺少。</div>
+
+  <h3>10.2 建议贡献表述</h3>
+  <ol>
+    <li>提出语义槽与物理 Lane 解耦的有效事件存储，实现每拍完整 VLIW 的确定性恢复。</li>
+    <li>提出面向程序域的 issue-width 接纳方法：只在周期损失阈值内减少物理 Lane 数，而不是假定所有程序都稀疏。</li>
+    <li>提出 SRAM 深度量化感知的非对称主道/侧道映射，在不改变已有 schedule 的情况下选择 spill，避免原始 rare-only 方案的 2× 深度悬崖。</li>
+    <li>在 BERT、LLaMA、SD-UNet 三个模型程序池上同时给出容量、性能、恢复正确性和 RTL PPA；最后一项目前尚待完成。</li>
+  </ol>
+
+  <h2 id="next">11. 接下来最合理的具体工作</h2>
+  <ol>
+    <li><strong>先做 E5-R/E5-B RTL 编码器和解码顶层。</strong>不要一开始做调度优化；直接使用本次已经生成的三个池 schedule 和新脚本输出。</li>
+    <li><strong>做池模式逐 bit 回归。</strong>覆盖 BERT 4 个程序、LLaMA 3 个、SD-UNet 5 个，采用非连续切换顺序；检查 config 读数、三主道读数、侧道读数和 phase reset。</li>
+    <li><strong>综合四个尺寸工作点。</strong>至少实现 <code>main/side=2048/1024、4096/2048、16384/128</code>，再加一个统一最大配置；报告 1 GHz slack、面积、功耗。</li>
+    <li><strong>侧道实现消融。</strong>比较真实 SRAM 宏、SCM 和寄存器；尤其关注 34×128 小侧道，因为 CACTI 对超浅宏可能过于乐观。</li>
+    <li><strong>Config 端口消融。</strong>分别综合 5-bit E5-R、6-bit E5-B 和统一 8-bit 物理实现。</li>
+    <li><strong>论文必需消融。</strong>E2、E5-R、E5-B 三者必须同时出现；否则读者看不到深度悬崖和容量平衡映射的必要性。</li>
+    <li><strong>再扩大域。</strong>在跨平台工作中定义的其它 VLIW/CGRA trace 上检查“可选侧道候选是否足够”，验证算法不是五槽 FRV 专用技巧。</li>
+  </ol>
+
+  <h2 id="files">12. 新增文件、复现命令与证据边界</h2>
+  <table>
+    <thead><tr><th>文件</th><th>用途</th></tr></thead>
+    <tbody>
+      <tr><td><a href="../experiments/model_pool_e5_sidecar_ppa_study.py"><code>experiments/model_pool_e5_sidecar_ppa_study.py</code></a></td><td>E2/E5-R/E5-B 编码解码、逐 bit 断言、容量搜索、CACTI 与门当量 PPA。</td></tr>
+      <tr><td><a href="../analysis_output_model_pool_e5_2026-09-08/model_pool_e5_ppa_results.json"><code>analysis_output_model_pool_e5_2026-09-08/model_pool_e5_ppa_results.json</code></a></td><td>三池全部机器可读结果、宏参数、活动率和公平 8-bit Config 敏感性结果。</td></tr>
+      <tr><td><code>analysis_output_model_pool_2026-09-08/schedules/</code></td><td>本次用最新调度器在本地重新生成的逐周期 schedule；原仓库没有提交这些大文件。</td></tr>
+      <tr><td><a href="model_pool_compression_study_2026-09-08.html"><code>plan/model_pool_compression_study_2026-09-08.html</code></a></td><td>三个程序池定义、E0/E1/E2 原始软件结果。</td></tr>
+      <tr><td><a href="paper4_new_idea_three_lane_sidecar_2026-09-07.html"><code>plan/paper4_new_idea_three_lane_sidecar_2026-09-07.html</code></a></td><td>原始 E5-R 想法；本报告保留其价值，同时关闭其跨池外推问题。</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>第一列均为本地可审计文件；第二列说明它在证据链中的作用。新脚本不会调用调度器，只消费已生成 schedule，因此可独立重复 PPA。</p>
+
+  <div class="formula">复现实验（需要 Python ≥ 3.8）：
+python3.9 experiments/model_pool_e5_sidecar_ppa_study.py \
+  --cacti-root /tmp/cacti-hp-20260906
+
+原程序池往返验证：
+PYTHONPATH=/tmp/vliw_py39 python3.9 experiments/verify_model_pool.py</div>
+
+  <div class="box warnbox"><strong>证据边界：</strong>本次确认了调度周期、槽占用、Bank 容量和软件编码/解码正确性；面积功耗仍是 CACTI+门当量预估。E5 尚无 RTL、时序、foundry SRAM 或功耗签核。所有改动仅在新克隆的本地目录中，未向 GitHub 上传。</div>
+
+  <h2>13. 最终建议</h2>
+  <div class="box goodbox"><strong>继续探索，但不要直接实现旧 E5-R 后就写论文。</strong>推荐把 E2 作为已经有真实 RTL 证据的主基线，把 E5-R 作为揭示 SRAM 深度悬崖的必要消融，把 E5-B 作为真正进入下一轮 RTL 的候选。若 E5-B 在三个尺寸下仍满足 1 GHz，且真实宏总面积相对 E2 保持约 8% 以上下降，这条“调度接纳 + 槽/Lane 解耦 + 量化感知非对称侧道”的故事足以比单一四 Bank 压缩完整得多；若浅侧道宏或 mod-3 关键路径抵消收益，则保留 E2 为最终架构，并把 E5 的负结果写成设计空间分析，不能强行宣称成功。</div>
+</main></body></html>
