@@ -1,0 +1,468 @@
+{
+  "settings": {
+    "X": 64,
+    "NUM_VE": 256,
+    "priority": "index",
+    "issue5_schemes": [
+      "uncompressed",
+      "candidate_a"
+    ],
+    "issue4_schemes": [
+      "four_slot"
+    ],
+    "pools": {
+      "BERT": [
+        [
+          "softmax",
+          512
+        ],
+        [
+          "layernorm",
+          768
+        ],
+        [
+          "bias_gelu",
+          3072
+        ],
+        [
+          "tanh",
+          768
+        ]
+      ],
+      "LLaMA": [
+        [
+          "rmsnorm",
+          4096
+        ],
+        [
+          "softmax",
+          4096
+        ],
+        [
+          "swiglu",
+          11008
+        ]
+      ],
+      "SD-UNet": [
+        [
+          "groupnorm",
+          1280
+        ],
+        [
+          "silu",
+          1280
+        ],
+        [
+          "layernorm",
+          768
+        ],
+        [
+          "softmax",
+          1024
+        ],
+        [
+          "geglu",
+          3072
+        ]
+      ]
+    }
+  },
+  "work_items": [
+    {
+      "function": "bias_gelu",
+      "y": 3072,
+      "mode": 2,
+      "cycles_issue5": 4456,
+      "cycles_issue4": 4456,
+      "slot_events": [
+        780,
+        768,
+        768,
+        0,
+        768
+      ],
+      "lane_events": [
+        771,
+        771,
+        771,
+        771
+      ]
+    },
+    {
+      "function": "geglu",
+      "y": 3072,
+      "mode": 2,
+      "cycles_issue5": 4133,
+      "cycles_issue4": 4133,
+      "slot_events": [
+        1536,
+        768,
+        768,
+        0,
+        768
+      ],
+      "lane_events": [
+        960,
+        960,
+        960,
+        960
+      ]
+    },
+    {
+      "function": "groupnorm",
+      "y": 1280,
+      "mode": 0,
+      "cycles_issue5": 2457,
+      "cycles_issue4": 2457,
+      "slot_events": [
+        330,
+        320,
+        2240,
+        768,
+        128
+      ],
+      "lane_events": [
+        947,
+        947,
+        946,
+        946
+      ]
+    },
+    {
+      "function": "layernorm",
+      "y": 768,
+      "mode": 0,
+      "cycles_issue5": 1450,
+      "cycles_issue4": 1450,
+      "slot_events": [
+        198,
+        192,
+        1344,
+        512,
+        128
+      ],
+      "lane_events": [
+        594,
+        594,
+        593,
+        593
+      ]
+    },
+    {
+      "function": "rmsnorm",
+      "y": 4096,
+      "mode": 0,
+      "cycles_issue5": 5327,
+      "cycles_issue4": 5327,
+      "slot_events": [
+        1040,
+        1024,
+        4096,
+        1152,
+        128
+      ],
+      "lane_events": [
+        1860,
+        1860,
+        1860,
+        1860
+      ]
+    },
+    {
+      "function": "silu",
+      "y": 1280,
+      "mode": 2,
+      "cycles_issue5": 1767,
+      "cycles_issue4": 1767,
+      "slot_events": [
+        320,
+        320,
+        320,
+        0,
+        320
+      ],
+      "lane_events": [
+        320,
+        320,
+        320,
+        320
+      ]
+    },
+    {
+      "function": "softmax",
+      "y": 512,
+      "mode": 2,
+      "cycles_issue5": 969,
+      "cycles_issue4": 969,
+      "slot_events": [
+        128,
+        128,
+        512,
+        128,
+        192
+      ],
+      "lane_events": [
+        272,
+        272,
+        272,
+        272
+      ]
+    },
+    {
+      "function": "softmax",
+      "y": 1024,
+      "mode": 2,
+      "cycles_issue5": 1877,
+      "cycles_issue4": 1877,
+      "slot_events": [
+        256,
+        256,
+        1024,
+        384,
+        320
+      ],
+      "lane_events": [
+        560,
+        560,
+        560,
+        560
+      ]
+    },
+    {
+      "function": "softmax",
+      "y": 4096,
+      "mode": 1,
+      "cycles_issue5": 7135,
+      "cycles_issue4": 7135,
+      "slot_events": [
+        1024,
+        1024,
+        4096,
+        1920,
+        1088
+      ],
+      "lane_events": [
+        2288,
+        2288,
+        2288,
+        2288
+      ]
+    },
+    {
+      "function": "swiglu",
+      "y": 11008,
+      "mode": 2,
+      "cycles_issue5": 18242,
+      "cycles_issue4": 18242,
+      "slot_events": [
+        5504,
+        2752,
+        5504,
+        0,
+        2752
+      ],
+      "lane_events": [
+        4128,
+        4128,
+        4128,
+        4128
+      ]
+    },
+    {
+      "function": "tanh",
+      "y": 768,
+      "mode": 2,
+      "cycles_issue5": 792,
+      "cycles_issue4": 792,
+      "slot_events": [
+        192,
+        192,
+        0,
+        0,
+        192
+      ],
+      "lane_events": [
+        144,
+        144,
+        144,
+        144
+      ]
+    }
+  ],
+  "pools": {
+    "BERT": {
+      "functions": [
+        "softmax(y=512)",
+        "layernorm(y=768)",
+        "bias_gelu(y=3072)",
+        "tanh(y=768)"
+      ],
+      "cycles": {
+        "uncompressed": 7667,
+        "candidate_a": 7667,
+        "four_slot": 7667
+      },
+      "uncompressed": {
+        "word_bits": 174,
+        "depth": 8192,
+        "macro_types": 1,
+        "alloc_bits": 1425408
+      },
+      "candidate_a": {
+        "config": {
+          "bits": 5,
+          "depth": 8192
+        },
+        "payload": {
+          "bits": 34,
+          "banks": 5,
+          "depth": 4096,
+          "bank_events": [
+            1298,
+            1280,
+            2624,
+            640,
+            1280
+          ]
+        },
+        "macro_types": 2,
+        "alloc_bits": 737280
+      },
+      "four_slot": {
+        "config": {
+          "bits": 5,
+          "depth": 8192
+        },
+        "payload": {
+          "bits": 34,
+          "banks": 4,
+          "depth": 2048,
+          "bank_events": [
+            1781,
+            1781,
+            1780,
+            1780
+          ]
+        },
+        "macro_types": 2,
+        "alloc_bits": 319488
+      }
+    },
+    "LLaMA": {
+      "functions": [
+        "rmsnorm(y=4096)",
+        "softmax(y=4096)",
+        "swiglu(y=11008)"
+      ],
+      "cycles": {
+        "uncompressed": 30704,
+        "candidate_a": 30704,
+        "four_slot": 30704
+      },
+      "uncompressed": {
+        "word_bits": 174,
+        "depth": 32768,
+        "macro_types": 1,
+        "alloc_bits": 5701632
+      },
+      "candidate_a": {
+        "config": {
+          "bits": 5,
+          "depth": 32768
+        },
+        "payload": {
+          "bits": 34,
+          "banks": 5,
+          "depth": 16384,
+          "bank_events": [
+            7568,
+            4800,
+            13696,
+            3072,
+            3968
+          ]
+        },
+        "macro_types": 2,
+        "alloc_bits": 2949120
+      },
+      "four_slot": {
+        "config": {
+          "bits": 5,
+          "depth": 32768
+        },
+        "payload": {
+          "bits": 34,
+          "banks": 4,
+          "depth": 16384,
+          "bank_events": [
+            8276,
+            8276,
+            8276,
+            8276
+          ]
+        },
+        "macro_types": 2,
+        "alloc_bits": 2392064
+      }
+    },
+    "SD-UNet": {
+      "functions": [
+        "groupnorm(y=1280)",
+        "silu(y=1280)",
+        "layernorm(y=768)",
+        "softmax(y=1024)",
+        "geglu(y=3072)"
+      ],
+      "cycles": {
+        "uncompressed": 11684,
+        "candidate_a": 11684,
+        "four_slot": 11684
+      },
+      "uncompressed": {
+        "word_bits": 174,
+        "depth": 16384,
+        "macro_types": 1,
+        "alloc_bits": 2850816
+      },
+      "candidate_a": {
+        "config": {
+          "bits": 5,
+          "depth": 16384
+        },
+        "payload": {
+          "bits": 34,
+          "banks": 5,
+          "depth": 8192,
+          "bank_events": [
+            2640,
+            1856,
+            5696,
+            1664,
+            1664
+          ]
+        },
+        "macro_types": 2,
+        "alloc_bits": 1474560
+      },
+      "four_slot": {
+        "config": {
+          "bits": 5,
+          "depth": 16384
+        },
+        "payload": {
+          "bits": 34,
+          "banks": 4,
+          "depth": 4096,
+          "bank_events": [
+            3381,
+            3381,
+            3379,
+            3379
+          ]
+        },
+        "macro_types": 2,
+        "alloc_bits": 638976
+      }
+    }
+  }
+}

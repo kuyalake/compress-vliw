@@ -11,3 +11,6 @@ analysis_output_priority_window_174/issue2/
 analysis_output_priority_window_174/issue5/
 analysis_output_issue124_four_lane_174/sweep/
 rtl/out/
+
+# model-pool study: keep summary JSON, exclude bulky per-run scheduler dirs
+analysis_output_model_pool_2026-09-08/schedules/

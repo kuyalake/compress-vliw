@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>四共享 Bank VLIW 指令压缩：跨处理器适用性、近十年文献与外部平台实验</title>
+  <style>
+    :root{--ink:#182230;--muted:#5d6b7c;--line:#d8e1ec;--bg:#eef3f8;--blue:#175cd3;--green:#067647;--amber:#b54708;--red:#b42318;--violet:#6941c6}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.78 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+    main{max-width:1260px;margin:24px auto 80px;background:#fff;padding:44px 55px;border-radius:15px;box-shadow:0 8px 34px #23395d18}
+    h1{font-size:30px;line-height:1.32;margin:0 0 10px}h2{font-size:22px;margin:43px 0 15px;padding-bottom:8px;border-bottom:2px solid #e8edf4}h3{font-size:18px;margin:27px 0 9px}h4{font-size:16px;margin:21px 0 7px}
+    p{margin:8px 0 13px}a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}code{background:#eef2f7;border-radius:4px;padding:1px 5px;overflow-wrap:anywhere}
+    .meta{color:var(--muted);margin-bottom:19px}.lead{font-size:16.5px;background:#f5f8ff;border-left:5px solid var(--blue);padding:16px 18px;border-radius:8px}
+    .box{border:1px solid #bfd0e8;background:#f7faff;border-radius:10px;padding:15px 18px;margin:15px 0}.goodbox{border-color:#a9dac4;background:#f3fbf7}.warnbox{border-color:#efc492;background:#fff9f2}.badbox{border-color:#efaaa4;background:#fff5f4}.violetbox{border-color:#c8b7ef;background:#faf8ff}
+    table{width:100%;border-collapse:collapse;margin:12px 0 7px;font-size:13.4px}th,td{border:1px solid var(--line);padding:9px 10px;vertical-align:top}th{background:#edf2f8;text-align:left}tbody tr:nth-child(even){background:#fafbfd}.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+    .table-note{margin:6px 2px 22px;padding:9px 12px;background:#f8fafc;border-left:3px solid #98a2b3;color:#475467;font-size:13px}.small{font-size:12.8px;color:var(--muted)}
+    .tag{display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:700;white-space:nowrap}.tag.go{background:#dff6ea;color:#05603a}.tag.cond{background:#fff0d9;color:#8f4300}.tag.no{background:#fee4e2;color:#912018}.tag.info{background:#e6efff;color:#174ea6}.tag.data{background:#eee7fe;color:#5d3ab5}
+    .good{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}
+    .formula,.flow{white-space:pre-wrap;background:#101828;color:#eef4ff;padding:15px 17px;border-radius:9px;font:13px/1.72 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.example{border:1px solid var(--line);background:#fbfcfe;border-radius:10px;padding:14px 17px;margin:14px 0}
+    ul,ol{padding-left:24px}li{margin:5px 0}.toc{columns:2;column-gap:34px;border:1px solid var(--line);background:#fafbfd;border-radius:10px;padding:16px 28px}.toc li{break-inside:avoid}
+    .bar{height:9px;border-radius:9px;background:#dfe7f2;overflow:hidden;margin-top:5px}.bar>i{display:block;height:100%;background:var(--blue)}
+    @media(max-width:880px){main{margin:0;padding:24px 15px;border-radius:0}.toc{columns:1}table{display:block;overflow-x:auto}}@media print{body{background:#fff}main{margin:0;max-width:none;box-shadow:none;padding:25px}}
+  </style>
+</head>
+<body><main>
+  <h1>四共享 Bank VLIW 指令压缩：跨处理器适用性、近十年文献与外部平台实验</h1>
+  <div class="meta">调研截止：2026-09-07 ｜ 重点覆盖 2016–2026 年论文、公开 RTL/编译器与厂商一手文档 ｜ 新做 2 个外部平台静态实验 ｜ 仅本地文件，未执行 git push</div>
+
+  <p class="lead"><strong>先给结论：</strong>这个工作可以从“只为第三篇五槽核省掉一个 Bank”提升为一个更一般的问题：<strong>静态调度的宽指令中，物理功能槽很多，但每拍真正有效的槽较少；能否用少于逻辑槽数的共享指令 Bank，仍在每个时钟周期恢复出完整控制字？</strong>跨平台调研表明，它最有希望扩展到两类机器：① 面向 CNN、视觉、信号处理的静态 VLIW/ASIP；② 每拍向多个 PE 发配置字的时分复用 CGRA。可是“属于 VLIW”本身远远不够，必须先测每拍有效槽数量。OpenEdgeCGRA 的负结果和 CCF 的初步正结果恰好证明了这一点。</p>
+
+  <div class="box goodbox"><strong>推荐的论文实验组合：</strong>保留第三篇架构作为完成 RTL、面积、功耗和精确恢复验证的主平台；加入 <strong>CCF 4×4 CGRA</strong> 作为跨架构正向候选；加入 <strong>OpenEdgeCGRA</strong> 作为格式匹配但 N=M−1 不合算的负向边界；争取获得 <strong>R-Blocks</strong> 或 <strong>VISA</strong> 的程序二进制/trace 作为第三个真实应用平台。这样的证据链比只列多个处理器名字更像一篇完整论文。</div>
+
+  <ol class="toc">
+    <li><a href="#plain">先用小白能懂的方式说明方案</a></li>
+    <li><a href="#criteria">什么机器才真正适用</a></li>
+    <li><a href="#survey">近十年平台筛选总表</a></li>
+    <li><a href="#openedge">实验一：OpenEdgeCGRA</a></li>
+    <li><a href="#ccf">实验二：CCF 4×4 CGRA</a></li>
+    <li><a href="#candidates">值得继续索取 trace 的平台</a></li>
+    <li><a href="#notfit">为什么一些知名 VLIW 不适合</a></li>
+    <li><a href="#hardware">跨平台硬件怎样设计</a></li>
+    <li><a href="#paper">论文切入点和实验矩阵</a></li>
+    <li><a href="#upload">需要用户补充的全文/材料</a></li>
+    <li><a href="#refs">文献与一手资料</a></li>
+  </ol>
+
+  <h2 id="plain">1. 先说明方案：不是“4-bit 指令”，而是“四个共享 payload Bank”</h2>
+  <p>一条 VLIW 指令像一张有很多固定栏目的值班表。例如第三篇中有 LOAD、STORE、VECTOR、SCALAR、SFU 五个栏目。每个栏目叫一个<strong>逻辑槽（slot）</strong>；某个周期不用某类硬件时，该槽就是 NOP。普通存法每拍都保存五个槽，即使只用了两个。</p>
+  <p>你的方案把“栏目是否有效”和“真正的操作内容”分开保存：</p>
+  <ol>
+    <li>一个窄的 <strong>mask</strong> 说明本周期哪些逻辑槽有效；五槽机器就用 5 个 bit。</li>
+    <li>NOP 不进入 payload SRAM；只有有效槽的 W-bit 操作内容才写入共享 Bank。</li>
+    <li>如果调度器保证每拍最多 N 个有效槽，那么只需 N 个单读口 Bank，就能同拍读出全部有效内容。</li>
+    <li>恢复电路依据 mask 中各个“1”的先后次序，把 Bank 输出送回正确逻辑槽；其余槽补 NOP。运行端仍然每拍看到一条完整 VLIW。</li>
+  </ol>
+
+  <div class="example"><strong>第三篇的具体例子：</strong>逻辑上有 M=5 个槽，每槽 W=34 bit；编译器保证一拍最多 N=4 个槽有效。硬件用 5-bit mask 加四个 34-bit 共享 Bank。这里“4-slot”指<strong>每拍最多供给四个有效槽、因此有四个 payload Bank</strong>，并不表示 Config 是 4 bit，也不表示只有几种固定模板。</div>
+
+  <h3>1.1 四个判断数字</h3>
+  <div class="formula">M：完整指令一共有多少个逻辑槽
+N：硬件一拍最多能从多少个共享 payload Bank 读出有效槽，N &lt; M 才减少端口/Bank 数
+W：每个槽的位宽；如果不同槽不等宽，就要补齐或分组处理
+k[t]：第 t 个执行周期实际有效的槽数</div>
+  <p>在完全不改调度的情况下，精确周期恢复的必要条件非常简单：所有周期都要满足 <code>k[t] ≤ N</code>。只看“平均每拍 2 个槽”是不够的；哪怕只有一个周期出现 5 个有效槽，四 Bank 电路也无法在那一拍提供五份内容。</p>
+  <p>若允许调度器拆开过满周期，最乐观的周期增加下界为：</p>
+  <div class="formula">最少新增周期 ≥ Σt ( ceil(k[t] / N) − 1 )，只对 k[t] &gt; N 的周期求和</div>
+  <p>这是<strong>下界</strong>而不是实际性能：依赖关系、分支、寄存器端口和相邻 PE 通信可能使合法重排付出更多周期。因此最终必须重新调度并跑功能验证。</p>
+
+  <h2 id="criteria">2. 适用条件：从“硬条件”改成可量化接纳测试</h2>
+  <table>
+    <thead><tr><th>检查项</th><th>为什么重要</th><th>怎样确认</th><th>不满足时怎么办</th></tr></thead>
+    <tbody>
+      <tr><td>每拍需要完整控制字</td><td>本方案的价值是压缩存储、在取指端同拍恢复；若处理器本来就逐条接收变长小指令，问题不存在。</td><td>看 RTL 的指令 SRAM 接口、PC 更新和 decode 输入。</td><td>归入“不可直接应用”，只作对比。</td></tr>
+      <tr><td>槽等宽或可低代价补齐</td><td>共享 Bank 要能存放任意逻辑槽的 payload。</td><td>读取 ISA/RTL 中每槽位宽。</td><td>按位宽分组建共享池；或统一补到最大宽度并把浪费计入面积。</td></tr>
+      <tr><td>有明确 NOP/空 PE</td><td>只有空槽才能被删除并形成稀疏事件流。</td><td>统计二进制、汇编或映射表中的 NOP/Free。</td><td>若包本身已只存有效指令，则没有这种冗余。</td></tr>
+      <tr><td>静态调度关系可获得</td><td>要知道每个有效操作原本属于哪个周期和槽，才能无损恢复。</td><td>编译器 schedule、bitstream、trace 或反汇编。</td><td>只有摘要和峰值 IPC 不能证明适用。</td></tr>
+      <tr><td><code>k[t]&gt;N</code> 很少且可重排</td><td>决定减少 Bank 后是否损失性能。</td><td>先画占用直方图，再做 N 约束重调度。</td><td>选择更大的 N，或把该平台作为负面对照。</td></tr>
+      <tr><td>分支/循环入口可恢复指针</td><td>共享事件流的 Bank 指针和 phase 必须与 PC 同步。</td><td>对每个基本块入口保存 Bank 起始指针/phase，跑逐周期比对。</td><td>仅压缩直线内核或 loop body，入口处重置状态。</td></tr>
+      <tr><td>指令存储确实值得优化</td><td>若程序存储只占全芯片极小部分，复杂散布网络可能得不偿失。</td><td>查看 SRAM 面积、取指/解码能耗和切换活动。</td><td>把目标从面积改为动态读能耗，或淘汰平台。</td></tr>
+      <tr><td>工具和工作负载可复现</td><td>论文需要可重复的跨平台数字。</td><td>检查 RTL、编译器、benchmark、许可证和版本。</td><td>标注“架构候选”，不能声称已验证。</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>“检查项”是平台接纳条件；“为什么重要”说明它和方案的关系；“怎样确认”给出需要的证据；“不满足时怎么办”用于区分可改造、只能对比和应当淘汰三种情况。</p>
+
+  <div class="box violetbox"><strong>建议在论文中定义“域内程序池接纳能力”：</strong>先规定目标平台、N、允许的最大性能损失（例如 1%）和一组程序；能够在容量内装入、正确执行且性能损失不超阈值的程序比例，就是接纳率。这样论文不需要声称“所有 VLIW 都适用”，而是用可复现的接纳曲线说明 N=2/3/4 分别覆盖多少程序。</div>
+
+  <h2 id="survey">3. 2016–2026 平台筛选总表</h2>
+  <table>
+    <thead><tr><th>工作/平台</th><th>完整指令或配置结构</th><th>与共享 Bank 的匹配</th><th>目前能否做实验</th><th>本论文中的推荐角色</th></tr></thead>
+    <tbody>
+      <tr><td><strong>你的 FRV-SFU-VLIW（第三篇，2026）</strong></td><td>M=5，五类槽均为 34 bit；逐周期 VLIW；已有 max-4 调度和四共享 Lane RTL。</td><td><span class="tag go">完全匹配</span> 已验证 mask+phase 精确恢复。</td><td>可以；软件、trace、RTL、综合流齐全。</td><td>主实现与主硬件结果。</td></tr>
+      <tr><td><strong>CISP / Candidate A</strong><br>Li 等，IEEE Access 2020</td><td>512-bit、五个并行 FU 的流处理 VLIW；论文报告典型程序 NOP 超过 60%，纵向压缩并行解码。</td><td><span class="tag go">直接基线</span> 但原论文是一槽一 Bank，没有跨槽共享容量。</td><td>全文已在本地；作者完整工具/trace 未公开。</td><td>压缩基线和问题来源。</td></tr>
+      <tr><td><strong>CCF 4×4 CGRA</strong><br>公开编译/仿真框架</td><td>同一时间点控制 16 个 PE；当前源码为每 PE 64-bit，仓库手册仍画旧 32-bit 格式。</td><td><span class="tag go">结构高度匹配</span> M=16，可测试 N=3/4；恢复端需 3/4→16 散布。</td><td><strong>已做一个仓库自带完整 schedule 实验</strong>；需安装全工具链扩展 benchmark。</td><td>最优先的跨架构正向平台。</td></tr>
+      <tr><td><strong>OpenEdgeCGRA</strong><br>ACM CF 2023 / 开源 RTL</td><td>每列四行 PE 共享 PC；每行每拍一个 32-bit 配置字，显式 NOP。</td><td><span class="tag go">格式完全匹配</span> M=4、W=32；但现有应用对 N=3 太密。</td><td><strong>已分析 12 个公开映射文件</strong>。</td><td>负向边界与接纳准则验证；不宜作为收益主平台。</td></tr>
+      <tr><td><strong>R-Blocks CGRA-L</strong><br>ACM TRETS 2024</td><td>18-issue VLIW-SIMD；15 个 benchmark；FU 利用率 24%–54%、平均 35%；IM 17.1 KB。</td><td><span class="tag cond">潜力很高但不等宽</span> FU 控制词约 13–33 bit，opcode 还做变长 Huffman 编码。</td><td>论文全文可读；论文使用内部 OpenASIP SIMD 后端，二进制/trace 未在公开仓库中找到。</td><td>最值得向作者索取 trace 的平台；可研究“按宽度类别共享 Bank”。</td></tr>
+      <tr><td><strong>VISA 异构 RISC-V DNN 核</strong><br>Sensors 2021</td><td>128-bit 固定长 VLIW，四个指令槽；控制计算、传输和数据移动，可同拍重叠。</td><td><span class="tag go">很接近</span> 公开文字支持 M=4；图中需进一步确认四槽均严格 32 bit。</td><td>全文开放；未发现 RTL、调度器或二进制。</td><td>CNN/边缘 AI 的强架构案例；拿到 AlexNet/YOLO 指令后测 N=3。</td></tr>
+      <tr><td><strong>ORB 特征提取 ASIP</strong><br>J. Signal Processing Systems 2023</td><td>四槽：一个 RV32I 标量槽、三个专用向量槽；作者明确说某些阶段让其他槽利用率下降；程序存储占总面积 5.1%。</td><td><span class="tag cond">需求很吻合</span> 但论文未公开各槽实际编码宽度和逐周期 schedule。</td><td>全文开放；Synopsys ASIP Designer 工具/代码不公开。</td><td>把应用域扩展到 SLAM/机器人视觉；需要微码或反汇编。</td></tr>
+      <tr><td><strong>ConvAix</strong><br>arXiv/ASIP 2019</td><td>四个异构 issue slot：slot0 控制/存储，slot1–3 为 SIMD；16 KB 指令存储；CNN 层 ALU 利用率平均 72.5%。</td><td><span class="tag cond">可能适用</span> 但“ALU 利用率”不等于四槽占用率，槽宽也未披露。</td><td>全文开放；ASIP Designer 编译器和 trace 不公开。</td><td>补充 CNN VLIW 案例；在拿到 VLIW dump 前不能给压缩率。</td></tr>
+      <tr><td><strong>AMD Versal AI Engine</strong><br>2020–2026 官方文档</td><td>每拍最多七个操作，128-bit fetch，16 KB 程序存储；官方已支持多种格式和变长短指令。</td><td><span class="tag cond">有稀疏槽需求但已有压缩</span> 槽异构且并非等宽。</td><td>可用 Vitis Analyzer 导出微码，但当前环境没有相应工具/设计。</td><td>工业对照；比较“变长格式”与“固定周期共享 Bank”，不宜直接宣称替换。</td></tr>
+      <tr><td><strong>ρ-VEX / VEX</strong><br>2017、2022 应用论文</td><td>可配置 2/4/8 issue，基本 syllable 等宽；已有 last/stop-bit 跳过 bundle 尾部 NOP，且支持动态 issue-width。</td><td><span class="tag no">已有稀疏包机制</span> 对尾部 NOP 已处理；内部空洞和等深 Bank 池化仍可作为对照问题。</td><td>旧版 RTL/汇编器公开，但论文所用编译二进制和完整 2022 实现未获得。</td><td>关键先例和强基线，不作为首选收益平台。</td></tr>
+      <tr><td><strong>256-bit 动态 RISC-V VLIW</strong><br>IEEE Access 2020</td><td>八条 32-bit flow 组成 256 bit，但宽指令由硬件动态调度器从普通 RISC-V 流即时形成。</td><td><span class="tag no">不符合存储前提</span> 指令存储里不是静态稀疏的 256-bit bundle。</td><td>全文开放；无需做本方案实验。</td><td>用来解释“看起来等宽，实际上问题不存在”。</td></tr>
+      <tr><td><strong>Qualcomm Hexagon V7x</strong><br>官方手册</td><td>每包 1–4 条指令，包长可变，另有 duplex；编译器显式划包。</td><td><span class="tag no">不直接适用</span> 存储中本来就不需要用 NOP 把每包补成四槽。</td><td>LLVM packetizer 开源，可做包宽统计，但不能验证共享 Bank 的新增价值。</td><td>商业 VLIW 的负向对照。</td></tr>
+      <tr><td><strong>TI C66x / C7000</strong><br>官方 ISA/优化指南</td><td>C66x 每次取八个 32-bit word，但 p-bit 把它们分成 1–8 条 execute packet；C7000 最多 13 发射并有专用压缩/扩展格式。</td><td><span class="tag no">执行包已稀疏化</span> “取指块”不等于“每周期完整槽向量”。</td><td>工具可获得但没有必要先投入。</td><td>说明固定 fetch 宽度不能被误当成固定 VLIW 槽。</td></tr>
+      <tr><td><strong>Kalray MPPA Coolidge</strong><br>2020/2022 白皮书</td><td>64-bit、6-issue VLIW 核，面向高性能和深度学习。</td><td><span class="tag data">信息不足</span> 未找到公开 slot 编码、NOP 分布和微码格式。</td><td>专有平台；需 ISA/反汇编/trace。</td><td>观察名单，不应写入定量结论。</td></tr>
+      <tr><td><strong>DLA FPGA Overlay</strong><br>FPL 2018</td><td>论文称 VLIW network，但它发送的是给各 kernel 编程的 8-bit packet/配置序列，不是执行期每拍一条 M 槽控制字。</td><td><span class="tag no">模型不同</span></td><td>全文开放；无需强行套用。</td><td>术语澄清的负向案例。</td></tr>
+      <tr><td><strong>Tensor Computing Unit</strong><br>2025</td><td>128-bit 包含 C=16、M=48、L/V=32、S0/S1=16 bit 等不同宽槽。</td><td><span class="tag cond">不等宽</span> 可按 16/32/48 位分池，但已不是原始统一 W 方案。</td><td>网页可读；未获得 RTL/trace。</td><td>作为“不等宽扩展”的远期案例。</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>“工作/平台”给出近十年论文或当前工业架构；“结构”只写从全文、RTL或官方文档确认的事实；“匹配”判断是否存在固定周期、等宽/可补齐和空槽；“能否实验”区分已执行、资料齐但未运行、只有论文三种状态；“推荐角色”避免把所有平台都包装成正结果。</p>
+
+  <h2 id="openedge">4. 外部实验一：OpenEdgeCGRA——格式匹配，但 N=3 性能风险过大</h2>
+  <h3>4.1 为什么选择它</h3>
+  <p>OpenEdgeCGRA 是公开 RTL。默认结构为四行 PE；同一列内四行共享程序计数器，每行每拍读取一个 32-bit 配置字。因此“一个列流”可以严格看作 M=4、W=32 的四槽宽指令。公开手工映射文件还显式写出了 NOP，能直接统计 <code>k[t]</code>。</p>
+  <p>本地只读克隆位于 <a href="../external_platforms/OpenEdgeCGRA/"><code>external_platforms/OpenEdgeCGRA/</code></a>，commit 为 <code>4a179fcf6faee18765f66baa0a30af91e3840728</code>。新实验脚本为 <a href="../experiments/openedgecgra_shared_bank_applicability_2026_09_07.py"><code>experiments/openedgecgra_shared_bank_applicability_2026_09_07.py</code></a>，机器可读结果为 <a href="../analysis_output_external_platforms_2026-09-07/openedgecgra_shared_bank_applicability.json"><code>openedgecgra_shared_bank_applicability.json</code></a>。</p>
+
+  <h3>4.2 实验怎样做</h3>
+  <ol>
+    <li>执行仓库的 12 个 <code>instructions_*.py</code> 手工映射脚本，还原四行×周期的配置矩阵。</li>
+    <li>把每个被使用的“列”当作一条独立四槽指令流；共得到 26 条列流、348 个静态调度周期。</li>
+    <li>若某行配置等于公开 NOP 编码 <code>ZERO,ZERO,NOP,-,SELF,0</code>，该槽记为空，否则记为有效。</li>
+    <li>重点测试从 M=4 减到 N=3 是否可以原周期恢复；若出现四槽全有效，计算只拆拍、不考虑依赖时的最乐观新增周期。</li>
+    <li>同时计算未压缩、普通按行纵向压缩和共享 Bank 的 payload 容量。所有深度按 2 的幂向上取整；尚未计入 Config 和散布网络面积。</li>
+  </ol>
+
+  <h3>4.3 七个应用内核的结果</h3>
+  <table>
+    <thead><tr><th>公开映射</th><th class="num">列流×周期</th><th class="num">平均有效槽/拍</th><th class="num">四槽全有效周期</th><th class="num">N=3 最乐观周期下界</th><th>判断</th></tr></thead>
+    <tbody>
+      <tr><td>dbl_max</td><td class="num">1×14</td><td class="num">2.14</td><td class="num">2（14.3%）</td><td class="num bad">+14.3%</td><td>不适合直接减到 3 Bank</td></tr>
+      <tr><td>dbl_min</td><td class="num">1×14</td><td class="num">2.07</td><td class="num">2（14.3%）</td><td class="num bad">+14.3%</td><td>同上</td></tr>
+      <tr><td>fft_bitrev</td><td class="num">1×11</td><td class="num">2.82</td><td class="num">3（27.3%）</td><td class="num bad">+27.3%</td><td>不适合</td></tr>
+      <tr><td>fft_cplx</td><td class="num">2×14</td><td class="num">2.64</td><td class="num">5（17.9%）</td><td class="num bad">+17.9%</td><td>不适合</td></tr>
+      <tr><td>fft_cplx_forever</td><td class="num">2×15</td><td class="num">2.60</td><td class="num">5（16.7%）</td><td class="num bad">+16.7%</td><td>不适合</td></tr>
+      <tr><td>max_peak</td><td class="num">1×11</td><td class="num">2.64</td><td class="num">4（36.4%）</td><td class="num bad">+36.4%</td><td>不适合</td></tr>
+      <tr><td>min_max_circular</td><td class="num">1×10</td><td class="num">2.20</td><td class="num">3（30.0%）</td><td class="num bad">+30.0%</td><td>不适合</td></tr>
+      <tr><td><strong>合计</strong></td><td class="num"><strong>118 拍</strong></td><td class="num"><strong>2.483</strong></td><td class="num"><strong>24（20.3%）</strong></td><td class="num bad"><strong>至少 +20.3%</strong></td><td><strong>N=3 不应作为该平台主设计点</strong></td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>“列流×周期”是被使用的独立列数和每列静态程序长度；“平均有效槽”只用于描述，不能代替峰值检查；“四槽全有效”直接决定 N=3 是否能原周期恢复；“周期下界”假设每个四槽周期只多拆一拍，尚未加入依赖、分支和通信约束，因此实际不会更好。</p>
+
+  <p>应用内核 118 拍的占用直方图为：1 槽 25 拍、2 槽 35 拍、3 槽 34 拍、4 槽 24 拍。虽然平均只有 2.48 槽，但 20.3% 的周期需要全部四行，这正是“平均值会误导”的实例。把功能测试和三个人工 while-loop 压力测试也纳入后，348 拍中有 203 拍四槽全有效，N=3 的拆拍下界达到 58.3%。</p>
+
+  <div class="box warnbox"><strong>OpenEdge 的真正用途：</strong>它不应被包装成又一个漂亮压缩率，而应作为论文的负向控制。它证明同样是“四个等宽 32-bit 槽、每拍完整恢复”，是否值得减少 Bank 仍由 workload 的峰值占用决定。若只保留 N=4 做跨槽容量池化，部分很短程序能减少 2 次幂 padding，但 Bank 数没有减少，贡献弱于第三篇的 M=5→N=4。</div>
+
+  <h2 id="ccf">5. 外部实验二：CCF 4×4 CGRA——M=16→N=3/4 的初步正结果</h2>
+  <h3>5.1 为什么它比 OpenEdge 更有希望</h3>
+  <p>CCF 是一个端到端 CGRA 编译与 gem5 仿真框架，支持把 C/C++ 中标记的循环映射到 2×2 至 16×16 的阵列。其手册说明 4×4 目标在每个时刻为 16 个 PE 生成操作；当前源码于 2022 年把每 PE 指令扩展为 64 bit。因此一拍的完整空间控制字可抽象为 M=16、W=64。逻辑槽很多，而小型 DFG 往往只占其中少数 PE，正适合测试共享 Bank。</p>
+  <p>本地稀疏克隆位于 <a href="../external_platforms/ccf/"><code>external_platforms/ccf/</code></a>，commit 为 <code>866785044bd915e4c1d5dce3d601fbe3886bd4e8</code>。实验脚本为 <a href="../experiments/ccf_shared_bank_applicability_2026_09_07.py"><code>experiments/ccf_shared_bank_applicability_2026_09_07.py</code></a>，结果为 <a href="../analysis_output_external_platforms_2026-09-07/ccf_shared_bank_applicability.json"><code>ccf_shared_bank_applicability.json</code></a>。</p>
+
+  <h3>5.2 已执行的具体实验</h3>
+  <p>仓库当前只有 <code>simple_loop_1</code> 保存了完整的 <code>prolog.sch</code>、<code>kernel.sch</code>、<code>epilog.sch</code>。每 16 行对应一个周期的 16 个 PE，节点号 <code>-1</code> 表示 Free/NOP。脚本不重新编译，只读取这份已生成的调度，因此没有改变原周期和依赖。</p>
+  <table>
+    <thead><tr><th>程序阶段</th><th class="num">静态周期</th><th>每拍有效 PE 数</th><th class="num">最大并发</th><th>N=3 是否原周期接纳</th></tr></thead>
+    <tbody>
+      <tr><td>Prologue：循环进入前准备</td><td class="num">6</td><td><code>0, 0, 2, 3, 2, 2</code></td><td class="num">3</td><td class="good">是</td></tr>
+      <tr><td>Kernel：循环稳态主体</td><td class="num">3</td><td><code>3, 2, 2</code></td><td class="num">3</td><td class="good">是</td></tr>
+      <tr><td>Epilogue：循环退出和结果回写</td><td class="num">2</td><td><code>3, 2</code></td><td class="num">3</td><td class="good">是</td></tr>
+      <tr><td><strong>整个存储程序</strong></td><td class="num"><strong>11</strong></td><td>2 个空拍、6 个双槽拍、3 个三槽拍</td><td class="num"><strong>3</strong></td><td class="good"><strong>是，零拆拍</strong></td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>“静态周期”是指令存储中不同的控制行，不是循环重复执行后的动态总周期；“有效 PE 数”就是本方案的 k[t]；“最大并发”决定最小可行 Bank 数；最后一列只证明取指带宽足够，不等于已经做过压缩 RTL 功能仿真。</p>
+
+  <h3>5.3 容量筛选数字</h3>
+  <table>
+    <thead><tr><th>存储组织</th><th>Bank×深度×宽度</th><th class="num">payload 项数</th><th class="num">payload 位数</th><th>解释</th></tr></thead>
+    <tbody>
+      <tr><td>未压缩、每拍完整 16 槽</td><td>逻辑上 16×11×64</td><td class="num">176</td><td class="num">11264 bit</td><td>尚未把 11 深度补到实际 SRAM 的 16 深度。</td></tr>
+      <tr><td>普通纵向压缩，16 个 Bank 全部等深并补 2 次幂</td><td>16×16×64</td><td class="num">256</td><td class="num">16384 bit</td><td>最忙 PE 有 9 个事件，因此统一深度需 16；短程序下 padding 甚至大于未压缩逻辑位数。</td></tr>
+      <tr><td>按 PE 分别定深的纵向下界</td><td>各 PE 独立取深，空 PE 仍按最小 1 项</td><td class="num">44</td><td class="num">2816 bit</td><td>这是高度 workload 定制的强基线；若允许完全删除 12 个空 PE Bank，oracle 为 32 项。</td></tr>
+      <tr><td><strong>3 个共享 Bank</strong></td><td><strong>3×8×64</strong></td><td class="num"><strong>24</strong></td><td class="num"><strong>1536 bit</strong></td><td>21 个事件均匀为 7/7/7；每拍最多三个，保持原周期。</td></tr>
+      <tr><td><strong>4 个共享 Bank</strong></td><td><strong>4×8×64</strong></td><td class="num"><strong>32</strong></td><td class="num"><strong>2048 bit</strong></td><td>21 个事件分为 6/5/5/5；同样保持原周期，并为以后程序留一份并发余量。</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>“Bank×深度×宽度”描述物理 payload SRAM；“项数”把宽度相同的 64-bit 项相加，便于看 padding；“位数”只等于项数×64。共享方案还需约 16-bit mask/周期、phase/入口状态和散布逻辑，这些没有混入 payload 数字。</p>
+
+  <p>若把 Config 粗略按 <code>16-bit mask × 16 深度 = 256 bit</code> 计入，则三 Bank 为 1792 bit、四 Bank 为 2304 bit；相比“空 PE 仍保留最小 Bank”的按 PE 定深纵向方案 3072 bit，分别少约 41.7% 和 25.0%。这只是<strong>位容量</strong>，不是 SRAM 宏面积：如此浅的存储在 ASIC 中很可能用寄存器/SCM 实现，真正面积可能由 3/4→16 散布网络支配。</p>
+
+  <div class="box badbox"><strong>严禁把这组数字写成完整论文结论：</strong>它只有一个简单循环，而且只使用 16 个 PE 中的前四个。它证明“外部架构上可以构造并精确读取稀疏 schedule”，没有证明 Parboil、MiBench、Rodinia 的平均收益。下一步必须安装 CCF 全编译流、重新生成至少 15–30 个循环的 schedule，并综合 16 槽解压器。</div>
+
+  <h2 id="candidates">6. 最值得继续获取 trace 的三个平台</h2>
+  <h3>6.1 R-Blocks：最强的一般性候选，但要改成“分宽度共享”</h3>
+  <p>R-Blocks 2024 是 18-issue、可编译的 VLIW-SIMD CGRA。论文在 15 个真实 benchmark 上给出 FU 利用率 24%–54%、平均 35%，并且 CGRA-L 的指令存储为 17.1 KB。FFT 的能耗表中，instruction memory 为 0.99 nJ、instruction cache 为 7.01 nJ、fetch/decode 为 9.55 nJ，说明指令供给并非无关紧要。</p>
+  <p>它的障碍是不同 FU 指令宽度不同：普通 FU 的 IM 可约 13 bit，长立即数单元约 33 bit；操作码还用 Huffman 树做变长编码。因此不能直接宣布“18 个 34-bit 槽变四 Bank”。更合理的扩展是：</p>
+  <ol>
+    <li>按最大宽度补成统一 34 bit，先得到最保守、最容易和第三篇统一的实验；</li>
+    <li>再做按宽度类分池，例如 ≤16 bit 的窄池和 17–34 bit 的宽池；</li>
+    <li>调度器同时约束“本拍总事件数”和“本拍宽事件数”，硬件分别从两类 Bank 读出；</li>
+    <li>与 R-Blocks 原始变长 opcode/IM 共同计面积和能耗，不能只与未压缩宽字比较。</li>
+  </ol>
+  <p>所需材料不是论文全文——全文已经获得——而是论文内部 OpenASIP SIMD 后端产生的 15 个程序二进制、逐周期 virtual-architecture 指令或 cycle-accurate trace。</p>
+
+  <h3>6.2 VISA：最接近“小改造即可验证”的 DNN 平台</h3>
+  <p>VISA 明确是 128-bit 固定长、四槽 VLIW，并给出 AlexNet、YOLO 层级的指令组织。它能同时安排内存传输、片上搬移和卷积计算，恰好会产生“某些阶段很稀、稳态阶段较密”的 phase 行为。需要作者的 Table 3 原始指令计数、Figure 8 对应的完整程序流或 128-bit dump。先测试 M=4→N=3；若三槽以上过多，就保留 N=4 只做跨槽容量池化，或把控制段和稳态段分开。</p>
+
+  <h3>6.3 ORB ASIP：应用叙事最好，但材料获取风险最高</h3>
+  <p>ORB ASIP 的四个槽分别负责不同子算法。论文明确承认：为了让 FAST/NMS 保持高吞吐，其他槽的利用率会降低，并计划继续优化 VLIW utilization。这是非常直接的稀疏动机；同时可把论文应用从“神经网络非线性”扩展到机器人视觉/SLAM。可是 ASIP Designer 是商业工具，论文没有公开二进制和槽宽。可先向作者请求：</p>
+  <ul>
+    <li>ORB 单尺度程序的 VLIW 汇编或 machine-code dump；</li>
+    <li>四个槽的编码位宽与 NOP 值；</li>
+    <li>每拍 slot utilization trace；</li>
+    <li>程序存储的宽度、深度和读能耗。</li>
+  </ul>
+
+  <h2 id="notfit">7. 为什么不能把所有“VLIW”都算作应用对象</h2>
+  <table>
+    <thead><tr><th>容易产生的误判</th><th>典型平台</th><th>实际机制</th><th>为什么共享 Bank 不产生同样价值</th></tr></thead>
+    <tbody>
+      <tr><td>看到 256-bit 就认为每拍存八个槽</td><td>2020 动态 RISC-V VLIW</td><td>程序存储仍放普通 RISC-V 指令，硬件调度器运行时拼八 flow。</td><td>没有静态 256-bit NOP bundle 可压缩。</td></tr>
+      <tr><td>看到“最多四发射”就假设每包补四个槽</td><td>Hexagon</td><td>包本身为 1–4 条变长，且有 duplex。</td><td>空槽已经不存；新增 mask+Bank 反而可能重复编码。</td></tr>
+      <tr><td>把 fetch packet 当 execute cycle</td><td>TI C66x</td><td>一次取八个 32-bit word，p-bit 将其中连续指令划成不同执行周期。</td><td>一个 fetch 块可服务多个周期，不是一拍八槽控制向量。</td></tr>
+      <tr><td>看到 VLIW network 就认为它逐拍驱动 FU</td><td>DLA 2018</td><td>8-bit packet 在配置阶段给 kernel 写参数。</td><td>属于配置网络压缩，而不是指令槽 NOP 删除。</td></tr>
+      <tr><td>忽略平台已有压缩</td><td>AI Engine、ρ-VEX、ASIP Designer 短格式</td><td>已有变长格式、stop-bit、duplex 或预解码。</td><td>必须和原生压缩比较，不能拿未压缩 M×W 作为唯一基线。</td></tr>
+      <tr><td>只看平均利用率</td><td>OpenEdgeCGRA</td><td>平均 2.48/4，但仍有 20.3% 周期四槽全开。</td><td>N=3 的供给瓶颈由峰值/尾部分布决定。</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>第一列是调研中最常见的错误推断；第二列给实例；第三列写真实执行模型；第四列说明为什么它不能直接成为本方案的正向实验。</p>
+
+  <h2 id="hardware">8. 从 M=5 扩展到 M=16/18 后，硬件不能原样放大</h2>
+  <h3>8.1 通用数据通路</h3>
+  <div class="flow">编译/装载阶段
+完整 M 槽 schedule → 提取非 NOP → 按周期保存 M-bit mask
+                      → 有效 payload 按确定顺序条带化到 N 个 Bank
+
+执行阶段（每拍）
+Config SRAM 读 mask → 计算 popcount/rank/Bank 读使能
+N 个单读口 payload Bank → 读出最多 N 个 W-bit 操作
+mask + phase → 把每个 Bank 输出散布回 M 个逻辑槽 → 其余槽补 NOP
+分支/循环跳转 → 同时恢复 Config PC、N 个 Bank 指针和 phase/checkpoint</div>
+
+  <h3>8.2 规模扩大后的主要开销</h3>
+  <table>
+    <thead><tr><th>硬件部分</th><th>M=5、N=4、W=34（第三篇）</th><th>M=16、N=4、W=64（CCF）</th><th>风险与改进</th></tr></thead>
+    <tbody>
+      <tr><td>Config mask</td><td>每拍 5 bit</td><td>每拍 16 bit</td><td>仍很窄，但浅程序可能由最小宏尺寸主导；可按基本块做 mask RLE，但会增加跳转状态。</td></tr>
+      <tr><td>Rank/popcount</td><td>5 个 bit 的前缀计数</td><td>16 个 bit 的前缀计数</td><td>用分层 4-bit 小组前缀，而非一条长组合链。</td></tr>
+      <tr><td>通用散布网络结构代理 <code>M×N×W</code></td><td class="num">680 个 bit-route 单元</td><td class="num">4096 个 bit-route 单元</td><td>CCF 约为 6 倍；这只是连接/复用规模代理，不是综合门数。</td></tr>
+      <tr><td>物理连线</td><td>五类 FU 距离可控</td><td>需要跨 4×4 PE 阵列送 64-bit 控制</td><td>全局 crossbar 可能破坏频率；必须采用拓扑感知分组。</td></tr>
+      <tr><td>跳转状态</td><td>基本块入口保存四 Lane 指针/phase</td><td>modulo kernel 反复回跳，prologue/kernel/epilogue 分段</td><td>每段独立重置 phase 和 Bank 基址，避免循环每次重算。</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>前两列比较已有小规模实现和 CCF 扩展；<code>M×N×W</code> 只表示一个朴素全连接散布器要处理多少条单 bit 连接，不能当作门数或面积；最后一列给出进入 RTL 前必须解决的问题。</p>
+
+  <h3>8.3 推荐的新硬件创新：拓扑感知的分层共享 Bank</h3>
+  <p>如果直接让四个 Bank 都能驱动 16 个 PE，布线可能吃掉 SRAM 节省。更有论文价值的方案是让解压网络顺着 CGRA 的 4×4 物理结构分层：</p>
+  <ol>
+    <li><strong>第一层选择区域：</strong>每个 Bank 先选择四列/四个 2×2 象限之一；</li>
+    <li><strong>第二层局部散布：</strong>进入区域后只在 4 个 PE 内选择目标；</li>
+    <li><strong>编译器做 Bank 着色：</strong>同拍操作不仅要满足总数≤N，还不能让需要同一受限 Bank/区域的操作冲突；</li>
+    <li><strong>罕见冲突延后：</strong>若局部路由冲突，调度器只移动冲突节点，而不是把所有指令降成更窄 issue；</li>
+    <li><strong>提供三档硬件：</strong>全连接（性能上界）、分层路由（推荐）、固定分组（面积下界），比较面积、频率和额外周期。</li>
+  </ol>
+  <p>这比简单把 M=5、N=4 参数改成 M=16、N=4 更有创新性，因为它回答了“共享 Bank 为什么能扩展到空间阵列，而不会被全局路由成本吞掉”。同时它仍保留原方案的核心：每拍恢复完整控制字、无运行时发射仲裁。</p>
+
+  <h2 id="paper">9. 推荐的论文问题、贡献和完整实验矩阵</h2>
+  <h3>9.1 推荐标题方向</h3>
+  <div class="box goodbox"><strong>Occupancy-Bounded Shared-Bank Instruction Supply for Statically Scheduled Wide-Issue and CGRA Processors</strong><br>中文可表述为：<strong>面向静态宽发射处理器与 CGRA 的占用上界驱动共享 Bank 指令供给</strong>。</div>
+  <p>这个标题不把贡献绑死在“神经网络非线性”或“五槽减四槽”，也没有声称对所有 VLIW 都有效。它突出三个一般概念：静态调度、有效槽占用上界、少 Bank 同拍恢复。</p>
+
+  <h3>9.2 可以成立的四项贡献</h3>
+  <ol>
+    <li><strong>跨架构问题形式化：</strong>把普通 VLIW 功能槽和 CGRA 的空间 PE 配置统一成 M 个逻辑控制槽，定义 N-Bank 接纳条件、重调度下界和容量合同。</li>
+    <li><strong>确定性恢复：</strong>mask+phase/Bank 指针在固定一个周期内恢复完整 M 槽控制字，并给出分支、基本块、modulo loop 的状态检查点方法。</li>
+    <li><strong>编译—存储联合选 N：</strong>对 N=1…M 重新调度，联合比较性能、payload 深度、Config、功耗与硬件路由，而不是先拍脑袋固定 N=4。</li>
+    <li><strong>可扩展解压网络：</strong>小 M 使用全连接散布；CGRA 使用拓扑感知分层散布和调度期 Bank 着色，在面积/频率/性能间形成 Pareto 曲线。</li>
+  </ol>
+
+  <h3>9.3 最低可发表实验矩阵</h3>
+  <table>
+    <thead><tr><th>平台</th><th>工作负载</th><th>必须比较的 N</th><th>必须报告的软件指标</th><th>必须报告的硬件指标</th><th>论文作用</th></tr></thead>
+    <tbody>
+      <tr><td>第三篇 FRV-SFU-VLIW</td><td>现有 10 个非线性负载，外加短/长向量</td><td>1/2/3/4/5，重点 4</td><td>周期、k[t] 直方图、程序池接纳率、payload/Config 位数</td><td>28nm 面积、频率、动态/静态功耗、逐周期 bit-exact</td><td>完整实现</td></tr>
+      <tr><td>CCF 4×4</td><td>Parboil、MiBench、Rodinia 中至少 15–30 个可映射循环</td><td>3/4/6/8/16</td><td>原始与 N 约束 II/周期、每程序接纳、Bank 深度</td><td>3/4→16 全连接与分层散布综合；SCM/SRAM 能耗</td><td>跨架构正向验证</td></tr>
+      <tr><td>OpenEdgeCGRA</td><td>7 个应用映射 + 压力测试</td><td>3/4</td><td>已有占用；若重调度则给合法周期和功能仿真</td><td>可只做容量/路由估计，不必投入完整 RTL</td><td>负向边界</td></tr>
+      <tr><td>R-Blocks 或 VISA（二选一）</td><td>R-Blocks 15 个 benchmark，或 VISA AlexNet/YOLO 层</td><td>由占用曲线自动选</td><td>等宽补齐与分宽度池两种结果</td><td>若无 RTL，至少 CACTI/公开宏 + 解压逻辑综合</td><td>增强应用广度</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>“平台”给出证据来源；“工作负载”规定不能只测一个 toy；“比较的 N”用曲线代替单点；“软件指标”验证性能与容量；“硬件指标”防止只报逻辑 bit 数；“作用”说明为什么正、负平台都必要。</p>
+
+  <h3>9.4 Baseline 必须包含什么</h3>
+  <ol>
+    <li>未压缩完整 M×W 指令。</li>
+    <li>Candidate A：每个逻辑槽一个纵向 Bank，包含“所有 Bank 等深”和“按目标程序池分别定深”两种。</li>
+    <li>平台原生压缩：例如 R-Blocks 变长 FU opcode、AI Engine 短格式、ρ-VEX stop-bit。不能把它们删掉。</li>
+    <li>N 个共享 Bank：全连接散布、分层散布和固定分组。</li>
+    <li>oracle 下界：忽略 2 次幂宏台阶、只计算总有效 payload，用来区分算法损失和宏粒度损失。</li>
+  </ol>
+
+  <h3>9.5 Go / No-Go 判据</h3>
+  <table>
+    <thead><tr><th>里程碑</th><th>继续条件</th><th>停止/降级条件</th></tr></thead>
+    <tbody>
+      <tr><td>CCF 扩展 trace</td><td>至少 15 个循环中，N≤M/2 在≤1% 性能损失下接纳多数程序。</td><td>只有少量 toy 稀疏，真实循环普遍满 PE。</td></tr>
+      <tr><td>16 槽 RTL</td><td>共享 SRAM+分层散布的总面积/读能量仍明显小于强 Candidate A。</td><td>散布/长线使面积或关键路径抵消 SRAM 收益。</td></tr>
+      <tr><td>第三外部 trace</td><td>R-Blocks/VISA/ORB 至少一个得到真实逐周期程序并复现。</td><td>只能从摘要猜槽利用率；此时不写定量外推。</td></tr>
+      <tr><td>论文总体</td><td>至少一个完整主平台 + 一个真实正向外部平台 + 一个负向边界。</td><td>若 CCF 扩展失败，则将论文收缩为第三篇专用实现，不宣称广泛适用。</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note"><strong>表头说明：</strong>每行是一个能在数周内检查的决策点；“继续条件”不是保证录用，而是足以支撑一般性；“停止条件”用于避免三个月都花在不适合的平台安装上。</p>
+
+  <h2 id="upload">10. 全文和实验材料可获得性：哪些需要你补充</h2>
+  <p><strong>本地 <code>paper/</code> 下现有 PDF 均可以读取。</strong>其中 Candidate A、2018 CGRA 配置压缩、2018 modulo schedule 压缩、2016 变长编码感知调度、2024 可编程字典等已用于判断 baseline 和先例。</p>
+  <p>以下核心论文全文已从作者/机构/开放期刊获得，无需你重复上传：R-Blocks 2024、ConvAix 2019、VISA 2021、ORB ASIP 2023、可编程字典 2024，以及 AMD、Qualcomm、TI 官方架构手册。</p>
+  <div class="box warnbox"><strong>请优先手动上传两篇目前未取得可靠全文的论文：</strong>
+    <ol>
+      <li><em>An Open-Hardware Coarse-Grained Reconfigurable Array for Edge Computing</em>, ACM CF 2023, DOI <code>10.1145/3587135.3591437</code>。公开仓库和 ISA/RTL 已足够完成本次统计，但论文 PDF 有助于核对发表版面积、默认配置和 benchmark 描述。</li>
+      <li><em>Dynamic fault-tolerant VLIW processor with heterogeneous Function Units</em>, Microprocessors and Microsystems 93 (2022), 104564。当前只取得摘要和部分结构信息；需要全文确认其 ρ-VEX bundle、交换网络和十个 benchmark 是否能形成硬件强基线。</li>
+    </ol>
+  </div>
+  <p>比论文 PDF 更关键、但目前缺失的是：R-Blocks 的 15 个程序二进制/trace、VISA 的 128-bit 指令流、ORB ASIP 的微码、ConvAix 的 VLIW dump。若你能联系作者，优先请求这些文件，而不是只请求论文。</p>
+
+  <h2 id="refs">11. 主要文献和一手资料</h2>
+  <ol>
+    <li>Li, Hou, Zhu, <a href="https://doi.org/10.1109/ACCESS.2020.2985501">An Efficient and Fast VLIW Compression Scheme for Stream Processor</a>, IEEE Access, 2020；本地全文：<a href="../paper/An_Efficient_and_Fast_VLIW_Compression_Scheme_for_Stream_Processor.pdf">PDF</a>。</li>
+    <li>Bytyn et al., <a href="https://arxiv.org/abs/1904.05106">An Application-Specific VLIW Processor with Vector Instruction Set for CNN Acceleration</a>, 2019。</li>
+    <li>Zhang et al., <a href="https://www.mdpi.com/1424-8220/21/19/6491">A Heterogeneous RISC-V Processor for Efficient DNN Application in Smart Sensing System</a>, Sensors, 2021。</li>
+    <li>Ferreira et al., <a href="https://doi.org/10.1007/s11265-022-01833-9">Design of an Application-specific VLIW Vector Processor for ORB Feature Extraction</a>, JSPS, 2023；<a href="https://backend.orbit.dtu.dk/ws/portalfiles/portal/340215201/s11265-022-01833-9-1.pdf">机构全文</a>。</li>
+    <li>de Bruin et al., <a href="https://doi.org/10.1145/3656642">R-Blocks: an Energy-Efficient, Flexible, and Programmable CGRA</a>, ACM TRETS, 2024；<a href="https://imec-publications.be/server/api/core/bitstreams/c7fac670-c42e-46a4-9a69-541d7844a445/content">作者机构全文</a>。</li>
+    <li>EPFL ESL, <a href="https://github.com/esl-epfl/OpenEdgeCGRA">OpenEdgeCGRA 公开 RTL、ISA 与映射</a>；论文 DOI <a href="https://doi.org/10.1145/3587135.3591437">10.1145/3587135.3591437</a>。</li>
+    <li>ASU MPSLab, <a href="https://github.com/MPSLab-ASU/ccf">CCF: CGRA Compilation and Simulation Framework</a>，含编译器、指令生成器、映射器、benchmark 和手册。</li>
+    <li>Multanen et al., <a href="https://link.springer.com/article/10.1007/s10617-024-09290-2">Energy-efficient instruction compression with programmable dictionaries</a>, DAEM, 2024；本地全文：<a href="../paper/Energy-Efficient Instruction Compression with Programmable Dictionaries.pdf">PDF</a>。</li>
+    <li>Lee et al., <a href="https://doi.org/10.1145/3162018">Improving Energy Efficiency of CGRAs Through Modulo Schedule Compression/Decompression</a>, ACM TACO, 2018；本地全文：<a href="../paper/Improving Energy Efficiency of Coarse-Grain Reconfigurable Arrays Through Modulo Schedule Compression:Decompression.pdf">PDF</a>。</li>
+    <li>Shahhoseini et al., <a href="https://doi.org/10.1016/j.micpro.2018.06.010">Energy Efficient Configuration Unification and Compression for CGRAs</a>, 2018；本地全文：<a href="../paper/Energy Efficient Configuration Unification and Compression for CGRAs 2018.pdf">PDF</a>。</li>
+    <li>Qui, Lin, Chen, <a href="https://doi.org/10.1109/ACCESS.2020.3024851">Design and Implementation of a 256-Bit RISC-V-Based Dynamically Scheduled VLIW on FPGA</a>, IEEE Access, 2020。</li>
+    <li>AMD, <a href="https://docs.amd.com/r/en-US/am009-versal-ai-engine/Instruction-Fetch-and-Decode-Unit">Versal AI Engine Instruction Fetch and Decode</a> 与 <a href="https://docs.amd.com/r/en-US/am009-versal-ai-engine/AI-Engine-Tile-Program-Memory">16 KB Program Memory</a>，官方文档。</li>
+    <li>Qualcomm, <a href="https://docs.qualcomm.com/bundle/publicresource/80-N2040-51_REV_AB_Hexagon_V71_ProgrammerS_Reference_Manual.pdf">Hexagon V71 Programmer's Reference Manual</a>；LLVM <a href="https://llvm.org/docs/doxygen/HexagonVLIWPacketizer_8cpp_source.html">Hexagon VLIW Packetizer</a>。</li>
+    <li>Texas Instruments, <a href="https://www.ti.com/lit/ug/sprugh7/sprugh7.pdf">TMS320C66x CPU and Instruction Set Reference Guide</a> 与 <a href="https://software-dl.ti.com/codegen/docs/c7000/optimization_guide/2_architecture/compopt_arch_overview.html">C7000 Architecture Overview</a>。</li>
+    <li>Kalray, <a href="https://www.kalrayinc.com/wp-content/uploads/2023/10/WP_Kalray_MPPA_DPU_Coolidge_june2022.pdf">MPPA DPU Coolidge White Paper</a>, 2022。</li>
+    <li>Abdelfattah et al., <a href="https://arxiv.org/abs/1807.06434">DLA: Compiler and FPGA Overlay for Neural Network Inference Acceleration</a>, FPL, 2018。</li>
+    <li>Nguyen et al., <a href="https://doi.org/10.1016/j.micpro.2022.104564">Dynamic fault-tolerant VLIW processor with heterogeneous Function Units</a>, 2022（全文待补）。</li>
+  </ol>
+
+  <h2>12. 最终决策</h2>
+  <div class="box goodbox"><strong>值得继续，但论文的一般性不能靠“多列几个 VLIW 名字”获得。</strong>真正可发表的扩展应是：用统一的 M/N/W 模型筛平台；用 OpenEdge 证明不合适时应拒绝；用 CCF 证明空间 CGRA 也能抽象成稀疏宽指令；再以真实调度、RTL 和面积/功耗曲线证明共享 Bank 在不同 M 下仍有收益。若 CCF 多 benchmark 和 16 槽解压 RTL 都成功，这会明显强于“只针对第三篇减少一个 SRAM Bank”的叙事。</div>
+  <p class="small">证据边界：OpenEdge 与 CCF 数字来自本次本地脚本和公开仓库的静态 schedule；没有改动两个外部仓库的源文件，没有向任何远端推送。CCF 尚未重建全 LLVM/gem5 流；R-Blocks/VISA/ORB/ConvAix 尚无机器码，报告没有从论文平均利用率猜测压缩率。</p>
+</main></body></html>

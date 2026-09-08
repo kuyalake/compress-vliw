@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>分模型程序池压缩实验：BERT / LLaMA / SD-UNet（2026-09-08）</title>
+  <style>
+    :root{--ink:#172033;--muted:#5f6b7a;--line:#d8e0ea;--bg:#f3f6fa;--blue:#175cd3;--green:#067647;--amber:#b54708;--red:#b42318;--violet:#6941c6}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.68 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}main{max-width:1180px;margin:24px auto 80px;background:#fff;padding:42px 54px;border-radius:14px;box-shadow:0 8px 30px #18315316}
+    h1{font-size:29px;line-height:1.25;margin:0 0 10px}h2{font-size:22px;margin:40px 0 14px;padding-bottom:8px;border-bottom:2px solid #e7edf5}h3{font-size:17px;margin:24px 0 8px}p{margin:8px 0 12px}code{background:#f0f3f7;padding:1px 5px;border-radius:4px;font-size:.93em;overflow-wrap:anywhere}
+    .meta{color:var(--muted);margin-bottom:20px}.lead{font-size:16.5px;background:#f6f8fc;border-left:5px solid var(--blue);padding:15px 18px;border-radius:8px}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.stat{border:1px solid var(--line);border-radius:10px;padding:14px;background:#fbfcfe}.stat b{display:block;font-size:22px;margin:3px 0}.stat small,.small{color:var(--muted);font-size:12.5px}.good{color:var(--green)}.warn{color:var(--amber)}
+    .callout{border:1px solid #b8cdf5;background:#f5f8ff;border-radius:10px;padding:14px 17px;margin:14px 0}.callout.goodbox{border-color:#a7d8c1;background:#f3fbf7}.callout.warnbox{border-color:#efc18f;background:#fff9f2}
+    table{width:100%;border-collapse:collapse;margin:12px 0 20px;font-size:13.5px}th,td{border:1px solid var(--line);padding:8px 9px;vertical-align:top}th{background:#edf2f8;text-align:left}tbody tr:nth-child(even){background:#fafbfd}.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+    ul,ol{padding-left:24px}li{margin:5px 0}
+    @media(max-width:820px){main{margin:0;padding:24px 16px;border-radius:0}.grid{grid-template-columns:1fr}table{display:block;overflow-x:auto}}@media print{body{background:#fff}main{margin:0;max-width:none;box-shadow:none;padding:24px}}
+  </style>
+</head>
+<body><main>
+  <h1>分模型程序池压缩实验：BERT / LLaMA / SD-UNet</h1>
+  <div class="meta">2026-09-08 ｜ 平台：FRV-SFU-VLIW（174-bit ISA）｜ X=64 ｜ index priority ｜ 三方案：无压缩 / Candidate A / 4slot ｜ 脚本：<code>experiments/model_pool_compression_study.py</code></div>
+
+  <p class="lead"><strong>研究问题：</strong>是否应让一个模型里的非线性 workload 各成一组程序池（按 BERT / LLaMA / SD-UNet 分开统计）？本实验对三个模型各自的非线性函数池，在三种指令存储方案下统计<strong>周期数</strong>与<strong>Bank 深度</strong>。<strong>结论：三方案周期完全相同（max-4 调度零损失）；4slot 相对 Candidate A 的分配位数在 BERT/SD-UNet 池降 56.7%、在 LLaMA 池降 18.9%；相对无压缩最高降 77.6%。</strong></p>
+
+  <div class="grid">
+    <div class="stat"><small>模型池</small><b>3</b><small>BERT / LLaMA / SD-UNet</small></div>
+    <div class="stat"><small>周期损失（4slot vs 无压缩）</small><b class="good">0.00%</b><small>三池全部相同</small></div>
+    <div class="stat"><small>逐 bit 往返验证</small><b class="good">22 / 22</b><small>A 与 4slot 全过</small></div>
+  </div>
+
+  <h2>1. 实验设置</h2>
+  <ul>
+    <li><strong>池组成</strong>（架构纯净口径，只放该模型真实用到的非线性函数）：
+      <ul>
+        <li><strong>BERT</strong>（512 序列/768 隐藏/3072 中间维）：Softmax(512)、LayerNorm(768)、Bias+GELU(3072)、Tanh(768)；</li>
+        <li><strong>LLaMA 2</strong>（4096 隐藏/11008 中间维）：RMSNorm(4096)、Softmax(4096)、SwiGLU(11008)；</li>
+        <li><strong>SD-UNet</strong>（代表尺寸）：GroupNorm(1280)、SiLU(1280)、LayerNorm(768)、Softmax(1024)、GeGLU(3072)。</li>
+      </ul>
+    </li>
+    <li><strong>调度</strong>：每函数在 mode 0/1/2 中取周期最短者；无压缩/A 用 <code>MAX_ISSUE_SLOTS=5</code>，4slot 用 <code>MAX_ISSUE_SLOTS=4</code>。</li>
+    <li><strong>新增 DAG 构造器</strong>（基础调度器没有，按 plan §3.1 重实现）：Bias+GELU、RMSNorm、SwiGLU、SiLU、GeGLU、GroupNorm。</li>
+    <li><strong>Bank 深度口径</strong>：合并池、取整到 2 的幂。无压缩 = 174b×深度；A = config(5b) + 5×34b 专属 Bank；4slot = config(5b) + 4×34b 共享 Lane。</li>
+  </ul>
+
+  <h2>2. 各池结果（周期 / Bank 深度 / 分配位数）</h2>
+
+  <h3>2.1 BERT 池（周期 7667，三方案相同）</h3>
+  <table>
+    <thead><tr><th>方案</th><th class="num">周期</th><th>config 深度</th><th>payload 组织</th><th class="num">payload 深度</th><th class="num">宏种类</th><th class="num">分配 bit</th><th class="num">vs 无压缩</th></tr></thead>
+    <tbody>
+      <tr><td>无压缩</td><td class="num">7667</td><td>—</td><td>174b 整字</td><td class="num">8192</td><td class="num">1</td><td class="num">1,425,408</td><td class="num">1.000×</td></tr>
+      <tr><td>Candidate A</td><td class="num">7667</td><td>8192</td><td>5×34b 专属 Bank</td><td class="num">4096</td><td class="num">2</td><td class="num">737,280</td><td class="num">0.517×</td></tr>
+      <tr><td><strong>4slot</strong></td><td class="num">7667</td><td>8192</td><td>4×34b 共享 Lane</td><td class="num"><strong>2048</strong></td><td class="num">2</td><td class="num"><strong>319,488</strong></td><td class="num"><strong>0.224×</strong></td></tr>
+    </tbody>
+  </table>
+  <p class="small">A 各 Bank 事件 1298/1280/2624/640/1280（VECTOR 2624 顶到 4096 档）；4slot 各 Lane 事件 1781/1781/1780/1780（压进 2048 档）。</p>
+
+  <h3>2.2 LLaMA 池（周期 30704，三方案相同）</h3>
+  <table>
+    <thead><tr><th>方案</th><th class="num">周期</th><th>config 深度</th><th>payload 组织</th><th class="num">payload 深度</th><th class="num">宏种类</th><th class="num">分配 bit</th><th class="num">vs 无压缩</th></tr></thead>
+    <tbody>
+      <tr><td>无压缩</td><td class="num">30704</td><td>—</td><td>174b 整字</td><td class="num">32768</td><td class="num">1</td><td class="num">5,701,632</td><td class="num">1.000×</td></tr>
+      <tr><td>Candidate A</td><td class="num">30704</td><td>32768</td><td>5×34b 专属 Bank</td><td class="num">16384</td><td class="num">2</td><td class="num">2,949,120</td><td class="num">0.517×</td></tr>
+      <tr><td><strong>4slot</strong></td><td class="num">30704</td><td>32768</td><td>4×34b 共享 Lane</td><td class="num"><strong>16384</strong></td><td class="num">2</td><td class="num"><strong>2,392,064</strong></td><td class="num"><strong>0.420×</strong></td></tr>
+    </tbody>
+  </table>
+  <p class="small">A 各 Bank 事件 7568/4800/13696/3072/3968（VECTOR 13696 顶到 16384 档）；4slot 各 Lane 事件 8276×4（同 16384 档）。本池 4slot 与 A 同深度档，收益主要来自「少一个 Bank」。</p>
+
+  <h3>2.3 SD-UNet 池（周期 11684，三方案相同）</h3>
+  <table>
+    <thead><tr><th>方案</th><th class="num">周期</th><th>config 深度</th><th>payload 组织</th><th class="num">payload 深度</th><th class="num">宏种类</th><th class="num">分配 bit</th><th class="num">vs 无压缩</th></tr></thead>
+    <tbody>
+      <tr><td>无压缩</td><td class="num">11684</td><td>—</td><td>174b 整字</td><td class="num">16384</td><td class="num">1</td><td class="num">2,850,816</td><td class="num">1.000×</td></tr>
+      <tr><td>Candidate A</td><td class="num">11684</td><td>16384</td><td>5×34b 专属 Bank</td><td class="num">8192</td><td class="num">2</td><td class="num">1,474,560</td><td class="num">0.517×</td></tr>
+      <tr><td><strong>4slot</strong></td><td class="num">11684</td><td>16384</td><td>4×34b 共享 Lane</td><td class="num"><strong>4096</strong></td><td class="num">2</td><td class="num"><strong>638,976</strong></td><td class="num"><strong>0.224×</strong></td></tr>
+    </tbody>
+  </table>
+  <p class="small">A 各 Bank 事件 2640/1856/5696/1664/1664（VECTOR 5696 顶到 8192 档）；4slot 各 Lane 事件 3381/3381/3379/3379（压进 4096 档）。</p>
+
+  <h2>3. 关键对比与发现</h2>
+  <table>
+    <thead><tr><th>池</th><th class="num">周期（三方案）</th><th class="num">4slot vs A 位数</th><th class="num">4slot vs 无压缩位数</th><th class="num">A vs 无压缩位数</th><th>4slot 是否跨越深度边界</th></tr></thead>
+    <tbody>
+      <tr><td>BERT</td><td class="num">7667</td><td class="num good">−56.7%</td><td class="num good">−77.6%</td><td class="num">−48.3%</td><td>是（4096→2048）</td></tr>
+      <tr><td>LLaMA</td><td class="num">30704</td><td class="num">−18.9%</td><td class="num good">−58.0%</td><td class="num">−48.3%</td><td>否（同 16384 档）</td></tr>
+      <tr><td>SD-UNet</td><td class="num">11684</td><td class="num good">−56.7%</td><td class="num good">−77.6%</td><td class="num">−48.3%</td><td>是（8192→4096）</td></tr>
+    </tbody>
+  </table>
+
+  <ol>
+    <li><strong>周期零损失</strong>：三个池、所有函数，max-4 与 max-5 调度周期完全相同（T4 == T5），4slot 不付出性能代价。</li>
+    <li><strong>4slot 相对 A 的收益高度依赖「是否跨越 2 的幂深度边界」</strong>：BERT/SD-UNet 中 A 的 VECTOR Bank 顶到上一档（4096/8192）而 4slot 共享后压进下一档（2048/4096），位数 −56.7%；LLaMA 池事件量大、未跨档，收益只剩「少一个 Bank」（−18.9%）。</li>
+    <li><strong>宏种类</strong>：无压缩 1 种、A 与 4slot 各 2 种（config + payload）；4slot 的 payload Bank 数比 A 少一个（4 vs 5）。</li>
+    <li><strong>分池的价值</strong>：按模型分池后，BERT 与 SD-UNet 池因事件规模适中而能跨深度边界、收益显著；LLaMA 池（SwiGLU Y=11008 主导）事件量大、深度档位饱和，收益收窄。这说明「按模型/负载规模分池」直接影响压缩收益，支持按模型分开统计。</li>
+  </ol>
+
+  <h2>4. 逐工作项明细</h2>
+  <table>
+    <thead><tr><th>函数</th><th class="num">Y</th><th class="num">mode</th><th class="num">周期 T5=T4</th><th class="num">A 各槽事件 L/S/V/Sc/SFU</th><th class="num">4slot 各 Lane 事件</th></tr></thead>
+    <tbody>
+      <tr><td>softmax</td><td class="num">512</td><td class="num">2</td><td class="num">969</td><td class="num">128/128/512/128/192</td><td class="num">272/272/272/272</td></tr>
+      <tr><td>layernorm</td><td class="num">768</td><td class="num">0</td><td class="num">1450</td><td class="num">198/192/1344/512/128</td><td class="num">594/594/593/593</td></tr>
+      <tr><td>bias_gelu</td><td class="num">3072</td><td class="num">2</td><td class="num">4456</td><td class="num">780/768/768/0/768</td><td class="num">771/771/771/771</td></tr>
+      <tr><td>tanh</td><td class="num">768</td><td class="num">2</td><td class="num">792</td><td class="num">192/192/0/0/192</td><td class="num">144/144/144/144</td></tr>
+      <tr><td>rmsnorm</td><td class="num">4096</td><td class="num">0</td><td class="num">5327</td><td class="num">1040/1024/4096/1152/128</td><td class="num">1860/1860/1860/1860</td></tr>
+      <tr><td>softmax</td><td class="num">4096</td><td class="num">1</td><td class="num">7135</td><td class="num">1024/1024/4096/1920/1088</td><td class="num">2288/2288/2288/2288</td></tr>
+      <tr><td>swiglu</td><td class="num">11008</td><td class="num">2</td><td class="num">18242</td><td class="num">5504/2752/5504/0/2752</td><td class="num">4128/4128/4128/4128</td></tr>
+      <tr><td>groupnorm</td><td class="num">1280</td><td class="num">0</td><td class="num">2457</td><td class="num">330/320/2240/768/128</td><td class="num">947/947/946/946</td></tr>
+      <tr><td>silu</td><td class="num">1280</td><td class="num">2</td><td class="num">1767</td><td class="num">320/320/320/0/320</td><td class="num">320/320/320/320</td></tr>
+      <tr><td>softmax</td><td class="num">1024</td><td class="num">2</td><td class="num">1877</td><td class="num">256/256/1024/384/320</td><td class="num">560/560/560/560</td></tr>
+      <tr><td>geglu</td><td class="num">3072</td><td class="num">2</td><td class="num">4133</td><td class="num">1536/768/768/0/768</td><td class="num">960/960/960/960</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5. 复现入口</h2>
+  <ul>
+    <li>实验脚本：<code>experiments/model_pool_compression_study.py</code>（新增 6 个 DAG 构造器 + 三池三方案驱动）；</li>
+    <li>逐 bit 校验：<code>experiments/verify_model_pool.py</code>（22/22 全过）；</li>
+    <li>结果数据：<code>analysis_output_model_pool_2026-09-08/model_pool_compression_results.json</code>；</li>
+    <li>逐调度输出：<code>analysis_output_model_pool_2026-09-08/schedules/</code>。</li>
+  </ul>
+
+  <p class="small">说明：分配 bit 为「合并池、取整到 2 的幂」口径；面积为逻辑位数，非物理 SRAM 宏签核值。周期为调度周期数（含每程序 EOP 拍）。BERT 的 FFN 按真实带 bias 形式（Bias+GELU）；LLaMA 无 bias 故不含 Bias 融合；SD-UNet 已去除 sin/cos 时间嵌入。</p>
+</main></body></html>

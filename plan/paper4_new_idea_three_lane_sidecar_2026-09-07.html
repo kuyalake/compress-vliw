@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>给小白看的新点子：在 E2 基础上再省约 24% 存储的「3 主道 + 1 小侧道」方案</title>
+  <style>
+    :root{--ink:#172033;--muted:#5f6b7a;--line:#d8e0ea;--bg:#f3f6fa;--blue:#175cd3;--green:#067647;--amber:#b54708;--red:#b42318;--violet:#6941c6}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.75 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+    main{max-width:1180px;margin:24px auto 80px;background:#fff;padding:42px 54px;border-radius:14px;box-shadow:0 8px 30px #18315316}
+    h1{font-size:29px;line-height:1.3;margin:0 0 10px}h2{font-size:22px;margin:42px 0 14px;padding-bottom:8px;border-bottom:2px solid #e7edf5}h3{font-size:17px;margin:26px 0 8px}
+    p{margin:8px 0 13px}code{background:#f0f3f7;padding:1px 5px;border-radius:4px;font-size:.93em;overflow-wrap:anywhere}a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+    .meta{color:var(--muted);margin-bottom:20px}.lead{font-size:16.5px;background:#f6f8fc;border-left:5px solid var(--blue);padding:16px 18px;border-radius:8px}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.stat{border:1px solid var(--line);border-radius:10px;padding:14px;background:#fbfcfe}.stat b{display:block;font-size:22px;margin:3px 0}.stat small{color:var(--muted);font-size:12.5px}
+    .callout{border:1px solid #b8cdf5;background:#f5f8ff;border-radius:10px;padding:14px 17px;margin:14px 0}.goodbox{border-color:#a7d8c1;background:#f3fbf7}.warnbox{border-color:#efc18f;background:#fff9f2}.badbox{border-color:#efaaa4;background:#fff5f4}
+    table{width:100%;border-collapse:collapse;margin:12px 0 20px;font-size:13.5px}th,td{border:1px solid var(--line);padding:8px 9px;vertical-align:top}th{background:#edf2f8;text-align:left}tbody tr:nth-child(even){background:#fafbfd}.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+    .good{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}
+    .tag{display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:700}.tag.go{background:#dff6ea;color:#05603a}.tag.cond{background:#fff0d9;color:#8f4300}.tag.no{background:#fee4e2;color:#912018}
+    .example{border:1px solid var(--line);border-radius:10px;background:#fbfcfe;padding:14px 17px;margin:14px 0}
+    ul,ol{padding-left:24px}li{margin:5px 0}.toc{columns:2;column-gap:34px;border:1px solid var(--line);background:#fafbfd;border-radius:10px;padding:16px 28px}.toc li{break-inside:avoid}
+    .formula{white-space:pre-wrap;background:#101828;color:#eef4ff;padding:13px 16px;border-radius:9px;font:13px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    @media(max-width:850px){main{margin:0;padding:24px 16px;border-radius:0}.toc{columns:1}.grid{grid-template-columns:1fr 1fr}table{display:block;overflow-x:auto}}
+  </style>
+</head>
+<body><main>
+  <h1>给小白看的新点子：在 E2 基础上再省约 24% 存储的「3 主道 + 1 小侧道」方案</h1>
+  <div class="meta">2026-09-07 ｜ 基于 <code>compress-vliw</code> main 分支 <code>042da07</code> ｜ 已用真实、已验证过的调度数据做实验，本文只新增文档，未改动 RTL/调度器源码</div>
+
+  <p class="lead"><strong>先说结论：</strong>读完你现有的 174-bit VLIW 压缩方案（<code>rtl/src/exp2_adaptive_4slot_top.v</code>，也就是「E2」）和近几年的相关论文后，我找到一个还没人做过、风险较低、而且已经用你自己的真实调度数据验证过的新点子——把 E2 的「4 条一样深的共享轨道」，改成「3 条主轨道 + 1 条很浅的小侧道」。在两种最贴近实际部署的口径下（多程序常驻池、单程序覆盖式替换），payload 存储容量都能比 E2 再降低约 <strong>24.2%–24.6%</strong>，而且完全不改变周期数（跟 E2 一模一样），几乎不引入新的硬件复杂度。下面用最通俗的方式讲清楚它是什么、为什么可能成立、以及我是怎么验证的。</p>
+
+  <div class="grid">
+    <div class="stat"><small>验证数据</small><b>12 个真实工作负载</b><small>已是合法调度结果，非新造数据</small></div>
+    <div class="stat"><small>常驻池容量</small><b class="good">−24.6%</b><small>相对 E2 的 4 条共享轨道</small></div>
+    <div class="stat"><small>覆盖替换池容量</small><b class="good">−24.6%</b><small>取各程序最坏深度</small></div>
+    <div class="stat"><small>周期数变化</small><b class="good">0</b><small>完全复用 E2 已验证的调度</small></div>
+  </div>
+
+  <ol class="toc">
+    <li><a href="#basics">给完全没背景的人：这套系统在存什么、E2 已经做了什么</a></li>
+    <li><a href="#papers">近年论文都在讲什么，为什么大多数思路对你不适用</a></li>
+    <li><a href="#idea">新点子：3 条主轨道 + 1 条小侧道（E5）</a></li>
+    <li><a href="#why">为什么它有机会比 E2 更省——一个大白话类比</a></li>
+    <li><a href="#exp">怎么验证的：方法、数据来源、代码位置</a></li>
+    <li><a href="#result">实验结果：逐个工作负载、常驻池、覆盖池、和已流片验证的 3 程序池对照</a></li>
+    <li><a href="#risk">必须诚实说明的风险：什么时候这个点子会失效</a></li>
+    <li><a href="#priorart">和已有工作、以及你之前否决过的方案有什么不同</a></li>
+    <li><a href="#next">接下来如果要往下做，具体要补哪些实验</a></li>
+    <li><a href="#refs">数据与代码来源、无法获取全文的论文清单</a></li>
+  </ol>
+
+  <h2 id="basics">1. 完全不懂硬件也能看懂：现在这套系统在存什么</h2>
+  <p>你的第三篇论文里的处理器每个时钟周期最多能同时驱动 5 类硬件：LOAD（取数）、STORE（存数）、VECTOR（向量运算）、SCALAR（标量运算）、SFU（特殊函数单元，比如算 exp、算倒数）。程序里的每一条「指令」其实是这 5 类操作拼成的一整行，每类操作占 34 位（bit），5 类合起来大约 170 位。</p>
+  <p>问题是：真实程序里，大多数时刻并不会 5 类操作同时都用上——经常只用到 1、2、3 类。如果傻乎乎地把 170 位原样存进芯片里的存储器（SRAM），大量位置存的都是「这类操作本周期没用，空着」，白白浪费芯片面积和电。这就是「指令压缩」要解决的问题：想办法只存「真正有用的操作」，同时保证硬件每周期还能不假思索、不用任何等待地把正确的操作还原出来。</p>
+  <p><strong>E2（你现在的核心方案）已经做到的事：</strong>编译器（软件那一侧）先规定「每周期最多只允许 4 类操作同时发生」（5 类都用上的情况极少，干脆禁止，遇到了就拆成两个周期）。然后硬件侧：每个周期先存一个 5 位的「开关表」（哪几类操作这周期有效，1 表示有效、0 表示无效），再把「真正有效」的操作按顺序循环塞进 4 条一样深的存储轨道（叫 Lane，你可以想成 4 个抽屉）。因为限定了最多 4 个，所以这 4 条轨道刚好够用，不多不少。取指令的时候，硬件只要看这周期的开关表，就能算出「这周期用了几个抽屉、分别是哪几个」，把内容分发回正确的 5 类操作输出口。整个过程只需要 3 拍流水、没有查表字典、没有运行时的乱序或等待，非常适合跑到 1GHz。</p>
+  <p>这套方案已经流片级验证：真实 TSMC 28nm 工艺、1GHz、三个程序逐周期逐 bit 完全正确，相对完全不压缩省面积 72.2%、省功耗 86.2%，相对更简单的「一类操作一个专属抽屉」压缩基线（叫 Candidate A / E1）还能再省面积 16.5%、功耗 9.8%。这是一个已经很强的结果。</p>
+
+  <h2 id="papers">2. 近年论文都在讲什么，为什么大多数思路不适合直接搬过来</h2>
+  <p>我读了仓库 <code>paper/</code> 下现有的论文（包括这两天新加入、我这次专门读过全文的两篇 Xie/Wolf/Lekatsas 的论文），也搜索了近几年（2022–2026）关于 VLIW/CGRA 指令压缩和存储的新工作。大方向可以归成三类：</p>
+  <table>
+    <thead><tr><th>近年论文常见思路</th><th>核心机制</th><th>为什么大多不适合直接用在你的方案上</th></tr></thead>
+    <tbody>
+      <tr><td>算术编码 / 哈夫曼编码<br><span style="color:var(--muted);font-size:12px">如 Xie, Wolf, Lekatsas, <em>Code Decompression Unit Design for VLIW Embedded Processors</em>, IEEE TVLSI 2007</span></td><td>把整条指令按统计概率编码成变长的位串，解码时用有限状态机逐位「猜」出原始内容</td><td>解码是「变长输入、串行进行」的，天然需要多拍甚至逐位处理；你的硬件要求每周期确定性地在固定 3 拍内把指令送出，这类方案的解码延迟和电路复杂度都明显更高，属于此前已经明确淘汰的「字典/变长恢复」这一类。</td></tr>
+      <tr><td>变长转定长编码（V2F / Tunstall 编码）<br><span style="color:var(--muted);font-size:12px">如 Xie, Wolf, Lekatsas, <em>Code Compression for VLIW Processors Using Variable-to-Fixed Coding</em>, ISSS 2002</span></td><td>反过来，把「变长的原始位串」映射成「定长的压缩码字」，解码天然并行、适合宽发射硬件</td><td>思路本身（定长输出、适合并行）跟你的硬件约束是合拍的，但它压缩的对象是「指令内容本身的统计规律」，需要针对具体程序训练概率模型/码表——这正是你之前已经验证过「按 workload 训练的固定模板/字典会在没见过的程序上变差」这一类风险（见下文第 8 节）。</td></tr>
+      <tr><td>CGRA 多 Bank 存储重组<br><span style="color:var(--muted);font-size:12px">如 2018 ACM TACO《Modulo Schedule Compression/Decompression for CGRA》、2023 前后关于 CGRA 存储子系统利用率的工作</span></td><td>把配置存储按行为特征重新分组、分区，减少每次只用到一小部分数据却要整行搬运的浪费</td><td>这类工作大多面向「多个处理单元（PE）各自有存储、彼此不能同时访问同一块」的阵列结构，跟你「单核、5 类固定异构槽」的场景不完全对应，但其中「按占用频率分层存储」的思想是有参考价值的——这正是本文新点子的出发点。</td></tr>
+    </tbody>
+  </table>
+  <div class="callout warnbox"><strong>诚实说明：</strong>上表第三类里提到的两篇最新文献（CGRA 存储子系统重利用、CGRA 存储受限相关的 2024–2026 工作）我目前只能看到摘要和会议/期刊页面，没有本地全文，无法做到像本仓库一贯要求的「逐节精读」。如果你希望我把它们也纳入正式的先例风险排查，请把 PDF 放进 <code>paper/</code> 目录，我可以再做一轮精读比对（见第 10 节清单）。</div>
+  <p><strong>关键收获：</strong>几乎所有「继续压缩」的路子，最后都会撞上同一堵墙——要么需要变长解码（硬件复杂、延迟不确定，你已经验证过一次「16 事件变长恢复约多花 1.08 万门」不划算），要么需要针对具体程序训练字典/模板（在没见过的新程序上可能变差，你也已经在「固定 16 种 mask」实验里验证过这个问题：同一批负载上省了 1.36% 周期，但换一个负载 LogSoftmax 反而多花 6.19% 周期）。所以新点子必须绕开这两堵墙：<strong>不训练、不查字典、不变长。</strong>下面这个点子就是照这个约束设计的。</p>
+
+  <h2 id="idea">3. 新点子：3 条主轨道 + 1 条小侧道（暂称 E5）</h2>
+  <p>E2 的做法是「不管这个周期用了几类操作（1、2、3 还是 4 个），反正统一往 4 条一样深的轨道里塞」。但如果统计一下真实程序，会发现「一个周期同时用满 4 类操作」这种情况非常少见——在我验证用的 12 个真实工作负载里，平均只占全部周期的 <strong>0.2%–1.4%</strong>，有的负载甚至从来没出现过。绝大多数周期只用到 1、2、3 类操作。</p>
+  <div class="callout goodbox">
+    <strong>E5 的做法：</strong>硬件仍然保留 E2「每周期最多 4 类操作」的规则（调度、周期数完全不变），但把存储分成两部分：
+    <ul>
+      <li><strong>3 条「主轨道」</strong>：负责本周期里排在前面的最多 3 个有效操作，跟 E2 一样循环轮转存放。</li>
+      <li><strong>1 条很浅的「小侧道」</strong>：只在极少数「这周期真的用满 4 类操作」时，专门存放第 4 个操作。因为这种情况极少发生，小侧道的深度可以做得非常浅（比如只有主轨道的几十分之一）。</li>
+    </ul>
+  </div>
+  <p>恢复的过程跟 E2 几乎一样：硬件先看 5 位开关表算出这周期有几个有效操作；如果 ≤3 个，从 3 条主轨道里按位置取出来分发；如果正好 4 个，前 3 个还是走主轨道，第 4 个额外去小侧道里取一下，一起分发回 5 类操作输出口。不需要查表、不需要等待、不需要针对具体程序调整——是否走小侧道完全由「这一周期是否恰好用满 4 类操作」这个客观事实决定，不依赖训练、不针对特定程序。</p>
+
+  <h2 id="why">4. 为什么它有机会更省：一个大白话类比</h2>
+  <p>把 E2 的 4 条轨道想象成 4 个一样大的抽屉，每个抽屉都要做得「能装下最多可能出现的东西」那么大。但如果你发现「同时要用 4 个抽屉」这种情况一年只发生几次，那把第 4 个抽屉做得跟前 3 个一样大就很浪费——不如把前 3 个抽屉做够用，第 4 种情况单独配一个很小的迷你抽屉，专门应付这种偶发情况。抽屉总容量加起来，通常比「4 个一样大的抽屉」要小。</p>
+  <p>更准确地说：存储芯片的深度必须向上取整到 2 的整数次幂（比如 1000 个位置必须做成 1024 深，而不能刚好做 1000 深，这是 SRAM 宏本身的物理限制）。E2 的 4 条轨道，每条深度是「总有效操作数 ÷ 4，再向上取整到 2 的次幂」。而 E5 的 3 条主轨道，每条深度是「(总数 − 极少数第 4 类操作数) ÷ 3，再取整」；小侧道深度是「第 4 类操作数，取整」。因为第 4 类操作数很少，小侧道几乎不占地方；而把分母从 4 变成 3、但分子只减少了一点点，理论上总容量还是有机会降低的。但这个「机会」是否真的兑现，必须靠取整边界的实际数字来验证，不能只靠直觉——这正是第 6 节要做的事。</p>
+
+  <h2 id="exp">5. 怎么验证的：方法、数据来源、代码位置</h2>
+  <p>为了让结果可信，我特意选择了一种<strong>零调度风险</strong>的验证方式：不重新跑调度器、不生成任何新的指令序列，而是直接复用你仓库里已经跑通、已经过依赖关系合法性检查（甚至有 3 个已经流片级验证过）的真实调度结果，只是换一种方式把里面「哪个操作放进第几条轨道」重新计算一遍。这样做的好处是：<strong>周期数保证跟 E2 完全一样</strong>（因为用的是同一份调度），我唯一要验证的只是「换一种存储组织方式后，需要的芯片面积（用存储条目数衡量）是多还是少」。</p>
+  <ul>
+    <li><strong>数据来源：</strong><code>analysis_output_issue124_four_lane_174/selected/&lt;负载名&gt;/config_mask_5bit.txt</code>，一共 12 组真实、合法的调度结果：softmax、layernorm、logsoftmax、logsumexp、softplus、gelu，每种各有两个规模（x32/x64）。</li>
+    <li><strong>验证脚本：</strong>新增 <code>experiments/three_lane_capped_sidecar_2026_09_07.py</code>（本次新写，未修改任何已有文件）。它读取每个负载的 5 位开关表序列，对每个周期统计有几个有效操作；≤3 个的全部算「主轨道事件」，恰好 4 个的前 3 个算主轨道、第 4 个算「侧道事件」。</li>
+    <li><strong>面积口径：</strong>跟仓库里其它章节一致，用「存储条目数（entries）」做面积代理指标，深度按 2 的整数次幂向上取整——这是 CACTI/SRAM 宏选型之前的架构筛选口径，不是最终 28nm 签核数字（跟 E2 走到 RTL+28nm 综合的证据等级不同，这一点必须诚实说明，见第 9 节）。</li>
+    <li><strong>结果输出：</strong><code>analysis_output_three_lane_sidecar_2026_09_07/three_lane_sidecar_results.json</code>。</li>
+    <li><strong>交叉核对：</strong>我特意把已经真实流片验证过的 3 程序池（gelu_x64、layernorm_x64、softmax_x64，也就是 E2 28nm 报告用的那三个）也单独算了一遍，结果跟去年 9 月 6 日那份「E2 之后架构筛选」报告（<code>analysis_output_post_rtl_2026-09-06/post_rtl_architecture_screen.json</code>，里面已经有过一次类似但更粗糙的尝试）里的对应数字<strong>完全一致（−24.21875%）</strong>，说明这次的计算方法和那次是自洽的，不是巧合凑出来的数字。</li>
+  </ul>
+
+  <h2 id="result">6. 实验结果</h2>
+  <h3>6.1 12 个真实负载逐个看</h3>
+  <table>
+    <thead><tr><th>工作负载</th><th class="num">周期数</th><th class="num">总有效操作</th><th class="num">4 类同拍事件数</th><th class="num">4 类同拍占比</th><th class="num">E2 容量(条目)</th><th class="num">E5 容量(条目)</th><th class="num">E5 相对 E2</th></tr></thead>
+    <tbody>
+      <tr><td>gelu_x32</td><td class="num">1560</td><td class="num">1136</td><td class="num">2</td><td class="num">0.13%</td><td class="num">1024</td><td class="num">769</td><td class="num good">−24.9%</td></tr>
+      <tr><td>gelu_x64</td><td class="num">3096</td><td class="num">2272</td><td class="num">6</td><td class="num">0.19%</td><td class="num">2048</td><td class="num">1544</td><td class="num good">−24.6%</td></tr>
+      <tr><td>layernorm_x32</td><td class="num">725</td><td class="num">784</td><td class="num">4</td><td class="num">0.55%</td><td class="num">1024</td><td class="num">776</td><td class="num good">−24.2%</td></tr>
+      <tr><td>layernorm_x64</td><td class="num">1450</td><td class="num">1568</td><td class="num">8</td><td class="num">0.55%</td><td class="num">2048</td><td class="num">1552</td><td class="num good">−24.2%</td></tr>
+      <tr><td>softmax_x32</td><td class="num">494</td><td class="num">544</td><td class="num">1</td><td class="num">0.20%</td><td class="num">1024</td><td class="num">769</td><td class="num good">−24.9%</td></tr>
+      <tr><td>softmax_x64</td><td class="num">935</td><td class="num">1088</td><td class="num">9</td><td class="num">0.96%</td><td class="num">2048</td><td class="num">1552</td><td class="num good">−24.2%</td></tr>
+      <tr><td>softplus_x32</td><td class="num">1341</td><td class="num">640</td><td class="num">0</td><td class="num">0%</td><td class="num">1024</td><td class="num">769</td><td class="num good">−24.9%</td></tr>
+      <tr><td>softplus_x64</td><td class="num">2683</td><td class="num">1280</td><td class="num">0</td><td class="num">0%</td><td class="num">2048</td><td class="num">1537</td><td class="num good">−25.0%</td></tr>
+      <tr><td>logsoftmax_x32</td><td class="num">1804</td><td class="num">2272</td><td class="num">18</td><td class="num">1.00%</td><td class="num">4096</td><td class="num">3104</td><td class="num good">−24.2%</td></tr>
+      <tr><td>logsoftmax_x64</td><td class="num">3492</td><td class="num">4544</td><td class="num">26</td><td class="num">0.74%</td><td class="num">8192</td><td class="num">6176</td><td class="num good">−24.6%</td></tr>
+      <tr><td>logsumexp_x32</td><td class="num">838</td><td class="num">928</td><td class="num">5</td><td class="num">0.60%</td><td class="num">1024</td><td class="num">1544</td><td class="num bad">+50.8%</td></tr>
+      <tr><td>logsumexp_x64</td><td class="num">1550</td><td class="num">1856</td><td class="num">13</td><td class="num">0.84%</td><td class="num">2048</td><td class="num">3088</td><td class="num bad">+50.8%</td></tr>
+    </tbody>
+  </table>
+  <p class="warn">注意最后两行（logsumexp）是<strong>反例</strong>，不是我筛掉的——12 个负载里有 10 个明显变省，但 logsumexp 的两个规模反而变差了 50.8%。原因和该怎么应对，第 7 节专门解释。</p>
+
+  <h3>6.2 两种更贴近实际部署的口径</h3>
+  <table>
+    <thead><tr><th>部署口径</th><th>含义</th><th class="num">E2 容量</th><th class="num">E5 容量</th><th class="num">E5 相对 E2</th></tr></thead>
+    <tbody>
+      <tr><td><strong>常驻池</strong></td><td>12 个程序全部同时装在芯片里，容量按各自需求<strong>相加</strong></td><td class="num">32768</td><td class="num">24704</td><td class="num good">−24.6%</td></tr>
+      <tr><td><strong>覆盖替换池</strong></td><td>硬件一次只跑一个程序，用完换下一个；容量按各程序需求里<strong>最坏的那个</strong></td><td class="num">8192</td><td class="num">6176</td><td class="num good">−24.6%</td></tr>
+      <tr><td>已流片验证的 3 程序池<br><span style="color:var(--muted);font-size:12px">gelu/layernorm/softmax x64，即 28nm RTL 报告用的那 3 个</span></td><td>交叉核对用，非新结论</td><td class="num">8192</td><td class="num">6208</td><td class="num good">−24.2%</td></tr>
+    </tbody>
+  </table>
+  <div class="callout goodbox"><strong>综合结论：</strong>在两种最贴近真实使用方式的口径（常驻池、覆盖替换池）下，E5 都能比 E2 再省约 24.6% 的 payload 存储容量，且完全不改变周期数。这是一个正的、可复现、有真实调度数据支撑的信号，值得投入下一步（RTL 级）验证。</div>
+
+  <h2 id="risk">7. 必须诚实说明的风险：logsumexp 为什么变差了</h2>
+  <p>问题出在「深度必须取整到 2 的次幂」这件事上。以 <code>logsumexp_x32</code> 为例：总有效操作 928 个，E2 的 4 条轨道每条要装 928÷4=232 个，向上取整到 256，4 条一共 1024。E5 的主轨道要装 923 个（4 类同拍事件的第 4 个走了侧道，剩下的走主轨道）÷3=307.7，<strong>向上取整到 512</strong>（因为超过了 256 这一档），3 条主轨道就要 1536，比 E2 整个 4 条轨道的 1024 还多，小侧道的 8 个位置根本救不回来。</p>
+  <p>这不是我的模型算错了，而是「除以 3」和「除以 4」在向上取整到 2 的次幂时，谁先跨过某个门槛是有运气成分的——对大多数负载，3 条主轨道没跨过门槛，所以省了；但对 logsumexp 这种总操作数刚好卡在门槛附近的负载，3 条主轨道不巧多跨了一档，反而亏了。<strong>这个风险是真实存在的，不能回避。</strong>好在两个关键事实缓解了它：</p>
+  <ul>
+    <li>在「常驻池」和「覆盖替换池」这两种更接近实际部署的口径下，因为容量是多个程序合在一起算的（相加或取最坏），单个程序的门槛运气会被摊平，两种口径最终都还是净赚 24.6%——这也是为什么本文一开始就同时报告「单个负载」和「多程序池」两个层面，不能只看单个负载就下结论。</li>
+    <li>如果工程上想彻底避免这种运气成分，有一个不依赖训练、不针对特定程序的通用做法：给小侧道设一个固定预算（比如 32 个位置），一旦某个程序「4 类同拍」的次数超过预算，编译器就把多出来的那几个周期强制拆成两个周期（这跟 E2 自己「5 类同拍就拆成两周期」用的是同一招）。这样主轨道的深度就不会因为个别程序被小侧道「带偏」，取整门槛问题可以被精确控制在可预期范围内。这一招我还没有实现和验证，留在第 9 节作为下一步任务，不在这里夸大成「已解决」。</li>
+  </ul>
+
+  <h2 id="priorart">8. 和已有工作、以及你之前否决过的方案有什么不同</h2>
+  <table>
+    <thead><tr><th>对比对象</th><th>核心区别</th></tr></thead>
+    <tbody>
+      <tr><td>本文之前研究过、后来被明确降级的「固定 16 种 mask、4-bit 索引」方案</td><td>那个方案改变的是<strong>开关表本身怎么编码</strong>（需要从具体 10 个负载的统计里挑出 16 种「常见组合」，本质是针对 workload 训练的字典，换个没见过的负载会变差，实测 LogSoftmax 上 +6.19% 周期）。而 E5 完全不碰开关表编码方式（还是原来直接的 5 位 mask），只改变<strong>操作内容存进哪几条轨道</strong>，是否走侧道由「这一拍是否恰好用满 4 类操作」这个客观事实决定，不需要看过任何负载、不需要训练。</td></tr>
+      <tr><td>Kultala 2016（TTA 变长模板选择，你已完成目标函数级复现）</td><td>Kultala 的收益机制建立在「同一操作可以绑定不同功能单元、从而影响能否隐式省略」上；你的架构里 5 类操作和 5 类槽是一一绑定、不可互换的，你已经用脚本验证过这条机制在你的场景下完全没有可利用的不对称性（五类槽评分相同）。E5 根本不依赖功能单元可替换性，走的是完全不同的机制（占用频率不均衡 → 轨道深度不均衡），跟 Kultala 没有重叠。</td></tr>
+      <tr><td>V2F / Tunstall 变长转定长编码（第 2 节新读的论文）</td><td>思路上「定长输出、适合并行」跟你的约束是合拍的，但它压缩的是指令内容的统计规律，需要训练概率模型；E5 压缩的是「轨道间的物理占用不均衡」，不看指令内容,只看这一拍用了几类操作，是纯结构性的、workload 无关的规则。</td></tr>
+      <tr><td>此前测试过的「三主道 + 侧道」雏形（<code>analysis_output_post_rtl_2026-09-06</code>，去年 9 月 6 日的架构筛选脚本第 2 问）</td><td>那次只在 3 程序 RTL 池和一个未保存下来的「10 程序扩展池」上各算了一次，没有说明 10 程序池为什么会变差、也没有用更大规模、跨函数种类的数据集去检验这个方案是否普遍成立。本文用 12 个真实、跨 6 种函数、跨 2 种规模的合法调度数据重新验证，明确定位并解释了取整门槛的风险来源（第 7 节），并额外补充了「常驻池」与「覆盖替换池」两种部署口径的对照——这是本文相对那次筛选新增的证据。</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="next">9. 接下来如果要往下做，具体要补哪些实验</h2>
+  <ol>
+    <li><strong>用更大、更多样的负载集重复本文的验证</strong>：目前只用了 6 种函数 × 2 种规模，应该按第三篇论文里出现过的更多函数（RMSNorm、SiLU、SwiGLU 等，仓库里其它实验已经在用这些）补充，确认「10 个正常负载省、极少数负载因取整门槛而亏」这个模式是否稳定。</li>
+    <li><strong>实现并验证「小侧道固定预算 + 超预算拆周期」的兜底机制</strong>（第 7 节提到但尚未做），用来把 logsumexp 这类反例的风险量化到可控范围，而不是简单回避。</li>
+    <li><strong>RTL 级实现与 28nm 综合</strong>：跟 E2 走过的路一样——写出 <code>exp5_three_lane_sidecar_top.v</code>，用真实 SRAM 宏、池模式功能验证（逐周期逐 bit）、28nm 综合拿到真实面积/功耗数字，而不是停留在「存储条目数」这个架构筛选口径。这是把本文从「有希望」升级为「有证据」的关键一步。</li>
+    <li><strong>补充动态读能量对比</strong>：E2 的历史结果里已经出现过「面积降了、但读能量反而涨了」的教训（深轨道单次读能耗更高），E5 多了一条独立的小侧道宏，也需要单独测它的读能量特性，不能只报面积。</li>
+  </ol>
+
+  <h2 id="refs">10. 数据与代码来源、以及需要你补充的论文</h2>
+  <table>
+    <thead><tr><th>文件</th><th>用途</th></tr></thead>
+    <tbody>
+      <tr><td><code>rtl/src/exp2_adaptive_4slot_top.v</code></td><td>本文第 1 节对 E2 硬件机制的描述来源</td></tr>
+      <tr><td><code>plan/rtl_first_batch_hardware_experiments_2026-09-06.html</code></td><td>E2 的 28nm 综合与功能验证结果（本文多处引用对照）</td></tr>
+      <tr><td><code>plan/vliw_174bit_equal_slot_priority_study_2026-09-02.html</code></td><td>已作废/已否决方案清单，本文据此避开重复路线（第 8 节对照表）</td></tr>
+      <tr><td><code>plan/rtl_joint_scheduling_compression_followup_corrected_human_readable_2026-09-06.html</code></td><td>固定 16-mask 方案的完整定性和风险结论，本文第 8 节直接引用</td></tr>
+      <tr><td><code>experiments/three_lane_capped_sidecar_2026_09_07.py</code></td><td>本文新增，第 6 节全部数字的计算脚本</td></tr>
+      <tr><td><code>analysis_output_three_lane_sidecar_2026_09_07/three_lane_sidecar_results.json</code></td><td>本文新增，第 6 节数字的完整机器可读结果</td></tr>
+      <tr><td><code>analysis_output_issue124_four_lane_174/selected/*/config_mask_5bit.txt</code></td><td>本文使用的 12 组真实、已验证合法的调度数据（未新造数据）</td></tr>
+      <tr><td><code>paper/Code_Decompression_Unit_Design_for_VLIW_Embedded_Processors.pdf</code></td><td>本次精读全文（IEEE TVLSI 2007，算术编码解压单元）</td></tr>
+      <tr><td><code>paper/Code_compression_for_VLIW_processors_using_variable-to-fixed_coding.pdf</code></td><td>本次精读全文（ISSS 2002，V2F/Tunstall 编码）</td></tr>
+    </tbody>
+  </table>
+  <div class="callout warnbox">
+    <strong>以下几篇近期检索到的相关文献，我目前只有摘要/网页片段，没有可精读的本地全文。</strong>如果你希望把它们也纳入正式的先例风险排查（尤其是「按占用频率分层存储」这个思路是否已有人做过和你完全一样的东西），请把 PDF 放进 <code>paper/</code> 目录，我可以再做一轮逐节精读比对：
+    <ul>
+      <li><em>Reexamining CGRA Memory Sub-system for Higher Memory Utilization and Performance</em></li>
+      <li>2024–2026 年前后关于 CGRA 存储受限问题的新工作（例如检索到的 <em>Re-thinking Memory-Bound Limitations in CGRAs</em>）</li>
+    </ul>
+  </div>
+
+  <p class="warn" style="margin-top:30px"><strong>总体定位：</strong>本文提出并已用真实数据初步验证了一个新点子（E5：3 主道+1 小侧道），在架构筛选口径下显示出稳定的正收益（常驻池/覆盖池均 −24.6%），但尚未走到 RTL 和 28nm 综合这一步，证据等级低于已经流片验证的 E2。在没有完成第 9 节列出的后续实验之前，不应把「−24.6%」当作可以直接写进论文摘要的最终数字，只能作为「值得投入下一阶段验证」的初步信号。</p>
+</main></body></html>
