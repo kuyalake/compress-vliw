@@ -1,0 +1,4 @@
+0 softmax
+1 layernorm
+2 bias_gelu
+3 tanh

@@ -1,0 +1,3 @@
+0 rmsnorm
+1 softmax
+2 swiglu
