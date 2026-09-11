@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Multanen 2024 可编程并行字典：原理、可复现性、FRV/OpenEdge 对比与 CCF 重新解释</title>
+<style>
+:root{--ink:#172033;--muted:#5c6879;--line:#d9e2ee;--blue:#2059ad;--green:#08765c;--amber:#a35c00;--red:#a52d39;--violet:#6741a5;--bg:#edf2f7}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.72 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}main{max-width:1200px;margin:26px auto 70px;background:#fff;border-radius:14px;padding:44px 52px 64px;box-shadow:0 8px 34px #22334d17}
+h1{font-size:29px;line-height:1.3;margin:0 0 8px}h2{font-size:23px;margin:42px 0 14px;padding-bottom:8px;border-bottom:2px solid #e6edf6}h3{font-size:18px;margin:27px 0 9px}p{margin:8px 0 13px}.meta,.note,.small{color:var(--muted);font-size:13px}.lead{font-size:17px;line-height:1.82}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.card,.box{border:1px solid var(--line);border-radius:10px;background:#f7f9fc;padding:14px 16px}.card b{display:block;font-size:20px;margin:3px 0}.good{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}.violet{color:var(--violet)}
+.goodbox{border-left:5px solid var(--green);background:#f1faf7}.warnbox{border-left:5px solid #dc8b18;background:#fff8ed}.badbox{border-left:5px solid var(--red);background:#fff3f4}.bluebox{border-left:5px solid var(--blue);background:#f2f6fd}.violetbox{border-left:5px solid var(--violet);background:#f7f3fd}
+table{width:100%;border-collapse:collapse;margin:12px 0 6px;font-size:13px}th,td{border:1px solid var(--line);padding:8px 9px;vertical-align:top}th{background:#edf3fa;text-align:left}.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}tbody tr:nth-child(even){background:#fbfcfe}
+code{background:#edf1f6;padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}ul,ol{padding-left:24px}li{margin:5px 0}.toc{columns:2}.flow{display:flex;align-items:stretch;gap:7px;margin:16px 0;overflow-x:auto}.step{min-width:155px;flex:1;border:1px solid #cfd9e7;border-radius:9px;padding:11px;background:#f8fafc}.arrow{display:flex;align-items:center;color:#789;font-size:22px}.formula{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#f4f6f9;padding:11px 14px;border-radius:8px;overflow:auto}
+@media(max-width:850px){main{margin:0;padding:24px 16px;border-radius:0}.grid{grid-template-columns:1fr}.toc{columns:1}.flow{display:block}.arrow{display:none}.step{margin:7px 0}table{display:block;overflow:auto}}
+</style>
+</head>
+<body><main>
+<h1>Multanen 2024 可编程并行字典：从原理到可复现实验</h1>
+<div class="meta">日期：2026-09-10 ｜ 全文已读 ｜ 新增 FRV-SFU-VLIW 与 OpenEdgeCGRA 软件往返实验 ｜ CACTI 7.0 / HP 32 nm 筛选口径</div>
+
+<p class="lead"><strong>总判断：</strong>这篇工作应当成为第四篇论文的正式对比对象，因为它同样解决“宽指令的取指能耗”，并且已经在五发射槽静态调度处理器上做过硬件验证。但是它与 E2 利用的冗余不同：Multanen 利用的是<strong>指令值重复</strong>，将连续多个周期打包到一次宽存储读取中；E2 利用的是<strong>同一周期只有少数槽有效</strong>，只保存有效槽并把逻辑槽与物理 Lane 解耦。新实验显示：Multanen 方法在 FRV 上能减少 3%–26% 的宽 SRAM 读取次数，但没有跨过任何 SRAM 深度档位，主程序 SRAM 面积仍等于不压缩，且明显大于 E2；在 OpenEdge 12 映射压力池中可以跨过 512→256 深度，但它的预估面积、读能量和程序装载开销仍不优于 E2，更不优于该池上的静态整指令字典。</p>
+
+<div class="grid">
+  <div class="card"><span>原论文 TTA</span><b>5-slot / 64-bit</b><small>3 条压缩指令装入一个取指字</small></div>
+  <div class="card"><span>原论文动态 CR</span><b class="good">0.71 / 0.69</b><small>CHStone / Embench，越小越好</small></div>
+  <div class="card"><span>FRV 最佳筛选点</span><b class="warn">面积仍≈E0</b><small>三池均未跨 SRAM 深度档</small></div>
+  <div class="card"><span>OpenEdge 12 池</span><b class="warn">+29.6% 装载周期</b><small>8/12 个映射选择使用字典</small></div>
+</div>
+
+<div class="box goodbox"><strong>对论文最重要的结论：</strong>Multanen 不是把 E2 否掉的“更强同类方案”，而是一个必须比较的<strong>正交方案</strong>。本论文可以有力地说明：在寄存器地址和存储地址频繁变化、完整槽值重复率低、但每周期槽占用稀疏的 VLIW 中，按值匹配的字典并不一定转化为 SRAM 容量收益；E2 不依赖完整指令值重复，因而更适合 FRV 这类 trace。</div>
+
+<h2>目录</h2>
+<ol class="toc">
+  <li><a href="#terms">小白先读：几个基本词</a></li><li><a href="#core">Multanen 方法到底做了什么</a></li>
+  <li><a href="#example">用 FRV 数字举一个完整例子</a></li><li><a href="#paper-results">原论文做了哪些实验</a></li>
+  <li><a href="#availability">原平台和 trace 能否取得</a></li><li><a href="#fairness">怎样才算公平对比</a></li>
+  <li><a href="#frv">应用到 FRV 的新实验</a></li><li><a href="#openedge">应用到 OpenEdge 的新实验</a></li>
+  <li><a href="#ccf">CCF 4×4 重新解释</a></li><li><a href="#paper-use">论文如何组织这个 baseline</a></li>
+</ol>
+
+<h2 id="terms">1. 小白先读：这篇论文中的几个词是什么意思</h2>
+<table>
+<thead><tr><th>词</th><th>用最直白的话解释</th><th>容易误解的地方</th></tr></thead>
+<tbody>
+<tr><td><strong>字典</strong></td><td>一张小表。表里保存若干个完整字段值；大程序中不再反复写这个字段，而只写它在表里的编号。</td><td>字典不是软件里的字符串字典，而是处理器取指前面的小硬件存储。</td></tr>
+<tr><td><strong>并行字典</strong></td><td>宽指令被切成几块，每块各有一张字典；同一周期同时查多张表，再把结果拼回完整指令。</td><td>“并行”指多张表同拍查，不是一次解压多条真正执行的 VLIW。</td></tr>
+<tr><td><strong>选择性压缩</strong></td><td>只有能省取指能耗的指令才压缩；很少重复或需要太多新字典项的指令保持原宽。</td><td>因此同一个程序里会同时存在压缩指令和未压缩指令。</td></tr>
+<tr><td><strong>Bundle</strong></td><td>把连续的若干条“压缩后小指令”塞进一个原宽取指字。例如一次读出一个 64-bit 字，里面装三条压缩指令。</td><td>这里的 bundle 是<strong>多个时间周期</strong>的压缩指令集合，不是“一条 VLIW 内的多个 slot”。</td></tr>
+<tr><td><strong>字典 Frame</strong></td><td>某一个循环区域要用的一套字典内容。程序进入这个区域前，先用特殊指令把这套内容写入硬件字典。</td><td>换 frame 要花装载周期；字典并不是神奇地自动知道下一段程序需要什么。</td></tr>
+<tr><td><strong>静态压缩率</strong></td><td>磁盘/程序 SRAM 中总共存了多少 bit，除以未压缩程序的 bit。</td><td>它决定容量，但不一定决定运行能耗。</td></tr>
+<tr><td><strong>动态压缩率</strong></td><td>程序真正运行时，从上一级指令存储取出的 bit 数，除以未压缩时的取指 bit 数。</td><td>一个小循环会执行很多次，所以即使静态代码没变小，动态取指量仍可能明显下降。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>第一列是论文术语；第二列说明硬件实际做什么；第三列指出它与本课题“槽”和“Lane”的常见混淆。</p>
+
+<h2 id="core">2. Multanen 2024 的核心方法，逐步解释</h2>
+<h3>2.1 为什么不用一个“大字典”保存整条 VLIW</h3>
+<p>假设一条宽指令有五个槽。完整五槽组合很多：即使每个槽单独只有 16 种常用值，整条指令也可能有 <code>16⁵</code> 种组合。若把完整指令放进一张字典，字典很快就会太大。论文把指令按 issue slot 分成五个字段，每个字段用一张小字典。例如一条压缩指令不再保存五个原字段，而是保存五个字典索引。五张字典同拍读出，重新拼成一条完整 VLIW。</p>
+
+<h3>2.2 为什么不是所有指令都压缩</h3>
+<p>若一个很少执行的指令引入五个新字典项，它省下的一两次宽取指可能还不够支付字典装载和查表能耗。因此论文让编译器做选择：能反复复用已有字典项的指令压缩；其余指令继续以原宽形式存在。这样字典可以保持较小，也避免为了“压缩率好看”导致真实能耗变差。</p>
+
+<h3>2.3 为什么必须把多条压缩指令打成固定 Bundle</h3>
+<p>如果程序中任意混合 20-bit、30-bit、64-bit 指令，取指地址和跨界解码会很复杂。论文保持主指令存储的取指宽度不变：一个取指字要么是一条原宽指令，要么装固定数量的压缩指令。硬件读到压缩 bundle 后，将索引保存在小缓冲中，接下来逐周期查字典并输出一条完整指令。这样流水线填满后仍能每周期给后端一条指令。</p>
+
+<h3>2.4 为什么字典要在运行时重编程</h3>
+<p>不同程序、不同循环常用的指令字段并不相同。一套全程序静态字典要么很大，要么覆盖率很低。论文在编译时分析控制流图（CFG），把嵌套循环附近的基本块组成“压缩区域”；程序进入一个区域时先执行 header，再用若干个原宽字把新 frame 写入五张字典。论文避免在循环体内部反复改字典，而在进入循环区域时更新，以摊薄开销。</p>
+
+<h3>2.5 编译器如何挑字典项</h3>
+<p>不能简单地给每个槽独立选择最常见的值，因为一条指令只有在<strong>五个字段都能命中字典</strong>时才可压缩；而且还要连续凑够固定数量才形成 bundle。论文从内层循环开始，若整个循环所需项能放下就全部放入；放不下时，对候选 bundle 计算 occurrence-cost：大意是“新增多少字典项”除以“这些项在区域里能复用多少次”，优先选择花费小、复用多的联合组合。</p>
+
+<div class="flow">
+  <div class="step"><b>① 普通程序</b><br>编译得到原始宽指令</div><div class="arrow">→</div>
+  <div class="step"><b>② CFG/循环分析</b><br>找适合压缩的区域</div><div class="arrow">→</div>
+  <div class="step"><b>③ 联合选字典项</b><br>保证完整 bundle 可命中</div><div class="arrow">→</div>
+  <div class="step"><b>④ 插入 Frame</b><br>header + 字典装载字</div><div class="arrow">→</div>
+  <div class="step"><b>⑤ 运行时恢复</b><br>每周期输出原完整指令</div>
+</div>
+
+<h3>2.6 它真正优化的目标</h3>
+<div class="box warnbox"><strong>论文主要优化动态能耗，不是程序池容量。</strong>一个压缩 bundle 只需从较大的 L1/IMEM 读一次，却可以在几个执行周期中由小字典恢复多条指令。代价是：要读字典、保存 bundle 索引、装载 frame，并处理压缩/未压缩两种格式。论文因此用能量模型搜索字典深度，而不是只选择静态 bit 数最小的方案。</div>
+
+<h2 id="example">3. 用 FRV 的 174-bit 指令举一个完整例子</h2>
+<p>FRV 一条指令由五个 34-bit 功能槽组成，另有 3 个保留位和 1 个 EOP 位。这里使用两个保留位表示四种类型：未压缩、压缩 bundle、frame header、字典装载字。因此主存宽度仍保持 174 bit。</p>
+<p>若直接使用原论文的五张字典容量数字 <code>[32, 8, 8, 16, 32]</code>，五个索引分别需要 <code>[5,3,3,4,5]</code> bit，一条压缩逻辑指令共 20 bit。一个 174-bit 取指字扣除 2-bit 类型后剩 172 bit，因此可以装：</p>
+<div class="formula">floor(172 / (5+3+3+4+5)) = 8 条压缩逻辑指令</div>
+<p>但这不等于“任何八拍都能压成一拍”。连续八条指令的五个槽值必须全部存在各自字典中；少一个字段不命中，整组就不能成为完整八条 bundle。进入该函数前还要读取一个 header，并用若干个 174-bit 字并行写入五张字典。硬件执行压缩 bundle 时仍连续输出八个原始周期，只是主 SRAM 在这八个周期里只读一次。</p>
+<div class="box bluebox"><strong>与 E2 的根本不同：</strong>E2 在每个原始周期内查看“哪些槽非 NOP”，保存至多四个 34-bit 有效值；Multanen 跨时间查看“连续多个周期的槽值是否能在字典中找到”。一个依赖空间稀疏，一个依赖值重复，二者的适用条件不同。</div>
+
+<h2 id="paper-results">4. 原论文的平台与结果</h2>
+<table>
+<thead><tr><th>项目</th><th>论文设置</th><th>应该怎样理解</th></tr></thead>
+<tbody>
+<tr><td>处理器</td><td>OpenASIP 生成的自定义 TTA；5 个 issue slot；最终指令 64 bit；静态调度，支持无条件分支和谓词执行。</td><td>TTA 是显式控制数据搬运的静态多发射架构，可以看成比传统 VLIW 更暴露数据通路的一类机器。</td></tr>
+<tr><td>控制位</td><td>原始有效指令为 62 bit，增加 2-bit 字典控制，凑成 64 bit。</td><td>这与 FRV 可使用保留位的思路相似。</td></tr>
+<tr><td>五张字典</td><td>最终容量为 32、8、8、16、32 项；每张对应一个 TTA issue-slot 字段。</td><td>容量是对目标程序集做能耗搜索得到的，不是对所有 VLIW 都通用的常数。</td></tr>
+<tr><td>Bundle</td><td>每个 64-bit 取指字装三条压缩指令。</td><td>bundle=3 是字典索引总宽度和 64-bit 取指宽度共同决定的。</td></tr>
+<tr><td>字典硬件</td><td>字典和 loop buffer 使用 latch-based register-file memory；28 nm、0.9 V、25℃、500 MHz，DC + 门级 SAIF/ModelSim。</td><td>不能把本文的小 SRAM CACTI 数字当作原论文 latch-RF 面积。</td></tr>
+<tr><td>程序</td><td>CHStone 7 个、Embench 7 个；部分 Embench 因递归、64-bit 类型或浮点编译限制被排除。</td><td>不是完整 22 个 Embench。</td></tr>
+<tr><td>动态压缩率</td><td>CHStone 0.71，Embench 0.69。</td><td>运行时从上级存储读取的 bit 约减少 29%/31%。</td></tr>
+<tr><td>静态压缩率</td><td>CHStone 0.99，Embench 1.03。</td><td>程序镜像几乎没变，Embench 甚至增大 3%；这再次证明它不是容量优先方法。</td></tr>
+<tr><td>运行开销</td><td>CHStone 平均 0.13%；Embench 各测例也接近可忽略。</td><td>因为字典在进入热点循环前装一次，在循环多次迭代中摊薄。</td></tr>
+<tr><td>系统能耗</td><td>相对只有 L1 cache 的系统，再降 11.4%/3.8%；加入 loop buffer 后另有 19.8%/4.5% 平均收益。</td><td>这些是整套特定存储层次结果，不能直接套到 FRV。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>“论文设置”只记录原文；“怎样理解”说明这些数字是否能直接迁移。本地全文：<a href="../paper/Energy-Efficient Instruction Compression with Programmable Dictionaries.pdf">Energy-Efficient Instruction Compression with Programmable Dictionaries.pdf</a>；<a href="https://doi.org/10.1007/s10617-024-09290-2">论文 DOI</a>。</p>
+
+<div class="box warnbox"><strong>一个容易误引的面积数字：</strong>作者 2020 年单发射 RISC-V 前作报告过解压器约 4100 µm²、延迟 0.36 ns；2024 年论文没有给出五字典 TTA 解压器的可直接抄录绝对面积表。4100 µm² 不能当作 5-slot/174-bit FRV 解压器面积。</div>
+
+<h2 id="availability">5. 能否取得原实验平台的 trace</h2>
+<h3>5.1 已经能拿到什么</h3>
+<ul>
+  <li><a href="https://github.com/cpc/openasip">OpenASIP 官方仓库</a>公开，可以生成 TTA/VLIW 类处理器、编译程序和产生 ISA trace。</li>
+  <li>CHStone 源程序公开；当前 OpenASIP 仓库也包含多项 CHStone 测试源码。Embench 本身也是公开 benchmark。</li>
+  <li>论文全文公开，架构总宽、issue 数、最终字典容量、bundle 大小、工艺与评估流程都能确认。</li>
+</ul>
+
+<h3>5.2 仍然缺什么</h3>
+<table>
+<thead><tr><th>缺失 artifact</th><th>为什么不可替代</th><th>当前查证结果</th></tr></thead>
+<tbody>
+<tr><td>论文使用的 TTA <code>.adf/.bem</code></td><td>决定五个 issue-slot 的精确位宽、功能单元、互连、立即数字段和最终 62-bit 编码。</td><td>论文没有附件链接，当前官方仓库未发现与该论文对应的固定机器文件。</td></tr>
+<tr><td>编译后的 TPEF/程序镜像</td><td>同一个 C benchmark 在不同机器定义、编译器版本和调度参数下会产生不同 VLIW。</td><td>未发现作者实验用二进制。</td></tr>
+<tr><td>动态 ISA trace 与输入</td><td>动态 CR 和能耗依赖分支路径、循环次数与 cache miss。</td><td>论文只给统计图，没有逐周期 trace 数据。</td></tr>
+<tr><td>2024 CFG/区域/字典选择代码</td><td>它决定哪些循环组成区域、哪些指令压缩、何处装载 frame。</td><td>当前官方 OpenASIP 仓库只有较早的通用静态插件 <code>InstructionDictionary.cc</code> 和 <code>MoveSlotDictionary.cc</code>；文件说明分别是整指令静态字典和 move-slot 静态纵向字典，作者/年代为 2005–2009，并不是 2024 的可编程选择性算法。</td></tr>
+<tr><td>五字典解压器 RTL/SAIF</td><td>决定真正的面积、时序、查表和 bundle-buffer 能耗。</td><td>论文说明做过 RTL/门级验证，但未发现对应公开 artifact。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>第一列是复现实验必需文件；第二列解释为什么只有公开 benchmark 源码仍不够；第三列是截至 2026-09-10 对论文、作者页面和 OpenASIP 官方仓库的查证。</p>
+
+<div class="box badbox"><strong>结论：</strong>目前不能拿到“原论文可直接使用的逐周期 trace”，所以不能声称已经复现其 0.71/0.69。可以从公开 OpenASIP 和 benchmark 重新建立一个相似平台，但结果会是独立复现，不一定等于论文平台。最有效的做法是联系作者，索取：TTA ADF/BEM、编译后二进制、动态 trace、compression-region/frame 文件、压缩器源码和解压 RTL。</div>
+
+<h3>5.3 即使拿到 trace，也未必能直接跑 E2</h3>
+<p>E2 当前要求逻辑槽等宽。论文给出五个字典字段和总计 62+2 bit，但没有在正文表中列出五个字段的精确等宽关系；TTA 的 move-slot 编码通常随可连接源/目的数量而变化。拿到 ADF/BEM 后必须先确认：</p>
+<ol>
+  <li>五个字段是否等宽；若不等宽，不能直接称为“4×34-bit E2”。</li>
+  <li>最终 executable 每拍非 NOP 槽峰值是否≤4，而不是只看平均利用率。</li>
+  <li>若用补齐到最大字段宽度的方法强行等宽，必须把 padding 增量同时计入 raw、纵向和 E2，不能只让 baseline 承担。</li>
+</ol>
+<p>因此，现阶段最公平且可立即执行的对比是：<strong>把 Multanen 的方法移植到 FRV 的同一批 trace</strong>，而不是凭论文图推测 TTA trace 后声称 E2 胜出。本报告已经完成前者。</p>
+
+<h2 id="fairness">6. E2 与 Multanen 应比较什么</h2>
+<table>
+<thead><tr><th>维度</th><th>Multanen 可编程并行字典</th><th>E2 四 Lane 条带化</th></tr></thead>
+<tbody>
+<tr><td>利用的冗余</td><td>多个周期之间出现相同的 slot 字段值。</td><td>一个周期内五个槽经常只有 1–3 个有效。</td></tr>
+<tr><td>可接纳条件</td><td>完整连续 bundle 的每个字段都必须命中字典；不命中可回退原宽。</td><td>最终 trace 每拍有效槽数≤4；超过就必须重调度或加侧道。</td></tr>
+<tr><td>主存读取</td><td>压缩 bundle 的多个执行周期只取一个原宽字。</td><td>Config 每周期读取；只对本拍实际事件读取 payload Lane。</td></tr>
+<tr><td>主存容量</td><td>取决于插入 header/字典项后的静态字数是否跨 2 次幂深度档。</td><td>由 Config 深度和四条有效事件流深度决定。</td></tr>
+<tr><td>运行开销</td><td>换 frame 时需要停顿写字典；热点循环可摊薄。</td><td>合法 max-4 trace 不增加执行周期；固定流水启动延迟。</td></tr>
+<tr><td>主要硬件</td><td>五张可写小字典、五路索引、bundle 缓冲、类型/区域控制。</td><td>Config SRAM、四个事件计数器、phase、4→5 散布网络。</td></tr>
+<tr><td>适合的程序</td><td>循环中完整字段值高度重复，且 frame 能重复使用很多次。</td><td>槽值可以很杂，但同拍并发峰值低、NOP 多。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>每一行是一项必须独立报告的公平性条件。两方案优化对象不同，因此不能只用一个“压缩率”得出全面结论。</p>
+
+<h2 id="frv">7. 将 Multanen 方法应用到 FRV-SFU-VLIW</h2>
+<h3>7.1 实验设置和证据边界</h3>
+<ul>
+  <li>输入为现有 BERT、LLaMA、SD-UNet 三个程序池的全部 issue-5 <code>schedule.txt</code>，共 12 个函数成员、11 种不同函数/尺寸。</li>
+  <li>五个 34-bit slot 分别使用一张字典；两个保留位用作类型标记；EOP 保持未压缩。</li>
+  <li>每个非线性函数视为一个 compression region。候选连续 bundle 按“新增字典项/静态复用次数”排序并联合选项；若 header+字典项+压缩正文不能减少该函数主 SRAM 读取，则整个函数回退未压缩。</li>
+  <li>编码后逐条恢复原始五个 slot、reserved 和 EOP；所有选择的配置均 bit-exact 通过。</li>
+  <li>这叫<strong>基于论文机制的 trace 估计</strong>，不是其未公开 CFG 编译器复现。FRV 的展开式静态调度也没有原论文热点循环的动态 profile。</li>
+</ul>
+
+<h3>7.2 为什么给两种字典设置</h3>
+<table>
+<thead><tr><th>设置</th><th>五张字典容量</th><th>每条压缩指令索引</th><th>每个 174-bit 字可装几条</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td>论文数字直接排列</td><td>32 / 8 / 8 / 16 / 32</td><td>20 bit</td><td class="num">8</td><td>回答“把论文最终数字直接搬来会怎样”；但 TTA 槽序与 FRV 槽语义不同，只是参考点。</td></tr>
+<tr><td>同容量预算、FRV 最佳排列</td><td>8 / 16 / 32 / 8 / 32</td><td>20 bit</td><td class="num">8</td><td>在不增加原论文总字典项预算的情况下，对 FRV 槽重新排列。</td></tr>
+<tr><td>有限搜索的动态读取最佳点</td><td>128 / 128 / 128 / 128 / 128</td><td>35 bit</td><td class="num">4</td><td>在预先声明的 39 个固定硬件容量组合中，同时得到最低主存读取比和最低 CACTI-SRAM 动态能耗代理；不是全局最优证明。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>“容量”是每张字典能保存多少个 34-bit 项；“索引”是恢复一条逻辑指令所需五个编号的总宽度；“可装几条”是一个物理取指字包含的连续逻辑周期数。</p>
+
+<h3>7.3 FRV 三程序池定量结果</h3>
+<table>
+<thead><tr><th>程序池</th><th>方案</th><th class="num">主存读取比</th><th class="num">请求存储 bit<br>（含字典）</th><th class="num">CACTI 存储面积<br>(mm²)</th><th class="num">运行池一次动态能量<br>(nJ)</th><th class="num">额外周期</th></tr></thead>
+<tbody>
+<tr><td rowspan="5"><strong>BERT</strong><br>7,667 周期</td><td>E0 不压缩</td><td class="num">1.000</td><td class="num">1,425,408</td><td class="num">0.419199</td><td class="num">366.160</td><td class="num">0</td></tr>
+<tr><td>E1 纵向</td><td class="num">—</td><td class="num">737,280</td><td class="num">0.185225</td><td class="num">72.531</td><td class="num">0</td></tr>
+<tr><td><strong>E2 四 Lane</strong></td><td class="num">—</td><td class="num"><strong>319,488</strong></td><td class="num"><strong>0.087184</strong></td><td class="num"><strong>57.286</strong></td><td class="num">0</td></tr>
+<tr><td>Multanen 论文容量</td><td class="num">0.957</td><td class="num">1,428,672</td><td class="num">0.421602</td><td class="num">351.561</td><td class="num">+1.30%</td></tr>
+<tr><td>Multanen 128×5 筛选点</td><td class="num">0.791</td><td class="num">1,447,168</td><td class="num">0.425992</td><td class="num">298.574</td><td class="num">+6.73%</td></tr>
+
+<tr><td rowspan="5"><strong>LLaMA</strong><br>30,704 周期</td><td>E0 不压缩</td><td class="num">1.000</td><td class="num">5,701,632</td><td class="num">1.642712</td><td class="num">2,530.197</td><td class="num">0</td></tr>
+<tr><td>E1 纵向</td><td class="num">—</td><td class="num">2,949,120</td><td class="num">0.757930</td><td class="num">651.597</td><td class="num">0</td></tr>
+<tr><td><strong>E2 四 Lane</strong></td><td class="num">—</td><td class="num"><strong>2,392,064</strong></td><td class="num"><strong>0.617947</strong></td><td class="num"><strong>651.616</strong></td><td class="num">0</td></tr>
+<tr><td>Multanen 论文容量</td><td class="num">0.971</td><td class="num">5,704,896</td><td class="num">1.645116</td><td class="num">2,459.066</td><td class="num">+0.21%</td></tr>
+<tr><td>Multanen 128×5 筛选点</td><td class="num">0.829</td><td class="num">5,723,392</td><td class="num">1.649506</td><td class="num">2,119.203</td><td class="num">+1.26%</td></tr>
+
+<tr><td rowspan="5"><strong>SD-UNet</strong><br>11,684 周期</td><td>E0 不压缩</td><td class="num">1.000</td><td class="num">2,850,816</td><td class="num">0.837558</td><td class="num">710.222</td><td class="num">0</td></tr>
+<tr><td>E1 纵向</td><td class="num">—</td><td class="num">1,474,560</td><td class="num">0.400536</td><td class="num">181.935</td><td class="num">0</td></tr>
+<tr><td><strong>E2 四 Lane</strong></td><td class="num">—</td><td class="num"><strong>638,976</strong></td><td class="num"><strong>0.164035</strong></td><td class="num"><strong>145.766</strong></td><td class="num">0</td></tr>
+<tr><td>Multanen 论文容量</td><td class="num">0.877</td><td class="num">2,854,080</td><td class="num">0.839962</td><td class="num">626.076</td><td class="num">+1.08%</td></tr>
+<tr><td>Multanen 128×5 筛选点</td><td class="num">0.745</td><td class="num">2,872,576</td><td class="num">0.844352</td><td class="num">543.427</td><td class="num">+5.52%</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>“主存读取比”是插入 frame 后实际读取的 174-bit 主存字数/原周期数；E1/E2 使用不同的多 Bank 组织，不适合用这个单一比例，故写“—”。“请求存储 bit”按逻辑宽度和 2 次幂深度计算；Multanen 行还加一套共享硬件字典的逻辑 bit。“面积”仅含 CACTI SRAM；Multanen 的小字典用 SRAM 作代理，而原论文实际用 latch-RF。“动态能量”对 E0/E1/E2 是执行期读能量；Multanen 还计入字典查表和 frame 写入，但所有行都未计组合逻辑/时钟树。因此只作方向筛选。</p>
+
+<h3>7.4 怎样读这张表</h3>
+<ol>
+  <li><strong>Multanen 确实有效，但目标不同。</strong>128×5 筛选点相对 E0 将一次池运行的存储动态能量降低约 18.5%、16.2%、23.5%。所以不能说“字典完全无效”。</li>
+  <li><strong>它没有让 FRV 主程序 SRAM 变浅。</strong>BERT 压缩后 6068 字，仍需 8192 深；LLaMA 25460 字仍需 32768 深；SD-UNet 8702 字仍需 16384 深。主 SRAM 面积与 E0 相同，再加字典后略大。</li>
+  <li><strong>E2 的 SRAM 组织优势更强。</strong>E2 面积约是字典筛选点的 21.8%、37.5%、19.4%；动态存储能量约是字典点的 19.2%、30.7%、26.8%。即使暂时不计 Multanen 更复杂的 bundle buffer 和控制逻辑，E2 仍明显更低。</li>
+  <li><strong>大字典改善读取，却增加启动开销。</strong>128×5 需要在每个函数入口装更多项，额外周期达到 BERT 6.73%、SD-UNet 5.52%。原论文能把开销压到 0.13%，依赖热点循环大量重复执行；FRV 展开式微程序不具备同样摊薄条件。</li>
+</ol>
+
+<h3>7.5 能否在 E2 后面再加字典</h3>
+<p>初步数据不支持把它作为近期主线。E2 已删除全部 NOP，四条 Lane 中剩下的几乎都是带不同寄存器/地址的有效 34-bit 字：</p>
+<ul>
+  <li>BERT 每 Lane 约 1,587–1,680 个不同值，出现一次的值约 1,433–1,592 个；最常见 64 项只覆盖 7.9%–9.9% 事件。</li>
+  <li>LLaMA 每 Lane 约 5,860–6,274 个不同值，最常见 64 项只覆盖 6.5%–7.1%。</li>
+  <li>SD-UNet 每 Lane 约 2,723–2,913 个不同值，最常见 64 项覆盖 10.4%–14.1%。</li>
+</ul>
+<p>E2 的优势之一正是把 NOP 去掉；但 NOP 又是字典最容易命中的值。把字典放到 E2 payload 后面，反而失去字典最主要的重复来源，还要增加四张字典和索引/逃逸编码。因此目前不建议做“E2+payload 字典”RTL，除非先引入字段级 bitmask/delta，使寄存器地址变化不再破坏匹配。</p>
+
+<h2 id="openedge">8. 将 Multanen 方法应用到 OpenEdgeCGRA 的 12 个公开映射</h2>
+<h3>8.1 实验怎样做</h3>
+<ul>
+  <li>使用固定官方仓库 commit 对应的 12 个可执行 mapping 生成器，共 348 个 context 行；每行四个 32-bit RC row word。</li>
+  <li>每个公开 mapping 作为一个可编程字典区域；四张 16-entry×32-bit 字典；每条压缩逻辑行需 16-bit 索引，因此一个 128-bit context 字扣除 2-bit 标签后可装 7 行。</li>
+  <li>若某个 mapping 插入 header/字典项后不能减少读取字数，就保持未压缩；最终 8/12 个 mapping 使用字典。</li>
+  <li>所有压缩行逐 row、逐 slot 精确恢复。12 映射池是超过默认 context depth=128 的压力池，因此下表是扩容设计研究，不是原版 OpenEdge 可直接部署容量。</li>
+</ul>
+
+<h3>8.2 与 E2 和已有方法的定量对比</h3>
+<table>
+<thead><tr><th>方案</th><th class="num">SRAM 总 bit</th><th class="num">CACTI 存储面积<br>(mm²)</th><th class="num">运行/装载池一次<br>动态能量 (nJ)</th><th class="num">额外装载周期</th><th>解释</th></tr></thead>
+<tbody>
+<tr><td>不压缩</td><td class="num">65,536</td><td class="num">0.016638</td><td class="num">2.013</td><td class="num">0</td><td>四个 32×512 context bank。</td></tr>
+<tr><td>纵向 / 强 Candidate A</td><td class="num">67,584</td><td class="num">0.017693</td><td class="num">1.614</td><td class="num">0</td><td>四槽专属事件流仍需 512 深，并增加 mask。</td></tr>
+<tr><td>当前 E2，phase=0</td><td class="num">67,584</td><td class="num">0.017693</td><td class="num">1.614</td><td class="num">0</td><td>最深 Lane=262，未跨入 256 档。</td></tr>
+<tr><td><strong>E2 + 每程序 2-bit 初始 phase</strong></td><td class="num"><strong>34,816</strong></td><td class="num"><strong>0.011017</strong></td><td class="num"><strong>1.365</strong></td><td class="num">0</td><td>四 Lane 精确 255 项，进入 256 深。</td></tr>
+<tr><td>Multanen 形态，乐观复用非法编码作标签</td><td class="num">34,816</td><td class="num">0.011544</td><td class="num">1.637</td><td class="num bad">+29.6%</td><td>主存 128×256 + 四张 16×32 字典；标签不单独占 bank。</td></tr>
+<tr><td>Multanen 形态，独立逻辑 2-bit 标签</td><td class="num">35,328</td><td class="num">0.012134</td><td class="num">1.714</td><td class="num bad">+29.6%</td><td>CACTI 用物理 8-bit 小宏代理逻辑 2-bit 标签。</td></tr>
+<tr><td>静态整 context-row 字典</td><td class="num good">19,968</td><td class="num good">0.005441</td><td class="num good">0.819</td><td class="num">0</td><td>114 个唯一完整四槽 bundle；这是静态池字典，不含运行时 frame。</td></tr>
+<tr><td>相同值多播</td><td class="num">40,960</td><td class="num">0.012371</td><td class="num">0.983</td><td class="num">0</td><td>同拍相同 32-bit 值只存一次，并带目的位图。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>“SRAM 总 bit”是架构请求容量，深度取 2 的幂；Multanen 行将可复用的硬件字典 bit 也计入。“动态能量”只含 CACTI 存储访问；字典行包含主 context 读、字典读和 frame 写，仍不含解压逻辑。“额外装载周期”是写 frame 的 header/entry 行占原 348 行的比例；它增加 kernel 装载时间，不改变装入 PE 私有程序存储后的计算调度。</p>
+
+<h3>8.3 为什么 OpenEdge 上不建议把 Multanen 作为主方案</h3>
+<ol>
+  <li>它通过 247 个存储字将主 context 深度从 512 降到 256，但还要四张字典；总逻辑 bit 恰好与 phase-seeded E2 同为 34,816，CACTI 面积反而高约 4.8%。</li>
+  <li>字典总动态能量比 phase-seeded E2 高约 19.9%，还未计 bundle buffer、查表 mux 和字典控制。</li>
+  <li>12 个 mapping 很短，frame 装载无法像原论文热点循环那样摊薄；保守计算增加 103 个装载周期，即 +29.6%。</li>
+  <li>该压力池完整四槽 bundle 的重复性很强，简单静态整 bundle 字典反而更小。若强调未知程序可替换，静态字典的内容必须随程序池一起重新装载；这需要另行定义部署协议，但仍说明“并行可编程字典必然最好”不成立。</li>
+</ol>
+
+<div class="box violetbox"><strong>OpenEdge 的公平论文角色：</strong>把 Multanen 列为正式软件 baseline，并报告它确实跨过深度档；随后用面积、能耗和装载开销说明 E2 更适合“context 稀疏、需快速顺序恢复”的场景。不要只比较未取整字数，也不要把 kernel 装载开销误写成计算周期。</div>
+
+<h2 id="ccf">9. CCF 4×4 CGRA：重新从零解释</h2>
+<h3>9.1 “4×4”不是“四个指令槽”</h3>
+<p>CCF 的 4×4 表示有 4 行×4 列，共 <strong>16 个 PE</strong>。如果把每个 PE 在某周期的 64-bit 控制字看成一个逻辑槽，那么这里是 <strong>M=16</strong>，不是 M=4。你的 E2 若设置 N=4，含义是：原来一拍最多可能有 16 个 PE 指令，但物理只提供四条 payload Lane；要保持原周期，一拍有效 PE 数必须≤4。</p>
+
+<h3>9.2 为什么旧结论说“不影响周期”，后来又被推翻</h3>
+<p>CCF 仓库同时存在两个层次的文件：</p>
+<table>
+<thead><tr><th>文件层次</th><th>里面有什么</th><th>simple_loop_1 看到的结果</th><th>能否代表最终执行</th></tr></thead>
+<tbody>
+<tr><td><code>.sch</code> mapper 调度片段</td><td>映射器安排的 kernel node/PE 占用，不包含完整机器控制的所有阶段。</td><td>11 周期、21 个有效事件、峰值 3 个 PE 同拍。</td><td class="bad">不能。它遗漏配置、预装载和收尾。</td></tr>
+<tr><td><code>prolog/kernel/epilog_ins.bin</code> 最终机器流</td><td>模拟器/执行端真正消耗的 16×64-bit 周期字，包括 prolog、kernel、epilog。</td><td>39 周期、67 个有效 PE 字；存在一拍 16 个 PE 全部有效。</td><td class="good">这是判断 E2 接纳性的正确输入。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>“.sch”回答 mapper 如何放 kernel；“最终机器流”回答硬件每拍必须恢复什么。只有后一行可以决定 N=4 是否保持周期。</p>
+
+<h3>9.3 16 槽同拍对四 Lane 意味着什么</h3>
+<div class="formula">原始一拍：16 个有效 PE 控制字<br>纯 E2 每拍容量：4 个有效控制字<br>只按数量拆分的乐观下界：ceil(16/4)=4 拍，即这一拍至少多 3 拍</div>
+<p>因此 simple_loop_1 即使忽略依赖和路由冲突，也至少从 39 拍变成 42 拍，增加 7.7%。这已经违反“每周期恢复原完整指令”。仓库另外三组 15-cycle mapper schedule 的峰值为 10–12 个有效 PE，同样不适合 N=4；仅按数量拆拍的乐观额外周期分别达到 +86.7%、+100% 和 +113.3%。</p>
+
+<h3>9.4 为什么“相同值多播”又能在 simple_loop_1 上工作</h3>
+<p>那一拍虽然有 16 个有效 PE，但 16 个 64-bit 字只有<strong>两种不同值</strong>。如果一条物理 Lane 读一个值，同时再带 16-bit 目的位图，就可以把同一个值发给多个 PE；四条 Lane 足够容纳最多四种不同值。软件验证显示这条 39-cycle binary 每拍最多三种不同有效值，因此“4 value-lane + 多播”可以无损恢复。</p>
+<div class="box badbox"><strong>但它不是 E2。</strong>E2 每拍只需一个 16-bit 有效槽 mask，每个 Lane 对应一个事件；多播方案需要四个 16-bit destination bitmap，共 64-bit metadata，并需要一对多分发网络。更重要的是，其它 CCF schedule 没有对应完整机器字，无法验证它们是否也只有≤4种值。因此只能说 simple_loop_1 支持多播扩展，不能说“CCF 支持纯四 Lane E2”。</div>
+
+<h3>9.5 CCF 最终 binary 的存储数字</h3>
+<table>
+<thead><tr><th>方案</th><th class="num">SRAM 总 bit</th><th class="num">CACTI 面积<br>(mm²)</th><th>是否原周期恢复</th><th>应如何理解</th></tr></thead>
+<tbody>
+<tr><td>不压缩</td><td class="num">65,536</td><td class="num">0.020470</td><td>是</td><td>16×64-bit×64 深。</td></tr>
+<tr><td>纵向压缩</td><td class="num">33,792</td><td class="num">0.014200</td><td>是</td><td>16 个 PE 专属 bank + mask。</td></tr>
+<tr><td>纯 E2，N=4</td><td class="num">—</td><td class="num">—</td><td class="bad">否</td><td>16 槽峰值无法由四 Lane 同拍接纳。</td></tr>
+<tr><td>静态整 bundle 字典</td><td class="num">33,088</td><td class="num">0.014068</td><td>是</td><td>22 个唯一 16-PE 完整 bundle。</td></tr>
+<tr><td>4 value-lane + 同值多播</td><td class="num">8,192</td><td class="num">0.004748</td><td>本 binary 是</td><td>依赖“每拍不同值≤4”，尚未覆盖其它应用。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>“SRAM 总 bit”按本地可替换指令池、各 bank 深度取 2 的幂；CACTI 是假设的本地 SRAM 筛选，因为 CCF 公开框架没有提供这一级物理 SRAM RTL。“原周期恢复”只判断是否重现 39 个原周期，不代表已完成 RTL 时序。</p>
+
+<h3>9.6 CCF 是否已有指令压缩</h3>
+<p><a href="https://github.com/MPSLab-ASU/ccf">CCF 官方仓库</a>和<a href="https://mpslab-asu.github.io/publications/papers/Dave2018DATEDEMO.pdf">原论文</a>主要提供 CGRA 编译、映射、模拟和代码生成；最终 <code>*_ins.bin</code> 仍显式保存 NOP，没有发现论文自己的指令压缩机制。OpenASIP 仓库中的通用静态字典插件也不是针对 CCF 的实现。当前最严谨结论仍是：截至 2026-09-10，未找到已公开的 CCF 专用指令压缩工作。</p>
+
+<div class="box bluebox"><strong>CCF 在第四篇论文中应是什么角色：</strong>它不是 E2 的正向跨平台证据，而是一个很有价值的失败反例：只看平均稀疏度或简化 mapper schedule 会错误判断 N=4 接纳性；必须分析最终 executable 的逐周期峰值。如果未来取得更多完整 CCF binary，它更适合研究“按不同值数量接纳的多播扩展”，而不是硬套纯 E2。</div>
+
+<h2 id="paper-use">10. 第四篇论文应怎样纳入 Multanen baseline</h2>
+<h3>10.1 建议的对比层次</h3>
+<ol>
+  <li><strong>算法层：</strong>同一 FRV trace 比较 E0、Candidate A、E2、Multanen-shaped programmable dictionary；报告逐 bit 恢复。</li>
+  <li><strong>静态存储层：</strong>报告未取整字数、2 次幂取整后的 SRAM 总 bit、物理宏宽/深，解释是否跨档。</li>
+  <li><strong>动态层：</strong>报告主存读取数、payload/dictionary 读取数、frame 写入数和一次调用能量；不能把 static CR 当 dynamic CR。</li>
+  <li><strong>性能层：</strong>E2 报告 max-4 调度是否增周期；字典报告 frame 装载周期，并区分循环迭代摊薄和单次微程序调用。</li>
+  <li><strong>硬件层：</strong>最终需要一个真正的五字典 FRV RTL baseline，至少包含索引缓冲、五张可写字典、旁路、header/entry 控制和逐周期恢复；在完成前，本文数字只能标“software + CACTI proxy”。</li>
+</ol>
+
+<h3>10.2 可以成立的论文论点</h3>
+<div class="box goodbox"><strong>推荐论点：</strong>现有可编程字典通过跨时间的值重复降低动态取指能耗，但在宽 VLIW 的字段值被寄存器/地址编码扰动、静态程序池需按离散 SRAM 宏定容时，不保证降低本地程序存储容量。本文针对另一类普遍冗余——逐周期 issue-slot 稀疏——提出逻辑槽/物理 Lane 解耦的条带化存储，在满足逐周期峰值接纳条件时，不依赖值重复即可精确恢复；并用 Multanen 字典、传统纵向方法和失败平台反例界定适用范围。</div>
+
+<h3>10.3 暂时不能写进论文的过度结论</h3>
+<ul>
+  <li>不能写“完整复现 Multanen 2024”，因为原 CFG 后处理器、TTA 文件、trace 和五字典 RTL 尚未公开取得。</li>
+  <li>不能把 4100 µm² 当作其 TTA/FRV 解压器面积；那是 2020 RISC-V 前作。</li>
+  <li>不能只用本报告的 128×5 搜索点代表作者算法全局最优；它只是 39 个固定配置、本文启发式和 CACTI 小 SRAM 代理下的最佳点。</li>
+  <li>不能说字典在 FRV “没有收益”；它相对 E0 减少了动态宽存储读取。准确结论是：它没有降低三池的主 SRAM 深度，且不如 E2 的存储组织。</li>
+  <li>不能继续把 CCF 写成纯 E2 零损失平台。</li>
+</ul>
+
+<h3>10.4 下一步最小工作</h3>
+<ol>
+  <li>给 Multanen 作者发送 artifact 请求；若拿到原 TTA trace，先检查 slot 位宽与最终逐拍占用，再判断是否能直接跑 E2。</li>
+  <li>把本次 Python estimator 固定为论文软件 baseline，增加单元测试：空区域、单条 EOP、bundle 边界、回退未压缩、frame 切换和非连续程序切换。</li>
+  <li>实现一个最小 FRV 五字典 RTL，只做本报告的固定“每函数一 frame”版本；综合得到 1 GHz 下真实面积、功耗和 bundle-buffer 关键路径。它不需要先复刻完整 CFG 编译器。</li>
+  <li>若五字典 RTL 明显大于 E2，正文仍公平报告；若动态能量在某些高复用函数胜出，则可提出“编译时按 trace 特征选择 E2 或字典模式”的双模式扩展，但必须先证明额外模式位与两套解码路径不会抵消收益。</li>
+</ol>
+
+<h2>11. 可复现文件与来源</h2>
+<table>
+<thead><tr><th>文件/来源</th><th>本次用途</th></tr></thead>
+<tbody>
+<tr><td><a href="../experiments/multanen_programmable_dictionary_cross_apply_2026_09_10.py">experiments/multanen_programmable_dictionary_cross_apply_2026_09_10.py</a></td><td>新实验：FRV/OpenEdge 并行字典、固定 bundle、选择性区域、frame 开销、bit-exact 恢复、CACTI 调用和 E2 Lane 重复度统计。</td></tr>
+<tr><td><a href="../analysis_output_multanen_cross_apply_2026-09-10/multanen_programmable_dictionary_cross_apply.json">analysis_output_multanen_cross_apply_2026-09-10/multanen_programmable_dictionary_cross_apply.json</a></td><td>完整机器可读结果、39 个 FRV 固定容量点、逐程序选择/回退、宏数据和 OpenEdge 明细。</td></tr>
+<tr><td><a href="../paper/Energy-Efficient Instruction Compression with Programmable Dictionaries.pdf">本地 Multanen 2024 全文</a>；<a href="https://doi.org/10.1007/s10617-024-09290-2">DOI</a></td><td>方法、TTA 设置、字典容量、bundle、动态/静态 CR、能耗和性能证据。</td></tr>
+<tr><td><a href="https://github.com/cpc/openasip">OpenASIP 官方仓库</a></td><td>查证公开工具、CHStone 源码和已有静态 dictionary compressor；固定检查 commit <code>7762099df624d5f25321ddec05bab763184817f1</code>。</td></tr>
+<tr><td><a href="https://github.com/esl-epfl/OpenEdgeCGRA">OpenEdgeCGRA 官方仓库</a></td><td>四个 context row bank 与 12 个公开 mapping。</td></tr>
+<tr><td><a href="https://github.com/MPSLab-ASU/ccf">CCF 官方仓库</a></td><td>区分 mapper <code>.sch</code> 与最终 <code>*_ins.bin</code>，重新验证 M=16 的逐周期峰值。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>第一列可直接打开本地 artifact 或官方一手来源；第二列说明它支持报告中的哪条证据。官方 OpenASIP 仅克隆到 <code>/tmp</code> 做只读核查；未修改、未提交、未 push。当前仓库的新脚本、JSON 和 HTML 也没有执行 git push。</p>
+
+<div class="box violetbox"><strong>最终决策：</strong>把 Multanen 2024 升级为正式 baseline，非常有必要；但当前结果支持的是“E2 在 FRV 型槽稀疏本地程序池上明显优于字典移植”，而不是“E2 普遍优于可编程字典”。OpenEdge 给出二者都能跨档、但 E2 PPA/装载更优的边界案例；CCF 给出 E2 接纳失败的反例。成功案例、边界案例和失败案例同时存在，反而能让论文的问题定义更严格、可信度更高。</div>
+
+</main></body></html>

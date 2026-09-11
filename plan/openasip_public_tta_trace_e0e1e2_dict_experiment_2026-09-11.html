@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>OpenASIP 公开仓库 TTA/VLIW trace：E0/E1/E2/字典压缩实验</title>
+<style>
+body { font-family: -apple-system, "PingFang SC", sans-serif; max-width: 1100px; margin: 2em auto; padding: 0 1em; line-height: 1.6; color: #222; }
+h1, h2, h3 { color: #123; }
+table { border-collapse: collapse; margin: 1em 0; font-size: 0.92em; }
+th, td { border: 1px solid #bbb; padding: 4px 8px; text-align: right; }
+th { background: #eef2f7; }
+td.l, th.l { text-align: left; }
+.good { color: #0a7a0a; font-weight: bold; }
+.bad { color: #b00020; font-weight: bold; }
+.warn { color: #a06000; font-weight: bold; }
+code { background: #f4f4f4; padding: 1px 4px; border-radius: 3px; }
+.box { background: #f7f9fc; border-left: 4px solid #36c; padding: 0.8em 1em; margin: 1em 0; }
+.neg { background: #fdf3f3; border-left: 4px solid #b00020; padding: 0.8em 1em; margin: 1em 0; }
+</style>
+</head>
+<body>
+
+<h1>OpenASIP 公开仓库 TTA/VLIW trace：E0 / E1 / E2 / 字典压缩对比实验</h1>
+<p>日期：2026-09-11 ｜ 状态：实验已完成并通过全部自检（v2：E2 按方案本意以"最大并发 = lane 数"自适应评估；补充 Blocks VLIW 程序）｜ 外部仓库：OpenASIP 官方仓库（固定 commit <code>7762099df624d5f25321ddec05bab763184817f1</code>，只读下载，未修改/未 push）</p>
+
+<div class="box">
+<b>一句话结论：</b>可以。不构建 OpenASIP 工具链，仅从公开仓库的预编译 TPEF + BEM + ADF 就重建了真实调度后的 VLIW/TTA 程序镜像与动态 trace（含一份与 GHDL RTL 仿真逐周期对齐的 5234 周期 trace），并完成 E0 / E1 / E2 / Multanen 式字典对比。按方案本意把 E2 的 lane 数设为各 trace 的最大并发（N=max_k，条带化始终可行）后：<b>E2 在四条真实 TTA trace 上都可行，但只在槽宽较齐的 fft_limm/limm_opt 上赢过 E0，且四条 trace 上都不及 E1</b>；根因是 TTA 槽宽高度异构（lane 必须按最宽槽设计，宽度惩罚 1.35×–3.01×）且稠密代码的各槽事件数本就均衡（E1 的深度取整浪费小）。字典方案在热点循环把动态取指降到 E0 的 35%。
+</div>
+
+<h2>1. "OpenASIP 的 VLIW 做了吗"——为什么没有独立的操作型 VLIW 实验</h2>
+<p>OpenASIP 的原生静态多发射模型就是 TTA。README 原文：<i>"The internal processor template of OpenASIP is based on the … Transport Triggered Architecture (TTA), which is still its default target programming model for static multi-issue designs. OpenASIP, however, also has initial support for other programming models such as standard operation-based VLIW (demonstrated in Blocks CGRA) and … RISC-V."</i></p>
+<p>对仓库 artifact 的逐条核查结果：</p>
+<ul>
+<li><b>Blocks CGRA（操作型 VLIW 演示）</b>：工作流是 <code>blocks_translator</code> 把 Blocks 架构 XML（<code>generic_blocks_vliw_arch.xml</code>）<b>翻译成 TTA ADF</b>（实测翻译出 51 总线/20 FU/8 RF 的 TTA 机器）；其示例程序 <code>binarization.tpef</code> 配 <code>blocks_risc.adf</code>——后者是 10 条 32-bit 总线、带 segment/guard 的<b>标准 TTA 机器</b>，程序仍是 move-slot TPEF。<b>所以"OpenASIP 的 VLIW"在 artifact 层面就是 TTA 格式</b>，用本实验的 TTA 解析器即可分析，已补做（见 §4/§5 的 blocks_vliw_binarization）。</li>
+<li><b>RISC-V 支持</b>：是标量定制（operation-triggered format），不是 VLIW；仓库中没有已调度的 RISC-V/operation-triggered 多发射程序 artifact（全仓检索 <code>operation-triggered</code> ADF/BEM 与 riscv TPEF 均无）。</li>
+</ul>
+<p>结论：不是"只做了 TTA 而没做 VLIW"，而是 <b>OpenASIP 公开仓库里不存在独立编码的操作型 VLIW 指令流 artifact</b>；其 VLIW 能力以"翻译到 TTA 内部模板"的方式提供，因此本实验覆盖的 TTA trace 已经包含了 OpenASIP 唯一的 VLIW 演示程序（Blocks binarization）。</p>
+
+<h2>2. 为什么不能直接跑 OpenASIP 工具链（证据）</h2>
+<p>README 要求 Unix/Linux（macOS 为 experimental），依赖其<b>打过补丁的 LLVM</b>（<code>tools/scripts/install_llvm_*.sh</code>）、boost、xerces-c、sqlite、tcl、cmake 等；本机（macOS 沙箱）无 cmake/brew/docker，会话内无法构建。因此改为直接解析仓库内公开的预编译产物：TPEF 程序二进制、BEM 编码映射、ADF 机器定义、测试套件 golden 参考（RTL 总线 trace、PIG 程序镜像）。CHStone 只有 C 源码和参考周期数（topresults.csv），无预编译 TPEF，其 TTA trace 需在 Linux/CI 上构建 tcecc 后生成（后续工作）。</p>
+
+<h2>3. 方法：从公开仓库 artifact 重建 slot 级 trace</h2>
+<ol>
+<li><b>TPEF 解析器</b>（逐字段复刻 <code>src/base/tpef/TPEFHeaders.hh</code>、<code>TPEFCodeSectionReader.cc</code> 等）：每条指令每个 move slot 的 (源, 目的, guard, 立即数) 符号化值；相同符号值 ⇔ 相同编码比特。</li>
+<li><b>BEM 解析器</b>（按 <code>src/base/bem/</code> 各类 width() 规则）：每个 move slot 的位宽与全指令宽度。</li>
+<li><b>动态 trace 重建</b>：<code>fft_simm.asm</code> 头部自带 BB 频次（BB0×1；5×{BB1, BB2, BB3×84, BB4, BB5}），拼成 5234 周期动态序列。</li>
+<li><b>四种方案</b>（与 FRV 程序池同口径）：E0 不压缩；E1 纵向（每槽独立事件流 + 有效 mask，等深取 2 的幂）；<b>E2 条带化，lane 数 N 按 trace 最大并发自适应（方案本意），有效事件按 slot 序、phase 滚动分配到 N 条 lane</b>；DICT（Multanen 2024 式每槽可编程字典 + 定长 bundle + frame 装载，选择性压缩）。</li>
+</ol>
+
+<h2>4. 验证（全部通过）</h2>
+<table>
+<tr><th class="l">检查</th><th class="l">依据</th><th class="l">结果</th></tr>
+<tr><td class="l">TPEF 指令数</td><td class="l">fft_simm.asm 头部 "58"；ADF imem max-address=57</td><td class="l good">58 ✓（1kr4ditfft 75 ✓ 对 golden 镜像 75 行）</td></tr>
+<tr><td class="l">动态周期数</td><td class="l">asm 头部 "Cycle count = 5234" 与 BB 频次求和</td><td class="l good">5234 ✓</td></tr>
+<tr><td class="l">动态 trace 逐周期内容</td><td class="l">仓库自带 GHDL RTL golden 总线 trace</td><td class="l good">BB0 周期 0–8 的 m19 总线值序列与重建完全一致（0,0,1,2,3,4,0,4096,1004）✓</td></tr>
+<tr><td class="l">指令总宽</td><td class="l">PIG golden 镜像 WIDTH=255</td><td class="l good">28 总线机器参考宽度 255 ✓（自研 BEM 求和 221，差异见 §9）</td></tr>
+<tr><td class="l">编解码正确性</td><td class="l">E1 / E2(N=max_k) / 字典(all16) 编码→逐拍恢复</td><td class="l good">全部 bit-exact 往返通过 ✓</td></tr>
+</table>
+
+<h2>5. 平台、逐周期占用与 E2 lane 数</h2>
+<table>
+<tr><th class="l">程序</th><th>M（槽）</th><th>静态指令</th><th>动态周期</th><th>max k[t]</th><th>mean k[t]</th><th class="l">E2 可行最小 N（=max_k）</th></tr>
+<tr><td class="l">fft_simm</td><td>18</td><td>58</td><td>5234</td><td>16</td><td>7.05</td><td class="l">16</td></tr>
+<tr><td class="l">fft_limm</td><td>18+limm</td><td>58</td><td>5234</td><td>16</td><td>7.21</td><td class="l">16</td></tr>
+<tr><td class="l">fft_limm_opt</td><td>18</td><td>58</td><td>—</td><td>16</td><td>7.03</td><td class="l">16</td></tr>
+<tr><td class="l">fft1024_compiler_28bus</td><td>28+limm</td><td>75</td><td>—</td><td>28</td><td>7.23</td><td class="l">27（move 槽）</td></tr>
+<tr><td class="l">fft1024_18bus（编译器，无 BEM）</td><td>18</td><td>72</td><td>—</td><td>16</td><td>6.24</td><td class="l">16</td></tr>
+<tr><td class="l">sequential_program（无 BEM）</td><td>10</td><td>3736</td><td>—</td><td>7</td><td>1.63</td><td class="l">7</td></tr>
+<tr><td class="l">blocks_vliw_binarization（Blocks VLIW，ADF 估计位宽 85-bit）</td><td>10</td><td>33</td><td>—</td><td class="good">3</td><td>1.06</td><td class="l good">3（稀疏，条带化友好）</td></tr>
+<tr><td class="l">address_clipping（无 BEM）</td><td>4</td><td>20721</td><td>—</td><td>4</td><td>1.58</td><td class="l">4（M=N，无缩减空间）</td></tr>
+<tr><td class="l">tremor_vorbis（无 BEM）</td><td>10</td><td>134622</td><td>—</td><td>1</td><td>0.79</td><td class="l warn">未调度顺序中间形式，不作 VLIW 结论</td></tr>
+</table>
+<p>fft_simm 逐 BB 拆解（热点即密度所在）：</p>
+<table>
+<tr><th class="l">BB</th><th class="l">指令</th><th>执行</th><th>周期</th><th>mean k</th><th>max k</th><th class="l">字典(all16) 可压</th></tr>
+<tr><td class="l">BB0 初始化</td><td class="l">0..8</td><td>1</td><td>9</td><td>1.22</td><td>3</td><td class="l">9/9</td></tr>
+<tr><td class="l">BB1</td><td class="l">9..10</td><td>5</td><td>10</td><td>3.50</td><td>4</td><td class="l">2/2</td></tr>
+<tr><td class="l">BB2 内循环 prologue</td><td class="l">11..24</td><td>5</td><td>70</td><td>8.79</td><td>13</td><td class="l">14/14</td></tr>
+<tr><td class="l"><b>BB3 内循环 kernel</b></td><td class="l">25..36</td><td><b>420</b></td><td><b>5040（96%）</b></td><td class="bad"><b>14.08</b></td><td class="bad"><b>16</b></td><td class="l good"><b>12/12</b></td></tr>
+<tr><td class="l">BB4 内循环 epilogue</td><td class="l">37..50</td><td>5</td><td>70</td><td>6.57</td><td>14</td><td class="l">14/14</td></tr>
+<tr><td class="l">BB5</td><td class="l">51..57</td><td>5</td><td>35</td><td>1.00</td><td>3</td><td class="l">7/7</td></tr>
+</table>
+
+<h2>6. 静态容量对比（SRAM bit，深度取 2 的幂；统一用自研 BEM 位宽口径）</h2>
+<table>
+<tr><th class="l">程序</th><th>E0</th><th>E1 纵向</th><th>E2 条带化（N=最大并发）</th><th class="l">字典最好静态点</th></tr>
+<tr><td class="l">fft_simm（58 条，141-bit）</td><td>9,024</td><td class="good">5,664（62.8%）</td><td class="bad">11,904（132%，N=16，lane 宽 21）</td><td class="l">16,074（1.78×，tuned_le64）</td></tr>
+<tr><td class="l">fft_limm（58 条，144-bit）</td><td>9,216</td><td class="good">5,728（62.2%）</td><td>6,480（70.3%，N=16，lane 宽 10）</td><td class="l">17,136（1.86×）</td></tr>
+<tr><td class="l">fft_limm_opt（58 条，131-bit）</td><td>8,384</td><td class="good">5,312（63.4%）</td><td>6,272（74.8%，N=16，lane 宽 10）</td><td class="l">14,803（1.77×）</td></tr>
+<tr><td class="l">fft1024_compiler_28bus（75 条，221-bit；golden 255 时 E0=32,640）</td><td>28,288</td><td class="good">17,728（62.7%）</td><td>24,640（87.1%，N=27，lane 宽 22）</td><td class="l">36,907（1.30×）</td></tr>
+<tr><td class="l"><b>blocks_vliw_binarization</b>（33 条，85-bit，位宽为 ADF 连通性上界估计）</td><td>5,440</td><td>2,000（36.8%）</td><td class="good"><b>1,264（23.2%，N=3，lane 宽 13）</b></td><td class="l">3,145（0.58×，all2；但仅 16/33 可压）</td></tr>
+</table>
+<div class="box"><b>稀疏 regime 的正面证据（Blocks VLIW binarization）：</b>这是本批 OpenASIP 程序中唯一 max_k 远小于 M 的程序（10 槽、max_k=3、mean 1.06）。在它上面 <b>E2（N=3 条带化）= 1,264 bit，首次同时赢过 E1（2,000）和 E0（5,440）</b>：3 条 13-bit lane、深度 16 即可装下全部 35 个有效事件（lane 事件 12/12/11 均衡），而 E1 要为 10 个逻辑槽各保留一个 bank（其中 3 个槽全空也要占位）。字典在这种 33 条微程序上仍然输给 frame 装载（最少 18 个 frame 字 vs 33 条指令）。<b>注意：</b>binarization 无 BEM，位宽是 ADF 连通性上界估计（总宽 85-bit），且程序很小——它是方向性证据，不是容量主证据。</div>
+
+<h3>6.1 为什么这些 TTA trace 上 E1 &gt; E2：宽度异构惩罚的定量分解</h3>
+<table>
+<tr><th class="l">程序</th><th>lane 宽（=最宽 move 槽）</th><th>E1 原生位宽 payload</th><th>E2 等宽 lane payload</th><th>宽度惩罚</th></tr>
+<tr><td class="l">fft_simm</td><td>21</td><td>3,142</td><td>8,589</td><td class="bad">2.73×</td></tr>
+<tr><td class="l">fft_limm / limm_opt</td><td>10</td><td>3,011</td><td>4,080</td><td>1.35×</td></tr>
+<tr><td class="l">fft1024_compiler_28bus</td><td>22</td><td>3,702</td><td>11,154</td><td class="bad">3.01×</td></tr>
+</table>
+<div class="box"><b>结构性解释（E2 的适用条件被精确刻画）：</b>条带化要求任意槽的值可落到任意 lane，因此 lane 宽必须取所有槽的最大值。FRV 的 5 个槽等宽 34-bit，无惩罚；而这些 TTA 机器的槽宽从 5 bit 到 21/22 bit 不等，惩罚 1.35×–3.01×。同时，稠密 FFT 代码里各槽事件数本就接近（多数槽 28–32 个事件），E1 的"等深取整到最长流"浪费很小；E2 相对 E1 的剩余优势（跨槽均衡深度）被宽度惩罚吃掉。<b>E2 的胜出条件 = 槽宽齐（无惩罚）+ 各槽事件数不均衡（E1 深度浪费大）+ 跨 SRAM 深度档位</b>——FRV 三条全占，这四条 TTA trace 一条都不占。</div>
+
+<h3>6.2 解决位宽异构：宽度分组条带化（E2-G）与混合方案（E2-H）</h3>
+<p>针对 §6.1 的宽度惩罚，实验了两种"化整为零"的条带化变体（均通过 bit-exact 往返验证）：</p>
+<ul>
+<li><b>E2-G（宽度分组条带化）</b>：把槽按位宽分成若干等宽类，每类内部独立做 phase 条带化，lane 宽 = 该类最大槽宽。窄槽不再被最宽槽拖累。</li>
+<li><b>E2-H（混合）</b>：超过阈值 T 的宽槽各自留专属 bank（E1 式），其余窄槽共享条带 lane。</li>
+</ul>
+<table>
+<tr><th class="l">程序</th><th>E0</th><th>E1</th><th>E2 基础（N=max_k）</th><th>E2-G（每类自深度）</th><th>E2-G（统一深度，与 E1 同替换性口径）</th><th>E2-H（最优阈值）</th></tr>
+<tr><td class="l">fft_simm</td><td>9,024</td><td>63%</td><td class="bad">132%</td><td class="good">57%</td><td>61%</td><td>61%</td></tr>
+<tr><td class="l">fft_limm</td><td>9,216</td><td>62%</td><td>70%</td><td class="good">58%</td><td class="good">58%</td><td>58%</td></tr>
+<tr><td class="l">fft_limm_opt</td><td>8,384</td><td>63%</td><td>75%</td><td class="good">61%</td><td class="good">61%</td><td>61%</td></tr>
+<tr><td class="l">fft1024_28bus</td><td>28,288</td><td>63%</td><td>90%</td><td class="good"><b>41%</b></td><td>63%</td><td>54%</td></tr>
+</table>
+<div class="box"><b>结论：位宽异构是可以解决的，且"划分多个等宽 lane 组"（E2-G）有效。</b>
+<ul>
+<li><b>E2-G 在四条 trace 上都赢 E1</b>（统一深度口径下 61%/58%/61%/63% vs E1 的 63%/62%/63%/63%；每类自深度口径下进一步到 57%/58%/61%/41%），且<b>动态取指与 E1 完全相同</b>（等宽类 ⇒ 每周期按原生槽宽读，fft_simm 两者同为 624,109 bit）——即"E1 的动态能耗 + 更优的静态容量"。</li>
+<li><b>收益机制拆解</b>：① 窄 lane 代替最宽 lane，消除 1.35–3.01× 宽度惩罚；② 同类内互补活跃的槽共享 lane（lane 数 &lt; 槽数，如 fft_simm 的 7 个 5-bit 槽只需 6 条 lane）；③ 每类独立深度（宽松口径）让稀疏类不再向全局最长流对齐——28bus 上 41%→63% 的差距正来自此，统一深度后与 E1 持平，说明该口径差异是 28bus 大幅领先的部分原因，写论文时必须分开声明。</li>
+<li><b>E2-H 不优于 E2-G</b>，分组条带化是更干净的形式。</li>
+<li>对论文：<b>E2-G 可作为 E2 在槽宽异构机器上的推广形态</b>——"逻辑槽 → 物理 lane 解耦"的核心不变，只是 lane 按宽度分组。这把 E2 的适用范围从"槽宽齐"扩展到"槽宽异构"，是一个可以成立的扩展贡献点。</li>
+</ul></div>
+
+<h2>7. 动态取指对比（fft_simm / fft_limm，5234 周期真实 trace）</h2>
+<table>
+<tr><th class="l">方案</th><th>fft_simm 主存取指 bit</th><th>vs E0</th><th>fft_limm</th><th>vs E0</th><th class="l">备注</th></tr>
+<tr><td class="l">E0 不压缩</td><td>737,994</td><td>1.000</td><td>753,696</td><td>1.000</td><td class="l">参考宽度口径 779,866 / 785,100</td></tr>
+<tr><td class="l">E1 纵向（mask+有效槽）</td><td>624,109</td><td>0.846</td><td>624,954</td><td>0.829</td><td class="l"></td></tr>
+<tr><td class="l">E2（N=16，lane 宽 21/10）</td><td>1,609,068</td><td class="bad">2.180</td><td>815,562</td><td class="bad">1.082</td><td class="l">等宽 lane 惩罚进入动态项</td></tr>
+<tr><td class="l">字典 all8</td><td>622,656</td><td>0.844</td><td>636,336</td><td>0.844</td><td class="l">仅 ~2230/5234 周期可压</td></tr>
+<tr><td class="l">字典 all16/32/64</td><td>751,248</td><td class="bad">1.018</td><td>767,088</td><td class="bad">1.018</td><td class="l">统一容量索引 72–108 bit，无法 bundle</td></tr>
+<tr><td class="l"><b>字典 tuned_le64（按槽调索引宽）</b></td><td><b>259,299</b></td><td class="good"><b>0.351</b></td><td>326,448</td><td class="good">0.433</td><td class="l">cwidth=41 bit → 每字 3 条；全部周期可压</td></tr>
+</table>
+<p>字典另需每周期读 18 张小字典（fft_simm 合计 737,994 bit，与 E0 取指等宽），但它们是 latch-RF 级小存储，单位 bit 能耗远低于主 SRAM（Multanen 论文前提）。tuned_le64 的每槽索引位为 <code>[2,3,3,3,2,1,4,1,1,1,3,3,4,1,2,2,1,4]</code>：<b>宽 TTA 上字典有效的关键是按槽最小化索引宽度</b>；统一 16 项字典（72 bit）一个取指字只装 1 条，bundle 机制完全失效——这是对 Multanen 方法宽机器可迁移性的新量化观察。</p>
+
+<h2>8. 对第四篇论文的意义</h2>
+<ul>
+<li><b>regime 对照成立：</b>OpenASIP FFT TTA = "槽密集 + 值重复 + 槽宽异构"（E2 可行但不及 E1；字典动态有效）；FRV = "槽稀疏 + 值不重复 + 槽宽齐 34-bit"（E2 有效、字典无效）。两个平台合起来把 E2、E1、字典的适用边界划得很干净。</li>
+<li><b>E1 在两个 regime 都稳定约 -37% 静态容量</b>，是稳健纵向基线；E2 的优势窗口由"槽宽齐 + 事件不均衡 + 跨深度档"三条件刻画，本实验给出了反例侧的定量证据。<b>位宽异构可用"宽度分组条带化 E2-G"解决</b>：四条 TTA trace 上 E2-G 均不劣于/优于 E1（统一深度 61%/58%/61%/63%，每类自深度 57%/58%/61%/41%），动态取指与 E1 相同——这是 E2 向槽宽异构机器的一个可成立推广。</li>
+<li><b>Blocks VLIW（binarization，10 总线 max_k=3）属于稀疏 regime，是本批唯一 E2 同时赢 E1/E0 的程序</b>（E2 N=3：1,264 vs E1 2,000 vs E0 5,440，ADF 估计位宽）；它把 E2 的胜出条件（稀疏峰值 + 可接受 lane 宽）在 OpenASIP 公开 artifact 上正面演示了一次，但程序仅 33 条、位宽为估计值，只能作方向性证据。</li>
+<li><b>CHStone/Embench 的 TTA trace 需构建工具链</b>（patched LLVM + 全套依赖，Linux），建议作为 CI/后续工作。</li>
+</ul>
+
+<h2>9. 证据边界</h2>
+<ul>
+<li>本实验是<b>独立复现</b>，不是 Multanen 论文平台：其 .adf/.bem、二进制、动态 trace、2024 压缩器代码均未公开。</li>
+<li>自研 BEM 位宽与 PIG 实际打包有小差异（fft −6~−8 bit；28 总线 221 vs golden 255）。所有方案统一同口径位宽，相对比较公平；绝对容量同时给参考宽度。该偏差不影响 max_k、占用分布、字典可压性、动态取指比等结构性结论。</li>
+<li>动态能耗未计组合逻辑/时钟树；字典读为 latch-RF 小存储，不能与主 SRAM bit 直接相加。</li>
+<li>tremor.tpef 为未调度顺序形式（max_k=1），已排除出 VLIW 占用结论。</li>
+<li>OpenASIP 无独立编码的操作型 VLIW artifact（Blocks 经翻译进 TTA；RISC-V 为标量），本实验的 TTA trace 已覆盖其唯一 VLIW 演示程序。</li>
+</ul>
+
+<h2>附录 A. 各程序各方案的 bank/lane 划分、宽度与深度明细</h2>
+<p>所有深度均向上取 2 的幂；E1 各槽 bank 统一深度（=最长事件流取整），E2-G 为每类等宽 lane 各自的深度。binarization 位宽为 ADF 连通性上界估计。</p>
+<h4>fft_simm：58 条指令，M=18 槽，字宽 141 bit</h4>
+<table><tr><th class="l">方案</th><th class="l">bank/lane 划分</th><th class="l">每 lane 宽度</th><th class="l">深度</th></tr>
+<tr><td class="l">E0</td><td class="l">1 个 bank</td><td class="l">141 bit</td><td class="l">64</td></tr>
+<tr><td class="l">E1 纵向</td><td class="l">18 个槽 bank（每槽一个）</td><td class="l">各槽原生宽 5–21 bit</td><td class="l">统一 32</td></tr>
+<tr><td class="l">E2 基础</td><td class="l">16 条 lane</td><td class="l">21 bit（=最宽槽）</td><td class="l">32</td></tr>
+<tr><td class="l">E2-G 分组</td><td class="l">6 组共 17 条 lane</td><td class="l">见下</td><td class="l">见下</td></tr>
+</table>
+<table><tr><th class="l">E2-G 等宽组</th><th>组内槽</th><th>lane 宽</th><th>lane 数</th><th>深度</th><th class="l">lane 事件</th></tr>
+<tr><td class="l">5-bit 组</td><td>7 槽</td><td>5</td><td>6</td><td>32</td><td class="l">[25, 25, 25, 25, 25, 24]</td></tr>
+<tr><td class="l">9-bit 组</td><td>3 槽</td><td>9</td><td>3</td><td>32</td><td class="l">[30, 30, 30]</td></tr>
+<tr><td class="l">10-bit 组</td><td>2 槽</td><td>10</td><td>2</td><td>32</td><td class="l">[30, 30]</td></tr>
+<tr><td class="l">7-bit 组</td><td>2 槽</td><td>7</td><td>2</td><td>32</td><td class="l">[18, 18]</td></tr>
+<tr><td class="l">8-bit 组</td><td>3 槽</td><td>8</td><td>3</td><td>32</td><td class="l">[21, 21, 21]</td></tr>
+<tr><td class="l">21-bit 组</td><td>1 槽</td><td>21</td><td>1</td><td>16</td><td class="l">[11]</td></tr>
+</table>
+<h4>fft_limm：58 条指令，M=18 槽，字宽 143 bit</h4>
+<table><tr><th class="l">方案</th><th class="l">bank/lane 划分</th><th class="l">每 lane 宽度</th><th class="l">深度</th></tr>
+<tr><td class="l">E0</td><td class="l">1 个 bank</td><td class="l">143 bit</td><td class="l">64</td></tr>
+<tr><td class="l">E1 纵向</td><td class="l">18 个槽 bank（每槽一个）</td><td class="l">各槽原生宽 5–10 bit</td><td class="l">统一 32</td></tr>
+<tr><td class="l">E2 基础</td><td class="l">16 条 lane</td><td class="l">10 bit（=最宽槽）</td><td class="l">32</td></tr>
+<tr><td class="l">E2-G 分组</td><td class="l">5 组共 17 条 lane</td><td class="l">见下</td><td class="l">见下</td></tr>
+</table>
+<table><tr><th class="l">E2-G 等宽组</th><th>组内槽</th><th>lane 宽</th><th>lane 数</th><th>深度</th><th class="l">lane 事件</th></tr>
+<tr><td class="l">5-bit 组</td><td>7 槽</td><td>5</td><td>6</td><td>32</td><td class="l">[25, 25, 25, 25, 25, 24]</td></tr>
+<tr><td class="l">9-bit 组</td><td>3 槽</td><td>9</td><td>3</td><td>32</td><td class="l">[30, 30, 30]</td></tr>
+<tr><td class="l">10-bit 组</td><td>3 槽</td><td>10</td><td>3</td><td>32</td><td class="l">[24, 23, 23]</td></tr>
+<tr><td class="l">7-bit 组</td><td>2 槽</td><td>7</td><td>2</td><td>32</td><td class="l">[18, 18]</td></tr>
+<tr><td class="l">8-bit 组</td><td>3 槽</td><td>8</td><td>3</td><td>32</td><td class="l">[21, 21, 21]</td></tr>
+</table>
+<h4>fft_limm_opt：58 条指令，M=18 槽，字宽 130 bit</h4>
+<table><tr><th class="l">方案</th><th class="l">bank/lane 划分</th><th class="l">每 lane 宽度</th><th class="l">深度</th></tr>
+<tr><td class="l">E0</td><td class="l">1 个 bank</td><td class="l">130 bit</td><td class="l">64</td></tr>
+<tr><td class="l">E1 纵向</td><td class="l">18 个槽 bank（每槽一个）</td><td class="l">各槽原生宽 5–10 bit</td><td class="l">统一 32</td></tr>
+<tr><td class="l">E2 基础</td><td class="l">16 条 lane</td><td class="l">10 bit（=最宽槽）</td><td class="l">32</td></tr>
+<tr><td class="l">E2-G 分组</td><td class="l">5 组共 17 条 lane</td><td class="l">见下</td><td class="l">见下</td></tr>
+</table>
+<table><tr><th class="l">E2-G 等宽组</th><th>组内槽</th><th>lane 宽</th><th>lane 数</th><th>深度</th><th class="l">lane 事件</th></tr>
+<tr><td class="l">5-bit 组</td><td>7 槽</td><td>5</td><td>6</td><td>32</td><td class="l">[25, 25, 25, 25, 25, 24]</td></tr>
+<tr><td class="l">9-bit 组</td><td>3 槽</td><td>9</td><td>3</td><td>32</td><td class="l">[30, 30, 30]</td></tr>
+<tr><td class="l">10-bit 组</td><td>3 槽</td><td>10</td><td>3</td><td>32</td><td class="l">[24, 23, 23]</td></tr>
+<tr><td class="l">7-bit 组</td><td>2 槽</td><td>7</td><td>2</td><td>32</td><td class="l">[18, 18]</td></tr>
+<tr><td class="l">8-bit 组</td><td>3 槽</td><td>8</td><td>3</td><td>32</td><td class="l">[21, 21, 21]</td></tr>
+</table>
+<h4>fft1024_28bus：75 条指令，M=28 槽，字宽 221 bit</h4>
+<table><tr><th class="l">方案</th><th class="l">bank/lane 划分</th><th class="l">每 lane 宽度</th><th class="l">深度</th></tr>
+<tr><td class="l">E0</td><td class="l">1 个 bank</td><td class="l">221 bit</td><td class="l">128</td></tr>
+<tr><td class="l">E1 纵向</td><td class="l">28 个槽 bank（每槽一个）</td><td class="l">各槽原生宽 4–22 bit</td><td class="l">统一 64</td></tr>
+<tr><td class="l">E2 基础</td><td class="l">28 条 lane</td><td class="l">22 bit（=最宽槽）</td><td class="l">32</td></tr>
+<tr><td class="l">E2-G 分组</td><td class="l">9 组共 28 条 lane</td><td class="l">见下</td><td class="l">见下</td></tr>
+</table>
+<table><tr><th class="l">E2-G 等宽组</th><th>组内槽</th><th>lane 宽</th><th>lane 数</th><th>深度</th><th class="l">lane 事件</th></tr>
+<tr><td class="l">9-bit 组</td><td>3 槽</td><td>9</td><td>3</td><td>32</td><td class="l">[17, 17, 17]</td></tr>
+<tr><td class="l">8-bit 组</td><td>1 槽</td><td>8</td><td>1</td><td>32</td><td class="l">[24]</td></tr>
+<tr><td class="l">10-bit 组</td><td>1 槽</td><td>10</td><td>1</td><td>32</td><td class="l">[23]</td></tr>
+<tr><td class="l">4-bit 组</td><td>5 槽</td><td>4</td><td>5</td><td>16</td><td class="l">[14, 14, 14, 13, 13]</td></tr>
+<tr><td class="l">7-bit 组</td><td>3 槽</td><td>7</td><td>3</td><td>16</td><td class="l">[15, 14, 14]</td></tr>
+<tr><td class="l">6-bit 组</td><td>5 槽</td><td>6</td><td>5</td><td>32</td><td class="l">[19, 19, 19, 19, 19]</td></tr>
+<tr><td class="l">11-bit 组</td><td>1 槽</td><td>11</td><td>1</td><td>32</td><td class="l">[17]</td></tr>
+<tr><td class="l">5-bit 组</td><td>8 槽</td><td>5</td><td>8</td><td>32</td><td class="l">[20, 19, 19, 19, 19, 19, 19, 19]</td></tr>
+<tr><td class="l">22-bit 组</td><td>1 槽</td><td>22</td><td>1</td><td>64</td><td class="l">[33]</td></tr>
+</table>
+<h4>binarization（ADF 估计位宽）：33 条指令，M=10 槽，字宽 85 bit</h4>
+<table><tr><th class="l">方案</th><th class="l">bank/lane 划分</th><th class="l">每 lane 宽度</th><th class="l">深度</th></tr>
+<tr><td class="l">E0</td><td class="l">1 个 bank</td><td class="l">85 bit</td><td class="l">64</td></tr>
+<tr><td class="l">E1 纵向</td><td class="l">10 个槽 bank（每槽一个）</td><td class="l">各槽原生宽 3–13 bit</td><td class="l">统一 16</td></tr>
+<tr><td class="l">E2 基础</td><td class="l">3 条 lane</td><td class="l">13 bit（=最宽槽）</td><td class="l">16</td></tr>
+<tr><td class="l">E2-G 分组</td><td class="l">6 组共 7 条 lane</td><td class="l">见下</td><td class="l">见下</td></tr>
+</table>
+<table><tr><th class="l">E2-G 等宽组</th><th>组内槽</th><th>lane 宽</th><th>lane 数</th><th>深度</th><th class="l">lane 事件</th></tr>
+<tr><td class="l">3-bit 组</td><td>1 槽</td><td>3</td><td>1</td><td>1</td><td class="l">[0]</td></tr>
+<tr><td class="l">13-bit 组</td><td>1 槽</td><td>13</td><td>1</td><td>16</td><td class="l">[9]</td></tr>
+<tr><td class="l">8-bit 组</td><td>4 槽</td><td>8</td><td>2</td><td>8</td><td class="l">[8, 8]</td></tr>
+<tr><td class="l">12-bit 组</td><td>1 槽</td><td>12</td><td>1</td><td>8</td><td class="l">[5]</td></tr>
+<tr><td class="l">9-bit 组</td><td>2 槽</td><td>9</td><td>1</td><td>8</td><td class="l">[5]</td></tr>
+<tr><td class="l">7-bit 组</td><td>1 槽</td><td>7</td><td>1</td><td>1</td><td class="l">[0]</td></tr>
+</table>
+<h2>10. 可复现文件</h2>
+<ul>
+<li>实验脚本：<code>experiments/openasip_tta_trace_compression_2026_09_11.py</code>（TPEF/BEM 解析 + 四方案 + 自适应 N 扫描 + 全部自检）</li>
+<li>机器可读结果：<code>analysis_output_openasip_tta_2026-09-11/openasip_tta_compression.json</code></li>
+<li>外部仓库：OpenASIP @ <code>7762099df624d5f25321ddec05bab763184817f1</code>（只读下载于 <code>../.tools/openasip</code>，未修改）</li>
+</ul>
+
+</body>
+</html>

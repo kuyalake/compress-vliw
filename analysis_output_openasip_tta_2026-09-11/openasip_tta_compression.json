@@ -1,0 +1,3688 @@
+{
+  "schemes": [
+    {
+      "name": "blocks_vliw_binarization",
+      "tpef": "testsuite/systemtest/bintools/BlocksTools/data/binarization.tpef",
+      "n_instr": 33,
+      "M_move_slots": 10,
+      "widths_estimated_from_adf": true,
+      "est_width": 85,
+      "slot_widths": {
+        "ra_out_to_ra_in": 3,
+        "bus_1": 13,
+        "bus_2": 8,
+        "bus_3": 12,
+        "bus_4": 8,
+        "bus_5": 9,
+        "bus_6": 7,
+        "bus_7": 8,
+        "bus_8": 9,
+        "bus_9": 8
+      },
+      "occupancy": {
+        "max_k": 3,
+        "hist": {
+          "0": 12,
+          "1": 11,
+          "2": 6,
+          "3": 4
+        },
+        "mean": 1.061
+      },
+      "E0": {
+        "bits": 2805,
+        "sram_bits": 5440,
+        "depth": 64,
+        "width": 85
+      },
+      "E1": {
+        "bits": 680,
+        "sram_bits": 2000,
+        "events": [
+          0,
+          9,
+          5,
+          5,
+          2,
+          0,
+          0,
+          8,
+          5,
+          1
+        ],
+        "depth": 16,
+        "mask_bits": 330
+      },
+      "E2_Nmax": {
+        "bits": 785,
+        "sram_bits": 1264,
+        "lane_events": [
+          12,
+          12,
+          11
+        ],
+        "depth": 16,
+        "lane_width": 13,
+        "max_k": 3,
+        "feasible": true,
+        "mask_bits": 330,
+        "limm_events": 0
+      },
+      "E2_N4": {
+        "bits": 785,
+        "sram_bits": 1472,
+        "lane_events": [
+          9,
+          9,
+          9,
+          8
+        ],
+        "depth": 16,
+        "lane_width": 13,
+        "max_k": 3,
+        "feasible": true,
+        "mask_bits": 330,
+        "limm_events": 0
+      },
+      "validate": {
+        "e1": true,
+        "e2_nmax": true
+      },
+      "dict": {
+        "all2": {
+          "static_bits": 3145,
+          "words": 37,
+          "n_compressed": 16,
+          "n_uncompressed": 17,
+          "per_word": 8,
+          "cwidth": 10,
+          "frame_words": 18,
+          "dict_hw_bits": 151,
+          "idx_bits": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ]
+        },
+        "all4": {
+          "static_bits": 3825,
+          "words": 45,
+          "n_compressed": 23,
+          "n_uncompressed": 10,
+          "per_word": 4,
+          "cwidth": 20,
+          "frame_words": 29,
+          "dict_hw_bits": 259,
+          "idx_bits": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ]
+        },
+        "all8": {
+          "static_bits": 4845,
+          "words": 57,
+          "n_compressed": 33,
+          "n_uncompressed": 0,
+          "per_word": 2,
+          "cwidth": 30,
+          "frame_words": 40,
+          "dict_hw_bits": 376,
+          "idx_bits": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "tuned_le16": {
+          "static_bits": 4335,
+          "words": 51,
+          "n_compressed": 33,
+          "n_uncompressed": 0,
+          "per_word": 3,
+          "cwidth": 21,
+          "frame_words": 40,
+          "dict_hw_bits": 376,
+          "idx_bits": [
+            1,
+            3,
+            3,
+            3,
+            2,
+            1,
+            1,
+            3,
+            3,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "fft_simm",
+      "tpef": "testsuite/systemtest_long/procgen/ProGe/data/fft_simm.tpef",
+      "n_instr": 58,
+      "M_move_slots": 18,
+      "has_limm": false,
+      "bem_width": 141,
+      "ref_width": 149,
+      "slot_widths": {
+        "m1": 5,
+        "m3": 9,
+        "m4": 9,
+        "m5": 10,
+        "m6": 7,
+        "m7": 5,
+        "m8": 10,
+        "m9": 5,
+        "m10": 5,
+        "m11": 5,
+        "m12": 8,
+        "m13": 8,
+        "m14": 9,
+        "m15": 5,
+        "m16": 7,
+        "m17": 8,
+        "m18": 5,
+        "m19": 21
+      },
+      "occupancy": {
+        "max_k": 16,
+        "hist": {
+          "0": 3,
+          "1": 10,
+          "2": 2,
+          "3": 6,
+          "4": 5,
+          "6": 2,
+          "7": 4,
+          "9": 6,
+          "10": 3,
+          "11": 1,
+          "13": 9,
+          "14": 3,
+          "15": 1,
+          "16": 3
+        },
+        "mean": 7.052
+      },
+      "E0": {
+        "bits": 8178,
+        "sram_bits": 9024,
+        "depth": 64,
+        "width": 141
+      },
+      "E0_refwidth": {
+        "bits": 8642,
+        "sram_bits": 9536,
+        "depth": 64,
+        "width": 149
+      },
+      "E1": {
+        "bits": 4186,
+        "sram_bits": 5664,
+        "events": [
+          3,
+          30,
+          32,
+          31,
+          29,
+          28,
+          29,
+          28,
+          28,
+          28,
+          28,
+          28,
+          28,
+          28,
+          7,
+          7,
+          6,
+          11
+        ],
+        "depth": 32,
+        "mask_bits": 1044
+      },
+      "E2_N4": {
+        "bits": 9633,
+        "sram_bits": 11904,
+        "lane_events": [
+          103,
+          102,
+          102,
+          102
+        ],
+        "depth": 128,
+        "lane_width": 21,
+        "max_k": 16,
+        "feasible": false,
+        "mask_bits": 1044,
+        "limm_events": 0
+      },
+      "E2_Nmax": {
+        "bits": 9633,
+        "sram_bits": 11904,
+        "lane_events": [
+          26,
+          26,
+          26,
+          26,
+          26,
+          26,
+          26,
+          26,
+          26,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25
+        ],
+        "depth": 32,
+        "lane_width": 21,
+        "max_k": 16,
+        "feasible": true,
+        "mask_bits": 1044,
+        "limm_events": 0
+      },
+      "E2_sweep": [
+        {
+          "N": 1,
+          "feasible": false,
+          "sram_bits": 11904,
+          "depth": 512,
+          "lane_events": [
+            409
+          ]
+        },
+        {
+          "N": 2,
+          "feasible": false,
+          "sram_bits": 11904,
+          "depth": 256,
+          "lane_events": [
+            205,
+            204
+          ]
+        },
+        {
+          "N": 3,
+          "feasible": false,
+          "sram_bits": 17280,
+          "depth": 256,
+          "lane_events": [
+            137,
+            136,
+            136
+          ]
+        },
+        {
+          "N": 4,
+          "feasible": false,
+          "sram_bits": 11904,
+          "depth": 128,
+          "lane_events": [
+            103,
+            102,
+            102,
+            102
+          ]
+        },
+        {
+          "N": 5,
+          "feasible": false,
+          "sram_bits": 14592,
+          "depth": 128,
+          "lane_events": [
+            82,
+            82,
+            82,
+            82,
+            81
+          ]
+        },
+        {
+          "N": 6,
+          "feasible": false,
+          "sram_bits": 17280,
+          "depth": 128,
+          "lane_events": [
+            69,
+            68,
+            68,
+            68,
+            68,
+            68
+          ]
+        },
+        {
+          "N": 7,
+          "feasible": false,
+          "sram_bits": 10560,
+          "depth": 64,
+          "lane_events": [
+            59,
+            59,
+            59,
+            58,
+            58,
+            58,
+            58
+          ]
+        },
+        {
+          "N": 8,
+          "feasible": false,
+          "sram_bits": 11904,
+          "depth": 64,
+          "lane_events": [
+            52,
+            51,
+            51,
+            51,
+            51,
+            51,
+            51,
+            51
+          ]
+        },
+        {
+          "N": 9,
+          "feasible": false,
+          "sram_bits": 13248,
+          "depth": 64,
+          "lane_events": [
+            46,
+            46,
+            46,
+            46,
+            45,
+            45,
+            45,
+            45,
+            45
+          ]
+        },
+        {
+          "N": 10,
+          "feasible": false,
+          "sram_bits": 14592,
+          "depth": 64,
+          "lane_events": [
+            41,
+            41,
+            41,
+            41,
+            41,
+            41,
+            41,
+            41,
+            41,
+            40
+          ]
+        },
+        {
+          "N": 11,
+          "feasible": false,
+          "sram_bits": 15936,
+          "depth": 64,
+          "lane_events": [
+            38,
+            38,
+            37,
+            37,
+            37,
+            37,
+            37,
+            37,
+            37,
+            37,
+            37
+          ]
+        },
+        {
+          "N": 12,
+          "feasible": false,
+          "sram_bits": 17280,
+          "depth": 64,
+          "lane_events": [
+            35,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34
+          ]
+        },
+        {
+          "N": 13,
+          "feasible": false,
+          "sram_bits": 9888,
+          "depth": 32,
+          "lane_events": [
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+            31,
+            31,
+            31,
+            31,
+            31,
+            31,
+            31
+          ]
+        },
+        {
+          "N": 14,
+          "feasible": false,
+          "sram_bits": 10560,
+          "depth": 32,
+          "lane_events": [
+            30,
+            30,
+            30,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29
+          ]
+        },
+        {
+          "N": 15,
+          "feasible": false,
+          "sram_bits": 11232,
+          "depth": 32,
+          "lane_events": [
+            28,
+            28,
+            28,
+            28,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27
+          ]
+        },
+        {
+          "N": 16,
+          "feasible": true,
+          "sram_bits": 11904,
+          "depth": 32,
+          "lane_events": [
+            26,
+            26,
+            26,
+            26,
+            26,
+            26,
+            26,
+            26,
+            26,
+            25,
+            25,
+            25,
+            25,
+            25,
+            25,
+            25
+          ]
+        }
+      ],
+      "width_diag": {
+        "native_payload_bits": 3142,
+        "e2_lane_payload_bits": 8589,
+        "lane_width": 21,
+        "n_events": 409,
+        "width_penalty": 2.734
+      },
+      "E2_grouped": {
+        "bits": 4186,
+        "sram_bits": 5168,
+        "classes": [
+          {
+            "slots": [
+              "m1",
+              "m7",
+              "m9",
+              "m10",
+              "m11",
+              "m15",
+              "m18"
+            ],
+            "width": 5,
+            "N": 6,
+            "depth": 32,
+            "lane_events": [
+              25,
+              25,
+              25,
+              25,
+              25,
+              24
+            ]
+          },
+          {
+            "slots": [
+              "m3",
+              "m4",
+              "m14"
+            ],
+            "width": 9,
+            "N": 3,
+            "depth": 32,
+            "lane_events": [
+              30,
+              30,
+              30
+            ]
+          },
+          {
+            "slots": [
+              "m5",
+              "m8"
+            ],
+            "width": 10,
+            "N": 2,
+            "depth": 32,
+            "lane_events": [
+              30,
+              30
+            ]
+          },
+          {
+            "slots": [
+              "m6",
+              "m16"
+            ],
+            "width": 7,
+            "N": 2,
+            "depth": 32,
+            "lane_events": [
+              18,
+              18
+            ]
+          },
+          {
+            "slots": [
+              "m12",
+              "m13",
+              "m17"
+            ],
+            "width": 8,
+            "N": 3,
+            "depth": 32,
+            "lane_events": [
+              21,
+              21,
+              21
+            ]
+          },
+          {
+            "slots": [
+              "m19"
+            ],
+            "width": 21,
+            "N": 1,
+            "depth": 16,
+            "lane_events": [
+              11
+            ]
+          }
+        ],
+        "n_classes": 6,
+        "roundtrip": true,
+        "sram_bits_uniform_depth": 5504
+      },
+      "E2_hybrid_best": {
+        "bits": 4186,
+        "sram_bits": 5504,
+        "threshold": 5,
+        "n_wide": 11,
+        "n_narrow_lanes": 6
+      },
+      "validate": {
+        "e1": true,
+        "e2_nmax": true,
+        "dict_all16": true,
+        "rtl_bustrace_m19_bb0": true
+      },
+      "dict": {
+        "all8": {
+          "static_bits": 16779,
+          "words": 119,
+          "n_compressed": 37,
+          "n_uncompressed": 21,
+          "per_word": 2,
+          "cwidth": 54,
+          "frame_words": 79,
+          "dict_hw_bits": 719,
+          "idx_bits": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "all16": {
+          "static_bits": 21432,
+          "words": 152,
+          "n_compressed": 58,
+          "n_uncompressed": 0,
+          "per_word": 1,
+          "cwidth": 72,
+          "frame_words": 94,
+          "dict_hw_bits": 908,
+          "idx_bits": [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "all32": {
+          "static_bits": 21432,
+          "words": 152,
+          "n_compressed": 58,
+          "n_uncompressed": 0,
+          "per_word": 1,
+          "cwidth": 90,
+          "frame_words": 94,
+          "dict_hw_bits": 908,
+          "idx_bits": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ]
+        },
+        "all64": {
+          "static_bits": 21432,
+          "words": 152,
+          "n_compressed": 58,
+          "n_uncompressed": 0,
+          "per_word": 1,
+          "cwidth": 108,
+          "frame_words": 94,
+          "dict_hw_bits": 908,
+          "idx_bits": [
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6
+          ]
+        },
+        "tuned_le64": {
+          "static_bits": 16074,
+          "words": 114,
+          "n_compressed": 58,
+          "n_uncompressed": 0,
+          "per_word": 3,
+          "cwidth": 41,
+          "frame_words": 94,
+          "dict_hw_bits": 908,
+          "idx_bits": [
+            2,
+            3,
+            3,
+            3,
+            2,
+            1,
+            4,
+            1,
+            1,
+            1,
+            3,
+            3,
+            4,
+            1,
+            2,
+            2,
+            1,
+            4
+          ]
+        }
+      },
+      "dynamic": {
+        "cycles": 5234,
+        "E0_fetch_bits": 737994,
+        "E0_refwidth_fetch_bits": 779866,
+        "E1_fetch_bits": 624109,
+        "E2_fetch_bits": 1609068,
+        "E2_lane_width": 21,
+        "E2_N": 16,
+        "E2_N4_optimistic_cycles": 20544,
+        "E2_grouped_fetch_bits": 624109,
+        "dict": {
+          "all8": {
+            "fetch_bits": 622656,
+            "dict_read_bits": 314712,
+            "compressed_cycles": 2232
+          },
+          "all16": {
+            "fetch_bits": 751248,
+            "dict_read_bits": 737994,
+            "compressed_cycles": 5234
+          },
+          "all32": {
+            "fetch_bits": 751248,
+            "dict_read_bits": 737994,
+            "compressed_cycles": 5234
+          },
+          "all64": {
+            "fetch_bits": 751248,
+            "dict_read_bits": 737994,
+            "compressed_cycles": 5234
+          },
+          "tuned_le64": {
+            "fetch_bits": 259299,
+            "dict_read_bits": 737994,
+            "compressed_cycles": 5234
+          }
+        }
+      },
+      "per_bb": [
+        {
+          "bb": "BB0",
+          "instrs": "0..8",
+          "n": 9,
+          "execs": 1,
+          "cycles": 9,
+          "mean_k": 1.22,
+          "max_k": 3,
+          "compressible": "9/9"
+        },
+        {
+          "bb": "BB1",
+          "instrs": "9..10",
+          "n": 2,
+          "execs": 5,
+          "cycles": 10,
+          "mean_k": 3.5,
+          "max_k": 4,
+          "compressible": "2/2"
+        },
+        {
+          "bb": "BB2",
+          "instrs": "11..24",
+          "n": 14,
+          "execs": 5,
+          "cycles": 70,
+          "mean_k": 8.79,
+          "max_k": 13,
+          "compressible": "14/14"
+        },
+        {
+          "bb": "BB3",
+          "instrs": "25..36",
+          "n": 12,
+          "execs": 420,
+          "cycles": 5040,
+          "mean_k": 14.08,
+          "max_k": 16,
+          "compressible": "12/12"
+        },
+        {
+          "bb": "BB4",
+          "instrs": "37..50",
+          "n": 14,
+          "execs": 5,
+          "cycles": 70,
+          "mean_k": 6.57,
+          "max_k": 14,
+          "compressible": "14/14"
+        },
+        {
+          "bb": "BB5",
+          "instrs": "51..57",
+          "n": 7,
+          "execs": 5,
+          "cycles": 35,
+          "mean_k": 1.0,
+          "max_k": 3,
+          "compressible": "7/7"
+        }
+      ]
+    },
+    {
+      "name": "fft_limm",
+      "tpef": "testsuite/systemtest_long/procgen/ProGe/data/fft_limm.tpef",
+      "n_instr": 58,
+      "M_move_slots": 18,
+      "has_limm": true,
+      "bem_width": 144,
+      "ref_width": 150,
+      "slot_widths": {
+        "m1": 5,
+        "m3": 9,
+        "m4": 9,
+        "m5": 10,
+        "m6": 7,
+        "m7": 5,
+        "m8": 10,
+        "m9": 5,
+        "m10": 5,
+        "m11": 5,
+        "m12": 8,
+        "m13": 8,
+        "m14": 9,
+        "m15": 5,
+        "m16": 7,
+        "m17": 8,
+        "m18": 5,
+        "m19": 10,
+        "<limm>": 13
+      },
+      "occupancy": {
+        "max_k": 16,
+        "hist": {
+          "0": 3,
+          "1": 2,
+          "2": 10,
+          "3": 6,
+          "4": 5,
+          "6": 2,
+          "7": 4,
+          "9": 6,
+          "10": 3,
+          "11": 1,
+          "13": 9,
+          "14": 2,
+          "15": 2,
+          "16": 3
+        },
+        "mean": 7.207
+      },
+      "E0": {
+        "bits": 8352,
+        "sram_bits": 9216,
+        "depth": 64,
+        "width": 144
+      },
+      "E0_refwidth": {
+        "bits": 8700,
+        "sram_bits": 9600,
+        "depth": 64,
+        "width": 150
+      },
+      "E1": {
+        "bits": 4185,
+        "sram_bits": 5728,
+        "events": [
+          3,
+          30,
+          32,
+          31,
+          29,
+          28,
+          29,
+          28,
+          28,
+          28,
+          28,
+          28,
+          28,
+          28,
+          7,
+          7,
+          6,
+          10,
+          10
+        ],
+        "depth": 32,
+        "mask_bits": 1044
+      },
+      "E2_N4": {
+        "bits": 5124,
+        "sram_bits": 6480,
+        "lane_events": [
+          102,
+          102,
+          102,
+          102
+        ],
+        "depth": 128,
+        "lane_width": 10,
+        "max_k": 16,
+        "feasible": false,
+        "mask_bits": 1044,
+        "limm_events": 10
+      },
+      "E2_Nmax": {
+        "bits": 5124,
+        "sram_bits": 6480,
+        "lane_events": [
+          26,
+          26,
+          26,
+          26,
+          26,
+          26,
+          26,
+          26,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25
+        ],
+        "depth": 32,
+        "lane_width": 10,
+        "max_k": 16,
+        "feasible": true,
+        "mask_bits": 1044,
+        "limm_events": 10
+      },
+      "E2_sweep": [
+        {
+          "N": 1,
+          "feasible": false,
+          "sram_bits": 6480,
+          "depth": 512,
+          "lane_events": [
+            408
+          ]
+        },
+        {
+          "N": 2,
+          "feasible": false,
+          "sram_bits": 6480,
+          "depth": 256,
+          "lane_events": [
+            204,
+            204
+          ]
+        },
+        {
+          "N": 3,
+          "feasible": false,
+          "sram_bits": 9040,
+          "depth": 256,
+          "lane_events": [
+            136,
+            136,
+            136
+          ]
+        },
+        {
+          "N": 4,
+          "feasible": false,
+          "sram_bits": 6480,
+          "depth": 128,
+          "lane_events": [
+            102,
+            102,
+            102,
+            102
+          ]
+        },
+        {
+          "N": 5,
+          "feasible": false,
+          "sram_bits": 7760,
+          "depth": 128,
+          "lane_events": [
+            82,
+            82,
+            82,
+            81,
+            81
+          ]
+        },
+        {
+          "N": 6,
+          "feasible": false,
+          "sram_bits": 9040,
+          "depth": 128,
+          "lane_events": [
+            68,
+            68,
+            68,
+            68,
+            68,
+            68
+          ]
+        },
+        {
+          "N": 7,
+          "feasible": false,
+          "sram_bits": 5840,
+          "depth": 64,
+          "lane_events": [
+            59,
+            59,
+            58,
+            58,
+            58,
+            58,
+            58
+          ]
+        },
+        {
+          "N": 8,
+          "feasible": false,
+          "sram_bits": 6480,
+          "depth": 64,
+          "lane_events": [
+            51,
+            51,
+            51,
+            51,
+            51,
+            51,
+            51,
+            51
+          ]
+        },
+        {
+          "N": 9,
+          "feasible": false,
+          "sram_bits": 7120,
+          "depth": 64,
+          "lane_events": [
+            46,
+            46,
+            46,
+            45,
+            45,
+            45,
+            45,
+            45,
+            45
+          ]
+        },
+        {
+          "N": 10,
+          "feasible": false,
+          "sram_bits": 7760,
+          "depth": 64,
+          "lane_events": [
+            41,
+            41,
+            41,
+            41,
+            41,
+            41,
+            41,
+            41,
+            40,
+            40
+          ]
+        },
+        {
+          "N": 11,
+          "feasible": false,
+          "sram_bits": 8400,
+          "depth": 64,
+          "lane_events": [
+            38,
+            37,
+            37,
+            37,
+            37,
+            37,
+            37,
+            37,
+            37,
+            37,
+            37
+          ]
+        },
+        {
+          "N": 12,
+          "feasible": false,
+          "sram_bits": 9040,
+          "depth": 64,
+          "lane_events": [
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34
+          ]
+        },
+        {
+          "N": 13,
+          "feasible": false,
+          "sram_bits": 5520,
+          "depth": 32,
+          "lane_events": [
+            32,
+            32,
+            32,
+            32,
+            32,
+            31,
+            31,
+            31,
+            31,
+            31,
+            31,
+            31,
+            31
+          ]
+        },
+        {
+          "N": 14,
+          "feasible": false,
+          "sram_bits": 5840,
+          "depth": 32,
+          "lane_events": [
+            30,
+            30,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29
+          ]
+        },
+        {
+          "N": 15,
+          "feasible": false,
+          "sram_bits": 6160,
+          "depth": 32,
+          "lane_events": [
+            28,
+            28,
+            28,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27
+          ]
+        },
+        {
+          "N": 16,
+          "feasible": true,
+          "sram_bits": 6480,
+          "depth": 32,
+          "lane_events": [
+            26,
+            26,
+            26,
+            26,
+            26,
+            26,
+            26,
+            26,
+            25,
+            25,
+            25,
+            25,
+            25,
+            25,
+            25,
+            25
+          ]
+        }
+      ],
+      "width_diag": {
+        "native_payload_bits": 3011,
+        "e2_lane_payload_bits": 4080,
+        "lane_width": 10,
+        "n_events": 408,
+        "width_penalty": 1.355
+      },
+      "E2_grouped": {
+        "bits": 4055,
+        "sram_bits": 5360,
+        "classes": [
+          {
+            "slots": [
+              "m1",
+              "m7",
+              "m9",
+              "m10",
+              "m11",
+              "m15",
+              "m18"
+            ],
+            "width": 5,
+            "N": 6,
+            "depth": 32,
+            "lane_events": [
+              25,
+              25,
+              25,
+              25,
+              25,
+              24
+            ]
+          },
+          {
+            "slots": [
+              "m3",
+              "m4",
+              "m14"
+            ],
+            "width": 9,
+            "N": 3,
+            "depth": 32,
+            "lane_events": [
+              30,
+              30,
+              30
+            ]
+          },
+          {
+            "slots": [
+              "m5",
+              "m8",
+              "m19"
+            ],
+            "width": 10,
+            "N": 3,
+            "depth": 32,
+            "lane_events": [
+              24,
+              23,
+              23
+            ]
+          },
+          {
+            "slots": [
+              "m6",
+              "m16"
+            ],
+            "width": 7,
+            "N": 2,
+            "depth": 32,
+            "lane_events": [
+              18,
+              18
+            ]
+          },
+          {
+            "slots": [
+              "m12",
+              "m13",
+              "m17"
+            ],
+            "width": 8,
+            "N": 3,
+            "depth": 32,
+            "lane_events": [
+              21,
+              21,
+              21
+            ]
+          }
+        ],
+        "n_classes": 5,
+        "roundtrip": true,
+        "sram_bits_uniform_depth": 5360
+      },
+      "E2_hybrid_best": {
+        "bits": 4055,
+        "sram_bits": 5360,
+        "threshold": 5,
+        "n_wide": 11,
+        "n_narrow_lanes": 6
+      },
+      "validate": {
+        "e1": true,
+        "e2_nmax": true,
+        "dict_all16": true
+      },
+      "dict": {
+        "all8": {
+          "static_bits": 17712,
+          "words": 123,
+          "n_compressed": 29,
+          "n_uncompressed": 29,
+          "per_word": 2,
+          "cwidth": 54,
+          "frame_words": 79,
+          "dict_hw_bits": 631,
+          "idx_bits": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "all16": {
+          "static_bits": 21744,
+          "words": 151,
+          "n_compressed": 48,
+          "n_uncompressed": 10,
+          "per_word": 1,
+          "cwidth": 72,
+          "frame_words": 93,
+          "dict_hw_bits": 766,
+          "idx_bits": [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "all32": {
+          "static_bits": 21744,
+          "words": 151,
+          "n_compressed": 48,
+          "n_uncompressed": 10,
+          "per_word": 1,
+          "cwidth": 90,
+          "frame_words": 93,
+          "dict_hw_bits": 766,
+          "idx_bits": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ]
+        },
+        "all64": {
+          "static_bits": 21744,
+          "words": 151,
+          "n_compressed": 48,
+          "n_uncompressed": 10,
+          "per_word": 1,
+          "cwidth": 108,
+          "frame_words": 93,
+          "dict_hw_bits": 766,
+          "idx_bits": [
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6
+          ]
+        },
+        "tuned_le64": {
+          "static_bits": 17136,
+          "words": 119,
+          "n_compressed": 48,
+          "n_uncompressed": 10,
+          "per_word": 3,
+          "cwidth": 41,
+          "frame_words": 93,
+          "dict_hw_bits": 766,
+          "idx_bits": [
+            2,
+            3,
+            3,
+            3,
+            2,
+            1,
+            4,
+            1,
+            1,
+            1,
+            3,
+            3,
+            4,
+            1,
+            2,
+            2,
+            1,
+            4
+          ]
+        }
+      },
+      "dynamic": {
+        "cycles": 5234,
+        "E0_fetch_bits": 753696,
+        "E0_refwidth_fetch_bits": 785100,
+        "E1_fetch_bits": 624954,
+        "E2_fetch_bits": 815562,
+        "E2_lane_width": 10,
+        "E2_N": 16,
+        "E2_N4_optimistic_cycles": 20544,
+        "E2_grouped_fetch_bits": 619325,
+        "dict": {
+          "all8": {
+            "fetch_bits": 636336,
+            "dict_read_bits": 288600,
+            "compressed_cycles": 2220
+          },
+          "all16": {
+            "fetch_bits": 767088,
+            "dict_read_bits": 624130,
+            "compressed_cycles": 4801
+          },
+          "all32": {
+            "fetch_bits": 767088,
+            "dict_read_bits": 624130,
+            "compressed_cycles": 4801
+          },
+          "all64": {
+            "fetch_bits": 767088,
+            "dict_read_bits": 624130,
+            "compressed_cycles": 4801
+          },
+          "tuned_le64": {
+            "fetch_bits": 326448,
+            "dict_read_bits": 624130,
+            "compressed_cycles": 4801
+          }
+        }
+      },
+      "per_bb": [
+        {
+          "bb": "BB0",
+          "instrs": "0..8",
+          "n": 9,
+          "execs": 1,
+          "cycles": 9,
+          "mean_k": 2.0,
+          "max_k": 3,
+          "compressible": "1/9"
+        },
+        {
+          "bb": "BB1",
+          "instrs": "9..10",
+          "n": 2,
+          "execs": 5,
+          "cycles": 10,
+          "mean_k": 3.5,
+          "max_k": 4,
+          "compressible": "2/2"
+        },
+        {
+          "bb": "BB2",
+          "instrs": "11..24",
+          "n": 14,
+          "execs": 5,
+          "cycles": 70,
+          "mean_k": 8.79,
+          "max_k": 13,
+          "compressible": "14/14"
+        },
+        {
+          "bb": "BB3",
+          "instrs": "25..36",
+          "n": 12,
+          "execs": 420,
+          "cycles": 5040,
+          "mean_k": 14.17,
+          "max_k": 16,
+          "compressible": "11/12"
+        },
+        {
+          "bb": "BB4",
+          "instrs": "37..50",
+          "n": 14,
+          "execs": 5,
+          "cycles": 70,
+          "mean_k": 6.57,
+          "max_k": 14,
+          "compressible": "14/14"
+        },
+        {
+          "bb": "BB5",
+          "instrs": "51..57",
+          "n": 7,
+          "execs": 5,
+          "cycles": 35,
+          "mean_k": 1.14,
+          "max_k": 3,
+          "compressible": "6/7"
+        }
+      ]
+    },
+    {
+      "name": "fft_limm_opt",
+      "tpef": "testsuite/systemtest_long/procgen/ProGe/data/fft_limm_opt.tpef",
+      "n_instr": 58,
+      "M_move_slots": 18,
+      "has_limm": false,
+      "bem_width": 131,
+      "ref_width": 137,
+      "slot_widths": {
+        "m1": 5,
+        "m3": 9,
+        "m4": 9,
+        "m5": 10,
+        "m6": 7,
+        "m7": 5,
+        "m8": 10,
+        "m9": 5,
+        "m10": 5,
+        "m11": 5,
+        "m12": 8,
+        "m13": 8,
+        "m14": 9,
+        "m15": 5,
+        "m16": 7,
+        "m17": 8,
+        "m18": 5,
+        "m19": 10
+      },
+      "occupancy": {
+        "max_k": 16,
+        "hist": {
+          "0": 4,
+          "1": 9,
+          "2": 2,
+          "3": 6,
+          "4": 5,
+          "6": 2,
+          "7": 4,
+          "9": 6,
+          "10": 3,
+          "11": 1,
+          "13": 9,
+          "14": 3,
+          "15": 1,
+          "16": 3
+        },
+        "mean": 7.034
+      },
+      "E0": {
+        "bits": 7598,
+        "sram_bits": 8384,
+        "depth": 64,
+        "width": 131
+      },
+      "E0_refwidth": {
+        "bits": 7946,
+        "sram_bits": 8768,
+        "depth": 64,
+        "width": 137
+      },
+      "E1": {
+        "bits": 4055,
+        "sram_bits": 5312,
+        "events": [
+          3,
+          30,
+          32,
+          31,
+          29,
+          28,
+          29,
+          28,
+          28,
+          28,
+          28,
+          28,
+          28,
+          28,
+          7,
+          7,
+          6,
+          10
+        ],
+        "depth": 32,
+        "mask_bits": 1044
+      },
+      "E2_N4": {
+        "bits": 5124,
+        "sram_bits": 6272,
+        "lane_events": [
+          102,
+          102,
+          102,
+          102
+        ],
+        "depth": 128,
+        "lane_width": 10,
+        "max_k": 16,
+        "feasible": false,
+        "mask_bits": 1044,
+        "limm_events": 0
+      },
+      "E2_Nmax": {
+        "bits": 5124,
+        "sram_bits": 6272,
+        "lane_events": [
+          26,
+          26,
+          26,
+          26,
+          26,
+          26,
+          26,
+          26,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25
+        ],
+        "depth": 32,
+        "lane_width": 10,
+        "max_k": 16,
+        "feasible": true,
+        "mask_bits": 1044,
+        "limm_events": 0
+      },
+      "E2_sweep": [
+        {
+          "N": 1,
+          "feasible": false,
+          "sram_bits": 6272,
+          "depth": 512,
+          "lane_events": [
+            408
+          ]
+        },
+        {
+          "N": 2,
+          "feasible": false,
+          "sram_bits": 6272,
+          "depth": 256,
+          "lane_events": [
+            204,
+            204
+          ]
+        },
+        {
+          "N": 3,
+          "feasible": false,
+          "sram_bits": 8832,
+          "depth": 256,
+          "lane_events": [
+            136,
+            136,
+            136
+          ]
+        },
+        {
+          "N": 4,
+          "feasible": false,
+          "sram_bits": 6272,
+          "depth": 128,
+          "lane_events": [
+            102,
+            102,
+            102,
+            102
+          ]
+        },
+        {
+          "N": 5,
+          "feasible": false,
+          "sram_bits": 7552,
+          "depth": 128,
+          "lane_events": [
+            82,
+            82,
+            82,
+            81,
+            81
+          ]
+        },
+        {
+          "N": 6,
+          "feasible": false,
+          "sram_bits": 8832,
+          "depth": 128,
+          "lane_events": [
+            68,
+            68,
+            68,
+            68,
+            68,
+            68
+          ]
+        },
+        {
+          "N": 7,
+          "feasible": false,
+          "sram_bits": 5632,
+          "depth": 64,
+          "lane_events": [
+            59,
+            59,
+            58,
+            58,
+            58,
+            58,
+            58
+          ]
+        },
+        {
+          "N": 8,
+          "feasible": false,
+          "sram_bits": 6272,
+          "depth": 64,
+          "lane_events": [
+            51,
+            51,
+            51,
+            51,
+            51,
+            51,
+            51,
+            51
+          ]
+        },
+        {
+          "N": 9,
+          "feasible": false,
+          "sram_bits": 6912,
+          "depth": 64,
+          "lane_events": [
+            46,
+            46,
+            46,
+            45,
+            45,
+            45,
+            45,
+            45,
+            45
+          ]
+        },
+        {
+          "N": 10,
+          "feasible": false,
+          "sram_bits": 7552,
+          "depth": 64,
+          "lane_events": [
+            41,
+            41,
+            41,
+            41,
+            41,
+            41,
+            41,
+            41,
+            40,
+            40
+          ]
+        },
+        {
+          "N": 11,
+          "feasible": false,
+          "sram_bits": 8192,
+          "depth": 64,
+          "lane_events": [
+            38,
+            37,
+            37,
+            37,
+            37,
+            37,
+            37,
+            37,
+            37,
+            37,
+            37
+          ]
+        },
+        {
+          "N": 12,
+          "feasible": false,
+          "sram_bits": 8832,
+          "depth": 64,
+          "lane_events": [
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34
+          ]
+        },
+        {
+          "N": 13,
+          "feasible": false,
+          "sram_bits": 5312,
+          "depth": 32,
+          "lane_events": [
+            32,
+            32,
+            32,
+            32,
+            32,
+            31,
+            31,
+            31,
+            31,
+            31,
+            31,
+            31,
+            31
+          ]
+        },
+        {
+          "N": 14,
+          "feasible": false,
+          "sram_bits": 5632,
+          "depth": 32,
+          "lane_events": [
+            30,
+            30,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29,
+            29
+          ]
+        },
+        {
+          "N": 15,
+          "feasible": false,
+          "sram_bits": 5952,
+          "depth": 32,
+          "lane_events": [
+            28,
+            28,
+            28,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27
+          ]
+        },
+        {
+          "N": 16,
+          "feasible": true,
+          "sram_bits": 6272,
+          "depth": 32,
+          "lane_events": [
+            26,
+            26,
+            26,
+            26,
+            26,
+            26,
+            26,
+            26,
+            25,
+            25,
+            25,
+            25,
+            25,
+            25,
+            25,
+            25
+          ]
+        }
+      ],
+      "width_diag": {
+        "native_payload_bits": 3011,
+        "e2_lane_payload_bits": 4080,
+        "lane_width": 10,
+        "n_events": 408,
+        "width_penalty": 1.355
+      },
+      "E2_grouped": {
+        "bits": 4055,
+        "sram_bits": 5152,
+        "classes": [
+          {
+            "slots": [
+              "m1",
+              "m7",
+              "m9",
+              "m10",
+              "m11",
+              "m15",
+              "m18"
+            ],
+            "width": 5,
+            "N": 6,
+            "depth": 32,
+            "lane_events": [
+              25,
+              25,
+              25,
+              25,
+              25,
+              24
+            ]
+          },
+          {
+            "slots": [
+              "m3",
+              "m4",
+              "m14"
+            ],
+            "width": 9,
+            "N": 3,
+            "depth": 32,
+            "lane_events": [
+              30,
+              30,
+              30
+            ]
+          },
+          {
+            "slots": [
+              "m5",
+              "m8",
+              "m19"
+            ],
+            "width": 10,
+            "N": 3,
+            "depth": 32,
+            "lane_events": [
+              24,
+              23,
+              23
+            ]
+          },
+          {
+            "slots": [
+              "m6",
+              "m16"
+            ],
+            "width": 7,
+            "N": 2,
+            "depth": 32,
+            "lane_events": [
+              18,
+              18
+            ]
+          },
+          {
+            "slots": [
+              "m12",
+              "m13",
+              "m17"
+            ],
+            "width": 8,
+            "N": 3,
+            "depth": 32,
+            "lane_events": [
+              21,
+              21,
+              21
+            ]
+          }
+        ],
+        "n_classes": 5,
+        "roundtrip": true,
+        "sram_bits_uniform_depth": 5152
+      },
+      "E2_hybrid_best": {
+        "bits": 4055,
+        "sram_bits": 5152,
+        "threshold": 5,
+        "n_wide": 11,
+        "n_narrow_lanes": 6
+      },
+      "validate": {
+        "e1": true,
+        "e2_nmax": true,
+        "dict_all16": true
+      },
+      "dict": {
+        "all8": {
+          "static_bits": 15458,
+          "words": 118,
+          "n_compressed": 38,
+          "n_uncompressed": 20,
+          "per_word": 2,
+          "cwidth": 54,
+          "frame_words": 79,
+          "dict_hw_bits": 631,
+          "idx_bits": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "all16": {
+          "static_bits": 19781,
+          "words": 151,
+          "n_compressed": 58,
+          "n_uncompressed": 0,
+          "per_word": 1,
+          "cwidth": 72,
+          "frame_words": 93,
+          "dict_hw_bits": 766,
+          "idx_bits": [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "all32": {
+          "static_bits": 19781,
+          "words": 151,
+          "n_compressed": 58,
+          "n_uncompressed": 0,
+          "per_word": 1,
+          "cwidth": 90,
+          "frame_words": 93,
+          "dict_hw_bits": 766,
+          "idx_bits": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ]
+        },
+        "all64": {
+          "static_bits": 19781,
+          "words": 151,
+          "n_compressed": 58,
+          "n_uncompressed": 0,
+          "per_word": 1,
+          "cwidth": 108,
+          "frame_words": 93,
+          "dict_hw_bits": 766,
+          "idx_bits": [
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6
+          ]
+        },
+        "tuned_le64": {
+          "static_bits": 14803,
+          "words": 113,
+          "n_compressed": 58,
+          "n_uncompressed": 0,
+          "per_word": 3,
+          "cwidth": 41,
+          "frame_words": 93,
+          "dict_hw_bits": 766,
+          "idx_bits": [
+            2,
+            3,
+            3,
+            3,
+            2,
+            1,
+            4,
+            1,
+            1,
+            1,
+            3,
+            3,
+            4,
+            1,
+            2,
+            2,
+            1,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "name": "fft1024_compiler_28bus",
+      "tpef": "testsuite/systemtest/bintools/PIG/data/1kr4ditfft.tce.tpef",
+      "n_instr": 75,
+      "M_move_slots": 28,
+      "has_limm": true,
+      "bem_width": 221,
+      "ref_width": 255,
+      "slot_widths": {
+        "m1": 9,
+        "m2": 8,
+        "m3": 10,
+        "m4": 4,
+        "m5": 4,
+        "m6": 9,
+        "m7": 7,
+        "m8": 7,
+        "m9": 6,
+        "m10": 11,
+        "m11": 6,
+        "m12": 6,
+        "m13": 6,
+        "m14": 5,
+        "m15": 4,
+        "m16": 5,
+        "m17": 5,
+        "m18": 5,
+        "m19": 5,
+        "m20": 5,
+        "m21": 5,
+        "m22": 5,
+        "m23": 6,
+        "m24": 7,
+        "m25": 9,
+        "m26": 4,
+        "m27": 4,
+        "m28": 22,
+        "<limm>": 32
+      },
+      "occupancy": {
+        "max_k": 28,
+        "hist": {
+          "0": 6,
+          "1": 1,
+          "2": 35,
+          "3": 4,
+          "5": 1,
+          "7": 1,
+          "9": 2,
+          "10": 2,
+          "11": 5,
+          "12": 2,
+          "13": 1,
+          "14": 2,
+          "16": 1,
+          "19": 2,
+          "21": 1,
+          "22": 3,
+          "23": 3,
+          "25": 1,
+          "26": 1,
+          "28": 1
+        },
+        "mean": 7.227
+      },
+      "E0": {
+        "bits": 16575,
+        "sram_bits": 28288,
+        "depth": 128,
+        "width": 221
+      },
+      "E0_refwidth": {
+        "bits": 19125,
+        "sram_bits": 32640,
+        "depth": 128,
+        "width": 255
+      },
+      "E1": {
+        "bits": 6922,
+        "sram_bits": 17728,
+        "events": [
+          24,
+          24,
+          23,
+          20,
+          20,
+          21,
+          20,
+          17,
+          21,
+          17,
+          20,
+          15,
+          20,
+          20,
+          20,
+          19,
+          19,
+          19,
+          19,
+          19,
+          19,
+          19,
+          19,
+          6,
+          6,
+          4,
+          4,
+          33,
+          35
+        ],
+        "depth": 64,
+        "mask_bits": 2100
+      },
+      "E2_N4": {
+        "bits": 13254,
+        "sram_bits": 16896,
+        "lane_events": [
+          127,
+          127,
+          127,
+          126
+        ],
+        "depth": 128,
+        "lane_width": 22,
+        "max_k": 27,
+        "feasible": false,
+        "mask_bits": 2100,
+        "limm_events": 35
+      },
+      "E2_Nmax": {
+        "bits": 13254,
+        "sram_bits": 25344,
+        "lane_events": [
+          19,
+          19,
+          19,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18,
+          18
+        ],
+        "depth": 32,
+        "lane_width": 22,
+        "max_k": 27,
+        "feasible": true,
+        "mask_bits": 2100,
+        "limm_events": 35
+      },
+      "E2_sweep": [
+        {
+          "N": 1,
+          "feasible": false,
+          "sram_bits": 16896,
+          "depth": 512,
+          "lane_events": [
+            507
+          ]
+        },
+        {
+          "N": 2,
+          "feasible": false,
+          "sram_bits": 16896,
+          "depth": 256,
+          "lane_events": [
+            254,
+            253
+          ]
+        },
+        {
+          "N": 3,
+          "feasible": false,
+          "sram_bits": 22528,
+          "depth": 256,
+          "lane_events": [
+            169,
+            169,
+            169
+          ]
+        },
+        {
+          "N": 4,
+          "feasible": false,
+          "sram_bits": 16896,
+          "depth": 128,
+          "lane_events": [
+            127,
+            127,
+            127,
+            126
+          ]
+        },
+        {
+          "N": 5,
+          "feasible": false,
+          "sram_bits": 19712,
+          "depth": 128,
+          "lane_events": [
+            102,
+            102,
+            101,
+            101,
+            101
+          ]
+        },
+        {
+          "N": 6,
+          "feasible": false,
+          "sram_bits": 22528,
+          "depth": 128,
+          "lane_events": [
+            85,
+            85,
+            85,
+            84,
+            84,
+            84
+          ]
+        },
+        {
+          "N": 7,
+          "feasible": false,
+          "sram_bits": 25344,
+          "depth": 128,
+          "lane_events": [
+            73,
+            73,
+            73,
+            72,
+            72,
+            72,
+            72
+          ]
+        },
+        {
+          "N": 8,
+          "feasible": false,
+          "sram_bits": 16896,
+          "depth": 64,
+          "lane_events": [
+            64,
+            64,
+            64,
+            63,
+            63,
+            63,
+            63,
+            63
+          ]
+        },
+        {
+          "N": 9,
+          "feasible": false,
+          "sram_bits": 18304,
+          "depth": 64,
+          "lane_events": [
+            57,
+            57,
+            57,
+            56,
+            56,
+            56,
+            56,
+            56,
+            56
+          ]
+        },
+        {
+          "N": 10,
+          "feasible": false,
+          "sram_bits": 19712,
+          "depth": 64,
+          "lane_events": [
+            51,
+            51,
+            51,
+            51,
+            51,
+            51,
+            51,
+            50,
+            50,
+            50
+          ]
+        },
+        {
+          "N": 11,
+          "feasible": false,
+          "sram_bits": 21120,
+          "depth": 64,
+          "lane_events": [
+            47,
+            46,
+            46,
+            46,
+            46,
+            46,
+            46,
+            46,
+            46,
+            46,
+            46
+          ]
+        },
+        {
+          "N": 12,
+          "feasible": false,
+          "sram_bits": 22528,
+          "depth": 64,
+          "lane_events": [
+            43,
+            43,
+            43,
+            42,
+            42,
+            42,
+            42,
+            42,
+            42,
+            42,
+            42,
+            42
+          ]
+        },
+        {
+          "N": 13,
+          "feasible": false,
+          "sram_bits": 23936,
+          "depth": 64,
+          "lane_events": [
+            39,
+            39,
+            39,
+            39,
+            39,
+            39,
+            39,
+            39,
+            39,
+            39,
+            39,
+            39,
+            39
+          ]
+        },
+        {
+          "N": 14,
+          "feasible": false,
+          "sram_bits": 25344,
+          "depth": 64,
+          "lane_events": [
+            37,
+            37,
+            37,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36,
+            36
+          ]
+        },
+        {
+          "N": 15,
+          "feasible": false,
+          "sram_bits": 26752,
+          "depth": 64,
+          "lane_events": [
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            34,
+            33,
+            33,
+            33
+          ]
+        },
+        {
+          "N": 16,
+          "feasible": false,
+          "sram_bits": 16896,
+          "depth": 32,
+          "lane_events": [
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+            32,
+            31,
+            31,
+            31,
+            31,
+            31
+          ]
+        },
+        {
+          "N": 17,
+          "feasible": false,
+          "sram_bits": 17600,
+          "depth": 32,
+          "lane_events": [
+            30,
+            30,
+            30,
+            30,
+            30,
+            30,
+            30,
+            30,
+            30,
+            30,
+            30,
+            30,
+            30,
+            30,
+            29,
+            29,
+            29
+          ]
+        },
+        {
+          "N": 18,
+          "feasible": false,
+          "sram_bits": 18304,
+          "depth": 32,
+          "lane_events": [
+            29,
+            29,
+            29,
+            28,
+            28,
+            28,
+            28,
+            28,
+            28,
+            28,
+            28,
+            28,
+            28,
+            28,
+            28,
+            28,
+            28,
+            28
+          ]
+        },
+        {
+          "N": 19,
+          "feasible": false,
+          "sram_bits": 19008,
+          "depth": 32,
+          "lane_events": [
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            27,
+            26,
+            26,
+            26,
+            26,
+            26,
+            26
+          ]
+        },
+        {
+          "N": 20,
+          "feasible": false,
+          "sram_bits": 19712,
+          "depth": 32,
+          "lane_events": [
+            26,
+            26,
+            26,
+            26,
+            26,
+            26,
+            26,
+            25,
+            25,
+            25,
+            25,
+            25,
+            25,
+            25,
+            25,
+            25,
+            25,
+            25,
+            25,
+            25
+          ]
+        },
+        {
+          "N": 21,
+          "feasible": false,
+          "sram_bits": 20416,
+          "depth": 32,
+          "lane_events": [
+            25,
+            25,
+            25,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24
+          ]
+        },
+        {
+          "N": 22,
+          "feasible": false,
+          "sram_bits": 21120,
+          "depth": 32,
+          "lane_events": [
+            24,
+            23,
+            23,
+            23,
+            23,
+            23,
+            23,
+            23,
+            23,
+            23,
+            23,
+            23,
+            23,
+            23,
+            23,
+            23,
+            23,
+            23,
+            23,
+            23,
+            23,
+            23
+          ]
+        },
+        {
+          "N": 23,
+          "feasible": false,
+          "sram_bits": 21824,
+          "depth": 32,
+          "lane_events": [
+            23,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22,
+            22
+          ]
+        },
+        {
+          "N": 24,
+          "feasible": false,
+          "sram_bits": 22528,
+          "depth": 32,
+          "lane_events": [
+            22,
+            22,
+            22,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21
+          ]
+        },
+        {
+          "N": 25,
+          "feasible": false,
+          "sram_bits": 23232,
+          "depth": 32,
+          "lane_events": [
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            21,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20
+          ]
+        },
+        {
+          "N": 26,
+          "feasible": false,
+          "sram_bits": 23936,
+          "depth": 32,
+          "lane_events": [
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            20,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19
+          ]
+        },
+        {
+          "N": 27,
+          "feasible": true,
+          "sram_bits": 24640,
+          "depth": 32,
+          "lane_events": [
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            19,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18
+          ]
+        },
+        {
+          "N": 28,
+          "feasible": true,
+          "sram_bits": 25344,
+          "depth": 32,
+          "lane_events": [
+            19,
+            19,
+            19,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18,
+            18
+          ]
+        }
+      ],
+      "width_diag": {
+        "native_payload_bits": 3702,
+        "e2_lane_payload_bits": 11154,
+        "lane_width": 22,
+        "n_events": 507,
+        "width_penalty": 3.013
+      },
+      "E2_grouped": {
+        "bits": 5802,
+        "sram_bits": 11728,
+        "classes": [
+          {
+            "slots": [
+              "m1",
+              "m6",
+              "m25"
+            ],
+            "width": 9,
+            "N": 3,
+            "depth": 32,
+            "lane_events": [
+              17,
+              17,
+              17
+            ]
+          },
+          {
+            "slots": [
+              "m2"
+            ],
+            "width": 8,
+            "N": 1,
+            "depth": 32,
+            "lane_events": [
+              24
+            ]
+          },
+          {
+            "slots": [
+              "m3"
+            ],
+            "width": 10,
+            "N": 1,
+            "depth": 32,
+            "lane_events": [
+              23
+            ]
+          },
+          {
+            "slots": [
+              "m4",
+              "m5",
+              "m15",
+              "m26",
+              "m27"
+            ],
+            "width": 4,
+            "N": 5,
+            "depth": 16,
+            "lane_events": [
+              14,
+              14,
+              14,
+              13,
+              13
+            ]
+          },
+          {
+            "slots": [
+              "m7",
+              "m8",
+              "m24"
+            ],
+            "width": 7,
+            "N": 3,
+            "depth": 16,
+            "lane_events": [
+              15,
+              14,
+              14
+            ]
+          },
+          {
+            "slots": [
+              "m9",
+              "m11",
+              "m12",
+              "m13",
+              "m23"
+            ],
+            "width": 6,
+            "N": 5,
+            "depth": 32,
+            "lane_events": [
+              19,
+              19,
+              19,
+              19,
+              19
+            ]
+          },
+          {
+            "slots": [
+              "m10"
+            ],
+            "width": 11,
+            "N": 1,
+            "depth": 32,
+            "lane_events": [
+              17
+            ]
+          },
+          {
+            "slots": [
+              "m14",
+              "m16",
+              "m17",
+              "m18",
+              "m19",
+              "m20",
+              "m21",
+              "m22"
+            ],
+            "width": 5,
+            "N": 8,
+            "depth": 32,
+            "lane_events": [
+              20,
+              19,
+              19,
+              19,
+              19,
+              19,
+              19,
+              19
+            ]
+          },
+          {
+            "slots": [
+              "m28"
+            ],
+            "width": 22,
+            "N": 1,
+            "depth": 64,
+            "lane_events": [
+              33
+            ]
+          }
+        ],
+        "n_classes": 9,
+        "roundtrip": true,
+        "sram_bits_uniform_depth": 17728
+      },
+      "E2_hybrid_best": {
+        "bits": 6407,
+        "sram_bits": 15328,
+        "threshold": 7,
+        "n_wide": 7,
+        "n_narrow_lanes": 21
+      },
+      "validate": {
+        "e1": true,
+        "e2_nmax": true,
+        "dict_all16": true
+      },
+      "dict": {
+        "all8": {
+          "static_bits": 34034,
+          "words": 154,
+          "n_compressed": 37,
+          "n_uncompressed": 38,
+          "per_word": 2,
+          "cwidth": 84,
+          "frame_words": 97,
+          "dict_hw_bits": 785,
+          "idx_bits": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "all16": {
+          "static_bits": 40443,
+          "words": 183,
+          "n_compressed": 40,
+          "n_uncompressed": 35,
+          "per_word": 1,
+          "cwidth": 112,
+          "frame_words": 108,
+          "dict_hw_bits": 988,
+          "idx_bits": [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "all32": {
+          "static_bits": 43537,
+          "words": 197,
+          "n_compressed": 40,
+          "n_uncompressed": 35,
+          "per_word": 1,
+          "cwidth": 140,
+          "frame_words": 122,
+          "dict_hw_bits": 1296,
+          "idx_bits": [
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5
+          ]
+        },
+        "all64": {
+          "static_bits": 43537,
+          "words": 197,
+          "n_compressed": 40,
+          "n_uncompressed": 35,
+          "per_word": 1,
+          "cwidth": 168,
+          "frame_words": 122,
+          "dict_hw_bits": 1296,
+          "idx_bits": [
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6,
+            6
+          ]
+        },
+        "tuned_le64": {
+          "static_bits": 36907,
+          "words": 167,
+          "n_compressed": 40,
+          "n_uncompressed": 35,
+          "per_word": 4,
+          "cwidth": 51,
+          "frame_words": 122,
+          "dict_hw_bits": 1296,
+          "idx_bits": [
+            3,
+            3,
+            3,
+            1,
+            1,
+            4,
+            2,
+            2,
+            2,
+            2,
+            1,
+            3,
+            3,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            2,
+            2,
+            1,
+            1,
+            5
+          ]
+        }
+      }
+    }
+  ],
+  "occupancy_only": [
+    {
+      "name": "tremor_vorbis",
+      "tpef": "test/base/tpef/TPEFReaderTest/data/tremor.tpef",
+      "n_instr": 134622,
+      "M_slots": 10,
+      "occupancy": {
+        "max_k": 1,
+        "hist": {
+          "0": 28019,
+          "1": 106603
+        },
+        "mean": 0.792
+      },
+      "total_events": 106603,
+      "distinct_values_per_slot": {
+        "1": 1365,
+        "2": 711,
+        "3": 37,
+        "4": 2980,
+        "5": 270,
+        "6": 85,
+        "7": 35,
+        "8": 16,
+        "9": 8,
+        "10": 14
+      }
+    },
+    {
+      "name": "address_clipping",
+      "tpef": "testsuite/systemtest/codesign/ttasim/data/address_clipping.tpef",
+      "n_instr": 20721,
+      "M_slots": 4,
+      "occupancy": {
+        "max_k": 4,
+        "hist": {
+          "0": 4708,
+          "1": 6345,
+          "2": 3615,
+          "3": 5004,
+          "4": 1049
+        },
+        "mean": 1.582
+      },
+      "total_events": 32783,
+      "distinct_values_per_slot": {
+        "1": 977,
+        "2": 587,
+        "3": 577,
+        "4": 547
+      }
+    },
+    {
+      "name": "sequential_program",
+      "tpef": "Python-bindings/scripts/sequential_program.scheduled.tpef",
+      "n_instr": 3736,
+      "M_slots": 10,
+      "occupancy": {
+        "max_k": 7,
+        "hist": {
+          "0": 858,
+          "1": 1029,
+          "2": 880,
+          "3": 674,
+          "4": 194,
+          "5": 91,
+          "6": 8,
+          "7": 2
+        },
+        "mean": 1.634
+      },
+      "total_events": 6104,
+      "distinct_values_per_slot": {
+        "1": 254,
+        "2": 233,
+        "3": 227,
+        "4": 386,
+        "5": 295,
+        "6": 318,
+        "7": 272,
+        "8": 271,
+        "9": 225,
+        "10": 234
+      }
+    },
+    {
+      "name": "fft1024_18bus",
+      "tpef": "testsuite/systemtest/codesign/ttasim/data/1024pointFFT.tpef",
+      "n_instr": 72,
+      "M_slots": 18,
+      "occupancy": {
+        "max_k": 16,
+        "hist": {
+          "0": 3,
+          "1": 12,
+          "2": 7,
+          "3": 10,
+          "4": 7,
+          "6": 2,
+          "7": 4,
+          "8": 1,
+          "9": 6,
+          "10": 3,
+          "11": 1,
+          "13": 9,
+          "14": 3,
+          "15": 1,
+          "16": 3
+        },
+        "mean": 6.236
+      },
+      "total_events": 449,
+      "distinct_values_per_slot": {
+        "1": 3,
+        "2": 14,
+        "3": 8,
+        "4": 7,
+        "5": 3,
+        "6": 2,
+        "7": 14,
+        "8": 2,
+        "9": 1,
+        "10": 1,
+        "11": 7,
+        "12": 4,
+        "13": 12,
+        "14": 1,
+        "15": 2,
+        "16": 2,
+        "17": 2,
+        "18": 10
+      }
+    },
+    {
+      "name": "func_ptr",
+      "tpef": "testsuite/systemtest/bintools/PIG/data/func_ptr.tpef",
+      "n_instr": 760,
+      "M_slots": 1,
+      "occupancy": {
+        "max_k": 1,
+        "hist": {
+          "0": 85,
+          "1": 675
+        },
+        "mean": 0.888
+      },
+      "total_events": 675,
+      "distinct_values_per_slot": {
+        "1": 254
+      }
+    }
+  ]
+}

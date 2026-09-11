@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>Linux 后续实验计划：等槽宽 TTA 目标机器 + CHStone/Embench 的 E0/E1/E2/E6 对比</title>
+<style>
+body { font-family: -apple-system, "PingFang SC", sans-serif; max-width: 1100px; margin: 2em auto; padding: 0 1em; line-height: 1.6; color: #222; }
+h1, h2, h3 { color: #123; }
+table { border-collapse: collapse; margin: 1em 0; font-size: 0.92em; }
+th, td { border: 1px solid #bbb; padding: 4px 8px; text-align: left; vertical-align: top; }
+th { background: #eef2f7; }
+code { background: #f4f4f4; padding: 1px 4px; border-radius: 3px; }
+.box { background: #f7f9fc; border-left: 4px solid #36c; padding: 0.8em 1em; margin: 1em 0; }
+.risk { background: #fdf8f0; border-left: 4px solid #a06000; padding: 0.8em 1em; margin: 1em 0; }
+.neg { background: #fdf3f3; border-left: 4px solid #b00020; padding: 0.8em 1em; margin: 1em 0; }
+ol li, ul li { margin: 0.3em 0; }
+</style>
+</head>
+<body>
+
+<h1>Linux 后续实验计划：等槽宽 TTA 目标机器 + CHStone/Embench 的 E0/E1/E2/E6 对比</h1>
+<p>日期：2026-09-11 ｜ 前置实验：<code>openasip_public_tta_trace_e0e1e2_dict_experiment_2026-09-11</code>（已在本机用公开预编译 trace 完成机制验证）｜ 本计划需在 <b>Linux</b> 上执行（构建 OpenASIP 工具链）</p>
+
+<h2>0. 已确认的决策（2026-09-11 与用户确认）</h2>
+<table>
+<tr><th>决策点</th><th>结论</th></tr>
+<tr><td>目标机器形态</td><td><b>对称等宽 5 槽 TTA</b>，规模仿 Multanen（5 个 move 槽做成等宽；FU/RF/互连足够编译 CHStone/Embench）。CHStone 与 Embench <b>共用同一台机器</b>（可行，Multanen 即如此）。</td></tr>
+<tr><td>E6（Multanen 字典）复现深度</td><td><b>机制级复现于自造等宽机器</b>：每槽可编程字典 + 定长 bundle + frame 装载 + 选择性压缩。明确标注"独立复现、非原作者平台"（其确切 ADF/编译器/trace/压缩器未公开）。</td></tr>
+<tr><td>benchmark 范围</td><td><b>Multanen 同款</b>：CHStone 7（Adpcm, Aes, Blowfish, GSM, Mips, Motion, SHA）+ Embench 7（Tarjan, Qrduino, Primecount, Matmult-int, Huffbench, Edn, crc32）。</td></tr>
+<tr><td>E2 lane 数 N</td><td>按方案本意<b>每程序自适应 N = max_k</b>（最大并发）；另报固定 N 对照。</td></tr>
+<tr><td>CACTI 口径</td><td>CACTI 7.0，HP 32 nm，1 GHz，1R/W（沿用仓库既有口径）。</td></tr>
+</table>
+
+<h2>1. 实验目标</h2>
+<ol>
+<li>构造一台<b>各数据槽等宽</b>的对称 5 槽 TTA 目标机器（解决上一实验发现的"位宽异构惩罚"问题）。</li>
+<li>用 tcecc 把 CHStone 7 + Embench 7 编译到该机器，ttasim 产出逐周期动态 trace。</li>
+<li>对<b>每个 benchmark</b> 和 <b>两个套件程序池</b>（CHStone 池、Embench 池，全部常驻）统计 <b>E0 / E1 / E2 / E6</b> 的压缩率，<b>显式计入 config 开销与字典开销</b>。</li>
+<li>基于 CACTI 做面积与功耗估算。</li>
+<li>定位：这是论文的<b>跨平台稳健性 + baseline 对比</b>层，主平台仍是 FRV。</li>
+</ol>
+
+<h2>2. 环境搭建（Linux，一次性）</h2>
+<ol>
+<li><b>OpenASIP 工具链</b>：按官方 README（Ubuntu 24.04）：<code>sudo apt-get install libwxgtk3.2-dev libboost-all-dev tcl8.6-dev libedit-dev libsqlite3-dev sqlite3 libxerces-c-dev g++ make autoconf automake libtool git cmake graphviz ...</code>；再用 <code>openasip/tools/scripts/install_llvm_*.sh</code> 构建其 patched LLVM；最后构建 OpenASIP 本体（得到 <code>tcecc</code>、<code>ttasim</code>、<code>generatebits</code>(PIG)、<code>BEMGenerator</code>、<code>ProgrammabilityValidator</code>）。</li>
+<li><b>CACTI 7.0</b>：HP 32 nm、1 GHz、按 cycle time 优化（沿用仓库口径）。</li>
+<li><b>分析脚本复用</b>：本机已写好的 <code>experiments/openasip_tta_trace_compression_2026_09_11.py</code>（TPEF/BEM 解析器 + E0/E1/E2/E6 + bit-exact 自检）可直接复用，只需把新生成的 TPEF/BEM/trace 喂进去。</li>
+</ol>
+
+<h2>3. 目标机器设计：对称等宽 5 槽 TTA</h2>
+<h3>3.1 结构</h3>
+<ul>
+<li><b>5 条对称数据 move 总线</b>（等宽条带化的对象）+ <b>1 条控制总线</b>（GCU，跳转/调用，单独处理不进条带）+ <b>1 个长立即数槽</b>（limm，独立于 move 槽，如 fft_limm 的处理方式）。</li>
+<li><b>FU</b>：2× 整数 ALU（add/sub/逻辑/比较）、1× 乘法器、1× LSU（ld/st）、1× GCU。<b>RF</b>：1× 32×32-bit 整数 RF（或 2 个对称 RF）+ 1× boolean RF（谓词）。操作集要覆盖 CHStone/Embench 的整数运算需求（无浮点/64-bit，与 Multanen 的剔除口径一致）。</li>
+<li><b>互连对称</b>：5 条数据总线以<b>完全相同的方式</b>连接源/目的 socket（同样的 FU 输出口、RF 读口作源；同样的 FU 输入口、RF 写口作目的），且 guard 集合一致——这是"等宽"的唯一来源。</li>
+</ul>
+<h3>3.2 等宽的验证与迭代</h3>
+<div class="risk"><b>关键风险：等宽、可编译、宽度合理三者互相牵制。</b>完全对称的全连接会让槽过宽；连接太少则编译器无法调度。迭代流程：
+<ol>
+<li>手写对称 ADF（5 数据总线 + 控制 + limm）；</li>
+<li><code>BEMGenerator</code> 生成 BEM → <b>检查 5 个数据槽位宽是否相等</b>（不等则调连接/socket 数）；</li>
+<li><code>ProgrammabilityValidator</code> 校验可调度性；</li>
+<li>试编译最小的 CHStone（如 sha）→ 能出 TPEF 且功能正确（ttasim 对参考输出）再固化。</li>
+</ol>
+目标槽宽参考 Multanen（5 槽共 64-bit ⇒ 约 12-bit/槽），但<b>以"等宽"为硬约束、宽度数值为软目标</b>。</div>
+
+<h2>4. benchmark 编译与 trace 生成</h2>
+<ol>
+<li><b>编译</b>：<code>tcecc -O2/-O3 -a machine.adf -o out.tpef bench.c</code>，对 CHStone 7 + Embench 7 各产出一个 TPEF。</li>
+<li><b>动态 trace</b>：<code>ttasim</code> 开 bus trace，得到逐周期、逐总线的执行序列（动态 CR 与 E2 峰值检查都依赖它）。同时生成参考输出做功能校验。</li>
+<li><b>程序池</b>：CHStone 池 = 7 个 benchmark 的镜像拼接常驻；Embench 池同理（对应仓库"程序池"口径）。</li>
+<li><b>占用统计先行</b>：先算每个程序的逐周期 max_k 与 mean_k——<b>这决定 E2 在各程序上的 N 和是否有收益空间</b>（见 §7 风险）。</li>
+</ol>
+
+<h2>5. 四种方案与开销口径（同一台机器、同一批程序）</h2>
+<table>
+<tr><th>方案</th><th>存储组织</th><th>config 开销</th><th>字典/其它开销</th></tr>
+<tr><td><b>E0</b> 不压缩</td><td>整宽字 × 指令数</td><td>无</td><td>无</td></tr>
+<tr><td><b>E1</b> 纵向</td><td>每槽专属 bank（等宽槽 ⇒ 各 bank 同宽），统一深度</td><td>每拍 M-bit 有效 mask</td><td>—</td></tr>
+<tr><td><b>E2</b> 条带化</td><td>N 条等宽 lane（N=max_k），phase 滚动条带</td><td>每拍 M-bit mask + phase/程序 descriptor</td><td>—</td></tr>
+<tr><td><b>E6</b> Multanen 字典</td><td>每槽可编程字典 + 定长 bundle 装入原宽字</td><td>bundle 控制位 + 压缩/未压缩标记</td><td><b>frame 装载（header + 每字典项一整宽字）+ 字典存储 + 每拍字典读</b></td></tr>
+</table>
+<p>所有方案做 <b>bit-exact 编码→逐拍恢复</b>自检（沿用已验证脚本）。</p>
+
+<h2>6. 统计指标</h2>
+<ul>
+<li><b>静态 CR</b>：程序镜像 bit（含 E6 的 frame 装载字、E1/E2 的 mask/config），相对 E0。</li>
+<li><b>动态 CR</b>：动态取指 bit（E6 含字典读与 frame 摊销），相对 E0。对热点循环加权。</li>
+<li><b>运行开销</b>：E6 的 frame 装载周期占总周期比例（对照 Multanen 的 0.13%）。</li>
+<li><b>E2 接纳性</b>：每程序 max_k 与 N=max_k 的可行性（周期不变）。</li>
+<li><b>CACTI 面积/功耗</b>：各方案的 SRAM 组织（E0 主存、E1 槽 bank、E2 lane、E6 主存+字典）分别建模面积、读能耗、漏电。字典用小 SRAM 宏作代理，并标注"原文用 latch-RF，CACTI 为代理"的口径差异。</li>
+</ul>
+
+<h2>7. 风险与缓解</h2>
+<div class="neg"><b>风险 1（最重要）：等宽 ≠ 稀疏。</b>5 槽机器上编译器会尽量填满 5 条总线，CHStone 可能 max_k≈5（稠密），使 E2 的 N=5=M 无收益。<b>缓解</b>：① §4 先测 max_k 再下结论；② E2 收益按程序如实报（稀疏的赢、稠密的平）；③ 论文里 E2 的主证据仍是 FRV（NN 负载天然稀疏），本平台是稳健性/baseline 层，不背 E2 的主结论。</div>
+<div class="risk"><b>风险 2：E6 是机制级复现。</b>无法拿到 Multanen 确切平台，数字不会等于其 0.71/0.69。<b>缓解</b>：明确标注"独立复现"；如需精确对比，另行联系作者索取 artifact（可作为并行支线）。</div>
+<div class="risk"><b>风险 3：对称机器可编译性。</b>见 §3.2 的迭代流程；若 5 槽对称机编译失败，退一档加连接/加 RF，或放宽到"近似等宽"（各槽宽差 ≤1 bit）并记录。</div>
+<div class="risk"><b>风险 4：CACTI 只建模 SRAM。</b>不含解压组合逻辑/时钟树/字典 latch-RF 的真实功耗；面积功耗数字只作方向性对比，不作最终芯片结论。</div>
+
+<h2>8. 交付物</h2>
+<ul>
+<li>对称等宽 5 槽 TTA 的 <code>machine.adf</code> + <code>machine.bem</code>（含等宽验证记录）；</li>
+<li>CHStone 7 + Embench 7 的 TPEF + ttasim 动态 trace + 参考输出校验；</li>
+<li>E0/E1/E2/E6 ×（每 benchmark + 两套件池）的静态/动态 CR、config/字典开销、运行开销、CACTI 面积功耗；</li>
+<li>机器可读 JSON + 报告（沿用本仓库 plan 格式）；全部方案 bit-exact 自检通过。</li>
+</ul>
+
+<h2>9. 执行顺序与检查点</h2>
+<ol>
+<li><b>CP1 环境</b>：OpenASIP + CACTI 跑通，hello.tpef 能编译能模拟。</li>
+<li><b>CP2 机器</b>：对称 ADF → BEM 等宽验证 → sha 试编译+功能正确。</li>
+<li><b>CP3 trace</b>：14 个 benchmark 全部编译+模拟+功能校验；先出 max_k/mean_k 占用表（<b>在此评估 E2 收益空间，决定是否调整机器或预期</b>）。</li>
+<li><b>CP4 四方案</b>：E0/E1/E2/E6 全部跑通 + bit-exact 自检。</li>
+<li><b>CP5 统计+CACTI</b>：出完整对比表与面积功耗。</li>
+<li><b>CP6 报告</b>：写成 plan/报告，标注机制级复现与各项口径。</li>
+</ol>
+
+<div class="box"><b>与本机前置实验的关系：</b>本机已用 OpenASIP 公开预编译 trace（fft_simm 等）验证了 E0/E1/E2/E6 的分析脚本与自检框架（含与 GHDL RTL trace 的逐周期对齐）。本计划把它升级为"自造等宽机器 + Multanen 同款 benchmark + 动态 trace + CACTI"的完整实验，脚本可直接复用。</div>
+
+</body>
+</html>

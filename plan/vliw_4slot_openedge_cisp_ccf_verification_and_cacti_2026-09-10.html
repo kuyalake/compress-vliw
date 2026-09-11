@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>4-slot 条带化压缩：OpenEdgeCGRA、CISP 与 CCF 的进一步查证和 CACTI 实验</title>
+<style>
+  :root{--ink:#172033;--muted:#5d687c;--line:#dce3ee;--blue:#2356a8;--pale:#f5f8fc;--good:#0b775e;--warn:#9a5a00;--bad:#a12c36;--violet:#6741a5}
+  *{box-sizing:border-box} body{margin:0;background:#eef2f7;color:var(--ink);font:15px/1.72 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  main{max-width:1180px;margin:28px auto;background:white;padding:42px 50px 60px;box-shadow:0 8px 34px #20304b18;border-radius:14px}
+  h1{font-size:30px;line-height:1.28;margin:0 0 8px} h2{margin:42px 0 13px;padding-bottom:8px;border-bottom:2px solid #e8edf5;font-size:23px} h3{font-size:18px;margin:28px 0 8px}
+  p{margin:8px 0 13px}.meta,.small,.note{color:var(--muted);font-size:13px}.lead{font-size:17px;line-height:1.8}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin:18px 0}.card,.box{border:1px solid var(--line);border-radius:10px;padding:15px 17px;background:var(--pale)}
+  .card b{display:block;font-size:20px;margin:3px 0}.good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}.violet{color:var(--violet)}
+  .goodbox{border-left:5px solid var(--good);background:#f0faf7}.warnbox{border-left:5px solid #dc8b18;background:#fff8ec}.badbox{border-left:5px solid var(--bad);background:#fff3f4}.bluebox{border-left:5px solid var(--blue);background:#f2f6fd}
+  table{width:100%;border-collapse:collapse;margin:12px 0 5px;font-size:13px} th,td{border:1px solid var(--line);padding:8px 9px;vertical-align:top} th{background:#edf3fb;text-align:left;position:sticky;top:0} td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  code{background:#eef2f7;padding:1px 4px;border-radius:4px} a{color:var(--blue);text-decoration:none} a:hover{text-decoration:underline}
+  ul,ol{padding-left:24px} li{margin:5px 0}.toc{columns:2;padding-left:22px}.tag{display:inline-block;padding:1px 7px;border-radius:10px;font-size:12px;background:#e7edf7;margin-right:4px}.formula{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#f6f7f9;padding:10px 13px;border-radius:7px;overflow:auto}
+  @media(max-width:800px){main{margin:0;padding:24px 17px;border-radius:0}.grid{grid-template-columns:1fr}.toc{columns:1}table{font-size:12px}}
+</style>
+</head>
+<body><main>
+<h1>4-slot 条带化压缩：OpenEdgeCGRA、CISP 与 CCF 的进一步查证和实验</h1>
+<div class="meta">日期：2026-09-10 ｜ CACTI 7.0 / HP 32 nm / 1 GHz 读活动口径 ｜ 所有新方案均做逐周期、逐槽软件往返恢复</div>
+
+<p class="lead"><strong>先说结论：</strong>这次查证改变了旧报告的两项判断。第一，OpenEdgeCGRA 的确没有实现指令压缩；保留 <em>N=4</em> 后不会改变原调度周期，但 E2 是否节省 SRAM，完全取决于程序池是否跨越 2 的幂深度边界。7 个应用 kernel 池中它不省容量；12 个公开映射的压力池中，只有给每个程序增加 2-bit 条带初始相位，E2 才能把总 SRAM 从 65,536 bit 降到 34,816 bit。第二，CCF 旧实验只看了 11-cycle 的 <code>.sch</code>，漏掉最终二进制中的配置和预装载指令；完整 39-cycle <code>*_ins.bin</code> 有一拍 16 槽全开，纯 4-lane E2 <strong>不能</strong>保持周期不变。仓库另外三组映射也普遍有 10–12 槽并发。因此 CCF 不应再被写成 E2 的普遍正向平台。</p>
+
+<div class="grid">
+  <div class="card"><span>OpenEdge 7 应用池</span><b class="bad">E2：+3.1% bit</b><small>128 深原始 SRAM 已刚好覆盖</small></div>
+  <div class="card"><span>OpenEdge 12 映射压力池</span><b class="good">phase-seeded E2：−46.9%</b><small>需新增每程序 2-bit 初始 phase</small></div>
+  <div class="card"><span>CCF 完整可执行流</span><b class="bad">纯 E2：不接纳</b><small>39 拍中有一拍 16 槽全开</small></div>
+</div>
+
+<div class="box warnbox"><strong>对论文定位的直接建议：</strong>OpenEdge 可以保留为“同样是四个等宽槽，但只有跨 SRAM 深度档位才出现容量收益”的边界实验；CCF 应改为“为什么只看平均稀疏度或 mapper schedule 会误判”的反例。若论文需要第二个正向平台，仍应寻找完整可执行 trace 中 <code>max_t k[t]≤4</code>、而不是仅在某个简化 schedule 中成立的平台。</div>
+
+<h2>目录</h2>
+<ol class="toc">
+  <li><a href="#terms">比较的五种方法是什么</a></li><li><a href="#method">实验和 CACTI 口径</a></li>
+  <li><a href="#openedge-evidence">OpenEdge：是否已有压缩</a></li><li><a href="#openedge-exp">OpenEdge：N=4 实验</a></li>
+  <li><a href="#cisp">CISP / Candidate A 可获取性</a></li><li><a href="#ccf-evidence">CCF：是否已有压缩</a></li>
+  <li><a href="#ccf-cycle">CCF：4 槽是否影响周期</a></li><li><a href="#ccf-exp">CCF：存储与 CACTI</a></li>
+  <li><a href="#limits">不能越过的证据边界</a></li><li><a href="#paper">论文应怎样使用这些结果</a></li>
+</ol>
+
+<h2 id="terms">1. 先把比较方法用人话讲清楚</h2>
+<table>
+<thead><tr><th>报告中的名字</th><th>到底怎样存</th><th>恢复一拍完整指令时做什么</th><th>本次是否完整复现</th></tr></thead>
+<tbody>
+<tr><td><strong>不压缩</strong></td><td>逻辑上有 M 个槽，就放 M 个等宽、等深 SRAM bank；每个地址保存一整拍。</td><td>所有 bank 用相同地址并行读，直接拼成完整控制字。</td><td>是。</td></tr>
+<tr><td><strong>纵向压缩 / 强 Candidate A</strong></td><td>删除各槽中的 NOP；每个逻辑槽仍有自己的专属 bank。为了保持程序可替换性，M 个 bank 统一按最长槽流定深。</td><td>每拍先读 M-bit 有效掩码；有效槽的专属指针加一，无效槽输出 NOP。这里还给 baseline 加了 bank clock-enable，已经比论文原图中“无效时读地址 0”更有利。</td><td>是；逐槽往返通过。</td></tr>
+<tr><td><strong>E2：N-lane 条带化</strong></td><td>仍只保存有效槽，但逻辑槽不再绑定物理 bank。每拍有效槽按 slot 序号排序，第 r 个事件放入 <code>(phase+r) mod N</code> lane，phase 再增加本拍有效数。</td><td>mask 给出目标 slot；phase 和 rank 算出源 lane，再散布回 M 个输出。若任一拍有效槽数大于 N，纯 E2 就无法在一拍恢复。</td><td>是；phase=0 的当前 RTL 语义与增加初始 phase 的扩展语义分别测试。</td></tr>
+<tr><td><strong>固定分区 temporal-hold</strong></td><td>每个槽只在“本拍值与上一拍不同”时存新值；没变化就不读 bank，让输出寄存器保持上一值。</td><td>读 M-bit change mask；有变化的槽更新，无变化的槽保持。</td><td>是，但只是 Lee 等 2018 方法的<strong>固定 M 分区、无重新调度子集</strong>；其专有编译器的 ASAP-ALAN 与实体分组没有复现。</td></tr>
+<tr><td><strong>静态整-bundle 字典</strong></td><td>相同的完整宽指令只存一次；每拍只存一个字典索引。字典在物理上拆成 M 个并读的 W-bit bank。</td><td>先读索引，再读字典；流水后可做到每拍一个，但通常比 E2 多一级查表依赖。</td><td>是；这是经典字典基线，不冒充 2024 可编程多字典论文的完整算法。</td></tr>
+<tr><td><strong>不同值多播（辅助实验）</strong></td><td>同一拍若多个 slot 的完整 W-bit 字完全相同，只存一次；每条 lane 另带 M-bit 目的位图。</td><td>一个 lane 的值可同时发给多个 slot。它来自 CGRA broadcast/multicast 这一已有思路，但与 E2 结合后的具体编码是本报告的辅助模型。</td><td>软件恢复是；不是原始 E2，也不是 RoMultiC 的逐项 RTL 复刻。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>“怎样存”描述 SRAM 内的内容；“恢复”描述每周期取指端动作；“完整复现”用于防止把论文中无法获得的编译器或 RTL 误写成已经复现。</p>
+
+<h2 id="method">2. 实验口径：为什么同时给“信息量”和“SRAM 总 bit”</h2>
+<p>一个 trace 理论上可能只需 77 行，但真实 SRAM 通常选 64、128、256、512 等深度。论文的创新恰恰与这种取整有关，因此每个方案同时计算两类数：</p>
+<div class="formula">未取整信息量 = 真正保存的 payload bit + 每拍 metadata bit<br>SRAM 总 bit = Σ（每个独立 SRAM 的宽度 × 向上取 2 的幂后的深度 × 实例数）</div>
+<ul>
+  <li><strong>CACTI：</strong>CACTI 7.0、HP 32 nm、1R/W port、按 cycle time 优化。全部返回的最大 cycle time 为 0.130 ns 以下，因此在这个模型中都满足 1 GHz。</li>
+  <li><strong>小宏限制：</strong>CACTI 不接受小于 64 Byte 的阵列；遇到这种情况，只把 CACTI 的物理建模深度翻倍到合法值。表中的“SRAM 总 bit”仍是架构请求值，面积/功耗采用 CACTI 实际建模值。机器可读 JSON 同时保存两者。</li>
+  <li><strong>动态功耗：</strong>以 1 GHz、顺序读完池内所有指令一次的平均每拍读次数估算。原始和字典每拍读全部 payload bank；Candidate A/E2/hold 假设无事件 bank 可关读使能，这是给压缩方案的较理想口径。</li>
+  <li><strong>未计入：</strong>解码组合逻辑、指针/phase 寄存器、跨 lane 到 slot 的长连线、程序 descriptor、OpenEdge 的 PE 私有程序存储。故 CACTI 数字只能比较 SRAM，不是最终芯片面积或总功耗。</li>
+</ul>
+<div class="box bluebox"><strong>特别注意 OpenEdge：</strong>压缩的是 2 KiB context SRAM，即 CPU 预先写入、kernel 启动时再拷贝到 PE 私有程序存储的那一级。它不是每个计算周期都读的 PE 私有程序存储。因此这里的“一拍恢复”首先保证 kernel 装载仍可每拍写入一行 PE 指令；计算阶段的周期序列保持不变。</div>
+
+<h2 id="openedge-evidence">3. OpenEdgeCGRA：原工作和后续工作是否已经压缩</h2>
+<h3>3.1 可确认的硬件事实</h3>
+<ul>
+  <li>原论文的默认实例是 4×4 RC；每个 RC 指令 32 bit、私有程序存储 32 words；共享 context memory 为 2 KiB。</li>
+  <li>公开 RTL 的 <code>context_memory.sv</code> 明确实例化 <strong>4 个 row SRAM</strong>，每个 32-bit、相同深度；kernel 装载时四 bank 同址并行读。</li>
+  <li>2 KiB 与 RTL 对应为 <code>4 × 128 × 32 = 16,384 bit</code>。多个 kernel 和其多个 column 在这四个 row bank 的地址空间内连续占用；所以本次把每个 kernel 的所有 column 先连起来，再把多个 kernel 合为程序池。</li>
+</ul>
+<h3>3.2 是否已经有指令压缩</h3>
+<div class="box goodbox"><strong>结论：没有发现。</strong>原论文只描述普通 context SRAM、kernel descriptor 与向 RC 私有程序存储的拷贝；公开仓库在固定 commit <code>4a179fcf6faee18765f66baa0a30af91e3840728</code> 中检索 <code>compress/compression</code>，也没有压缩器、压缩格式或解压 RTL。kernel ID 避免重复重装同一 kernel 是“缓存/复用”，不是减少已存指令 bit 的压缩。</div>
+<p>我还检索了明确使用 OpenEdgeCGRA 的后续公开工作，包括 2024 年卷积映射、2025 年功耗/时序快速评估框架、HEEPsilon 与 Compigra。找到的是映射、循环调度、性能和功耗分析，没有找到“已经把 OpenEdge context/program instruction 做压缩”的公开实现或实验。因此，当前最严谨的表述是：<strong>截至 2026-09-10，未找到针对 OpenEdgeCGRA 本身的已公开指令压缩工作</strong>；这不是对所有未公开项目的绝对不存在证明。</p>
+
+<h2 id="openedge-exp">4. OpenEdgeCGRA：保留 N=4 后的真实结果</h2>
+<h3>4.1 为什么 N=4 严格不增加调度周期</h3>
+<p>这里每拍的逻辑槽本来就是四个 row 指令，即 M=4；E2 也保留 N=4 条 payload lane。因此任意原始周期最多只有四个有效槽，必有 <code>k[t]≤4</code>。实验对 12 个公开映射的 348 个地址逐拍检查，最大值确为 4，软件编码后又逐拍、逐 row 恢复原 token。这个结论不依赖平均利用率，也没有重新调度，所以<strong>装载地址数和计算调度均不变</strong>。</p>
+
+<h3>4.2 主口径：7 个应用 kernel 同时常驻</h3>
+<p>包含 <code>dbl_max</code>、<code>dbl_min</code>、<code>fft_bitrev</code>、<code>fft_cplx</code>、<code>fft_cplx_forever</code>、<code>max_peak</code>、<code>min_max_circular</code>；合计 118 个 context 地址、293 个有效 row 字，平均 2.483/4，24 拍四槽全开。118 行能直接放进原平台的 128 深 bank。</p>
+<table>
+<thead><tr><th>方案</th><th class="num">未取整信息量<br>(bit)</th><th class="num">SRAM 总 bit</th><th class="num">vs 不压缩</th><th class="num">CACTI SRAM 面积<br>(mm²)</th><th class="num">1 GHz SRAM<br>总功耗 (mW)</th><th>解释</th></tr></thead>
+<tbody>
+<tr><td>不压缩</td><td class="num">15,104</td><td class="num">16,384</td><td class="num">基准</td><td class="num">0.004324</td><td class="num">2.293</td><td>4×(32×128)，就是原 2 KiB context memory。</td></tr>
+<tr><td>纵向压缩 / 强 A</td><td class="num">9,848</td><td class="num">16,896</td><td class="num bad">+3.1%</td><td class="num">0.004650</td><td class="num">1.809</td><td>事件 77/76/65/75；最长 77 仍需 128 深，另加 4×128 mask。</td></tr>
+<tr><td>E2，phase 固定从 0 开始</td><td class="num">9,848</td><td class="num">16,896</td><td class="num bad">+3.1%</td><td class="num">0.004650</td><td class="num">1.809</td><td>lane 77/75/71/70；仍是 128 深。</td></tr>
+<tr><td>E2，每程序 2-bit 初始 phase</td><td class="num">9,848</td><td class="num">16,896</td><td class="num bad">+3.1%</td><td class="num">0.004650</td><td class="num">1.809</td><td>73/73/74/73，更平衡，但仍未跨过 64 深边界。</td></tr>
+<tr><td>固定分区 temporal-hold</td><td class="num">12,440</td><td class="num">16,896</td><td class="num bad">+3.1%</td><td class="num">0.004650</td><td class="num">2.124</td><td>变化事件更多，且仍需 128 深。</td></tr>
+<tr><td>静态整-bundle 字典</td><td class="num">11,322</td><td class="num">17,280</td><td class="num bad">+5.5%</td><td class="num">0.004651</td><td class="num">2.497</td><td>118 拍中有 82 种完整 bundle；字典仍需 128 深并增加索引。</td></tr>
+<tr><td>不同值多播，N=4</td><td class="num">10,240</td><td class="num">18,432</td><td class="num bad">+12.5%</td><td class="num">0.004918</td><td class="num">1.861</td><td>目的位图从 4-bit mask 扩成每拍 16 bit，短池中得不偿失。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>“未取整信息量”用于看编码本身是否删除冗余；“SRAM 总 bit”包含各 bank 取 2 次幂深度和 mask/index SRAM，是论文应优先报告的容量；面积和功耗只包含 CACTI SRAM。“总功耗”是 CACTI 漏电加 1 GHz 平均动态读功耗，不含解码逻辑。</p>
+<div class="box badbox"><strong>主口径结论：</strong>这个池中普通不压缩已经占满一个很合适的 128 深档位。虽然 Candidate A/E2 把实际信息量减少约 35%，它们没有把 payload 降到 64 深，反而多一个 mask SRAM。因此不能用这 7 个应用池声称 E2 节省 OpenEdge 的 SRAM 面积。</div>
+
+<h3>4.3 压力口径：仓库全部 12 个公开映射同时放入</h3>
+<p>此口径再加入 <code>check_size</code>、<code>func_test</code> 和三个 while-loop 利用率测试，共 348 地址、1,020 个有效 row 字。它超过原 128 深物理 context memory，所以代表“把平台扩到可同时放下全部公开映射”的设计实验，不是原芯片现成容量；且 203/348 拍四槽全开，明显受测试程序支配。</p>
+<table>
+<thead><tr><th>方案</th><th class="num">未取整信息量<br>(bit)</th><th class="num">SRAM 总 bit</th><th class="num">vs 不压缩</th><th class="num">CACTI SRAM 面积<br>(mm²)</th><th class="num">1 GHz SRAM<br>总功耗 (mW)</th><th>关键原因</th></tr></thead>
+<tbody>
+<tr><td>不压缩</td><td class="num">44,544</td><td class="num">65,536</td><td class="num">基准</td><td class="num">0.016638</td><td class="num">7.648</td><td>348 行向上取 512：4×(32×512)。</td></tr>
+<tr><td>纵向压缩 / 强 A</td><td class="num">34,032</td><td class="num">67,584</td><td class="num bad">+3.1%</td><td class="num">0.017693</td><td class="num">6.616</td><td>slot 事件 266/255/244/255；最长 266 把四 bank 都推到 512 深。</td></tr>
+<tr><td>当前 E2：每程序 phase=0</td><td class="num">34,032</td><td class="num">67,584</td><td class="num bad">+3.1%</td><td class="num">0.017693</td><td class="num">6.616</td><td>lane 262/256/252/250；262 仍超过 256。</td></tr>
+<tr><td><strong>E2 + 每程序 2-bit 初始 phase</strong></td><td class="num">34,032</td><td class="num"><strong>34,816</strong></td><td class="num good"><strong>−46.9%</strong></td><td class="num"><strong>0.011017</strong></td><td class="num"><strong>5.006</strong></td><td>选择各程序条带起点后精确为 255/255/255/255，达到总事件数÷4的理论下界。</td></tr>
+<tr><td>固定分区 temporal-hold</td><td class="num">38,704</td><td class="num">67,584</td><td class="num bad">+3.1%</td><td class="num">0.017693</td><td class="num">7.223</td><td>需要存从有效值变回 NOP 的变化，最长仍超过 256。</td></tr>
+<tr><td><strong>静态整-bundle 字典</strong></td><td class="num">17,028</td><td class="num"><strong>19,968</strong></td><td class="num good"><strong>−69.5%</strong></td><td class="num"><strong>0.005441</strong></td><td class="num"><strong>2.926</strong></td><td>只有 114 种唯一完整 bundle；但重复性主要来自功能/while 测试，外推风险很大。</td></tr>
+<tr><td>不同值多播，N=4</td><td class="num">21,504</td><td class="num">40,960</td><td class="num good">−37.5%</td><td class="num">0.012371</td><td class="num">4.039</td><td>同拍相同字合并有效，但每拍需 16-bit 目的位图。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>与上一表相同；本表的“vs 不压缩”只在这个扩容后的 12-mapping 常驻池内比较。不能把它替换成原 OpenEdge 2 KiB 芯片后继续声称同一物理容量。</p>
+
+<h3>4.4 新发现：2-bit 初始 phase 为什么重要</h3>
+<p>当前 <code>exp2_adaptive_4slot_top.v</code> 在每次 <code>start</code> 时把 <code>phase_q</code> 清零。小程序很多时，每个程序的第一个有效事件总偏向 lane 0，多个程序累加后可能把 lane 0 推过 256，而其它 lane 还有空位。改进方式不是按 workload 定制 SRAM，而是在通用程序 descriptor 中加一个 2-bit <code>initial_phase</code>；编译器把每个程序的起点在 0/1/2/3 中旋转，硬件启动时把 phase 初始化为该值。四条物理 lane 的深度仍完全相同，程序仍可替换。</p>
+<div class="box goodbox"><strong>这是真正值得从 OpenEdge 实验中提炼的点：</strong>“条带化”要在程序池边界也保持全局均衡，不能只保证单程序内部差不超过 1。2-bit phase seed 使 12 个程序的 lane 从 262/256/252/250 变成 255/255/255/255，且软件证明达到容量下界。不过它对 7 应用池仍无面积收益，所以只能作为 E2 的健壮性修正，不能单独构成论文创新。</div>
+
+<h2 id="cisp">5. CISP / Candidate A：平台和 trace 是否真的拿不到</h2>
+<p>本地全文已经完整阅读，不是根据摘要猜测。论文明确给出：CISP 是 512-bit、五个并行 FU 的研究原型；六个应用为 Reed-Solomon、H.264、Ygx2、Susan、LUCAS、MPEG2；纵向压缩删除 NOP、用 <code>ifnull[h][w]</code> 标记有效槽、每槽独立 bank/FPCR/BAR，并在 65 nm 下用 Design Compiler 综合。</p>
+<table>
+<thead><tr><th>想获得的材料</th><th>论文中有什么</th><th>公开入口查证结果</th><th>能否直接复现实验</th></tr></thead>
+<tbody>
+<tr><td>论文全文</td><td>IEEE Access 8 (2020), DOI 10.1109/ACCESS.2020.2985501，CC BY 4.0。</td><td>本地 <code>paper/</code> 已有完整 PDF。</td><td class="good">能阅读方法与表格。</td></tr>
+<tr><td>CISP RTL / ISA 完整定义</td><td>只有结构示意、512-bit 总宽、五 FU 和字段示例。</td><td>正文没有 repository、artifact、supplementary 或下载链接；以标题、DOI、作者、CISP 中英文关键词检索 GitHub/Gitee/机构页面，未发现对应代码。</td><td class="bad">不能。</td></tr>
+<tr><td>mapper / 编译器</td><td>只说六应用 mapped to CISP。</td><td>没有工具名、版本、命令、seed 或映射文件。</td><td class="bad">不能。</td></tr>
+<tr><td>逐周期 VLIW / NOP trace</td><td>Figure 2 给每字段 NOP 比例，Table 3 给六应用最终压缩率。</td><td>没有逐拍指令、每槽事件数、kernel 长度或二进制附件。</td><td class="bad">不能重算 E2。</td></tr>
+<tr><td>硬件结果</td><td>Table 5 给 65 nm 下 address unit、instruction memory 与系统汇总。</td><td>无综合网表、约束、SRAM macro 型号或 DC script。</td><td class="warn">只能引用，不能同工具复现。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>第二列只陈述论文正文；第三列记录公开材料检索；“不能”表示无法从公开材料直接重新生成论文的逐周期数据，并不等于作者手中不存在。</p>
+<div class="box warnbox"><strong>准确结论：</strong>截至 2026-09-10，无法从公开入口直接取得 CISP 的 RTL、mapper 或六应用逐周期 trace；能取得的是完整论文及汇总统计。因此 CISP 可以继续作为 Candidate A 的方法学 baseline，但不能作为本论文新增 E2 实验平台。若必须做同 trace 对比，下一步只能联系论文通信作者 Gongli Li（论文列出的邮箱 <code>ligl522@163.com</code>）索取匿名化 VLIW trace、每槽宽度和 kernel 边界。</div>
+
+<h2 id="ccf-evidence">6. CCF 4×4 CGRA：原工作和其它工作是否已经压缩</h2>
+<h3>6.1 原 CCF 做了什么</h3>
+<p>CCF 是 LLVM mapper + instruction generator + gem5 simulator。公开仓库 commit <code>866785044bd915e4c1d5dce3d601fbe3886bd4e8</code> 中，当前源码定义 4×4 PE 和 64-bit PE 指令；generator 把 prolog、kernel、epilog 逐 PE 写成 <code>unsigned long</code> 数组和 <code>*_ins.bin</code>。代码中没有压缩格式、压缩器或解压器，二进制中保留显式 NOOP 值 <code>0x0000000177e00000</code>。</p>
+<div class="box goodbox"><strong>结论：CCF 本身没有做指令压缩。</strong>它把 modulo kernel 只存一次并循环执行，这是 loop-buffer/控制流复用，不是压缩；prolog/kernel/epilog 分段也不是删除冗余编码。</div>
+<h3>6.2 是否已有论文“对 CCF 做过压缩”</h3>
+<p>检索 CCF 全名、ASU MPSLab、CCF + instruction/context compression，没有发现把 Candidate A、Lee、字典或多播压缩实际接入 CCF 仓库并发布 trace/RTL 的工作。确实存在很多<strong>其它 CGRA</strong>的上下文压缩：例如 Lee 等在 Samsung SRP 上做时间保持与静态分区，Sargolzaei 等在自建 CGRA/CGRAmulator 上做 don't-care unification，Park/Choi 在 FloRA 上做 half/full 模式；但它们不能被写成“CCF 已经做过”。</p>
+
+<h2 id="ccf-cycle">7. CCF：设置最大 4 槽到底会不会影响周期</h2>
+<h3>7.1 旧的 11-cycle 数字为什么不完整</h3>
+<p>旧脚本只读取 <code>simple_loop_1/CGRAExec/L1/{prolog,kernel,epilog}.sch</code>，得到 6+3+2=11 个 mapper 周期、21 个映射节点，峰值 3。对<strong>这三份 schedule 文件本身</strong>，N=4 当然可以不改周期。</p>
+<p>但是 instruction generator 还会加入配置边界、live-in 预装载和 live-out 等指令。真正写给模拟器的三个 <code>*_ins.bin</code> 是 33+3+3=39 拍、67 个非 NOP；第一拍 16 个 PE 全部有效，其中包含两种不同的 64-bit 配置字。纯 E2 一条 lane 一拍只能供给一个 slot，四 lane 无法在一拍恢复 16 个 slot。</p>
+<table>
+<thead><tr><th>检查对象</th><th class="num">周期</th><th class="num">有效字</th><th class="num">峰值有效槽</th><th class="num">超过 4 槽的拍数</th><th class="num">仅按槽数拆拍的最少额外周期</th><th>判断</th></tr></thead>
+<tbody>
+<tr><td>simple_loop_1 的 <code>.sch</code></td><td class="num">11</td><td class="num">21</td><td class="num">3</td><td class="num">0</td><td class="num">0</td><td class="good">仅 mapper 片段零损失。</td></tr>
+<tr><td>simple_loop_1 的最终 <code>*_ins.bin</code></td><td class="num">39</td><td class="num">67</td><td class="num">16</td><td class="num">1</td><td class="num">3（+7.7%）</td><td class="bad">纯 E2 不可逐拍恢复。</td></tr>
+<tr><td>FalconCrimson / nested_if <code>.sch</code></td><td class="num">15</td><td class="num">105</td><td class="num">12</td><td class="num">10</td><td class="num">17（+113.3%）</td><td class="bad">明显不适合 N=4。</td></tr>
+<tr><td>FalconCrimson / node_29_if <code>.sch</code></td><td class="num">15</td><td class="num">90</td><td class="num">10</td><td class="num">10</td><td class="num">13（+86.7%）</td><td class="bad">明显不适合 N=4。</td></tr>
+<tr><td>FalconCrimson / simple_loop <code>.sch</code></td><td class="num">15</td><td class="num">95</td><td class="num">11</td><td class="num">11</td><td class="num">15（+100%）</td><td class="bad">明显不适合 N=4。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>“峰值有效槽”是某一原始周期同时非 NOP 的 PE 数；“最少额外周期”只算把 k 个事件分成 <code>ceil(k/4)</code> 组，尚未检查数据依赖、路由、分支与访存冲突，所以只是乐观下界，真实重调度不会更好。三个 Falcon mapper 目录在 FalconIMS、GraphMinor 下有字节相同的副本，本表只计一次，避免伪造样本量。</p>
+<div class="box badbox"><strong>回答用户问题：</strong>“设置最大 4 槽不会影响周期”只对旧脚本选中的 11-cycle mapper 片段成立；对完整 CCF 指令流和其它公开 schedule 不成立。旧 HTML 把这个 toy 结果上升为 CCF 正向候选，证据不足，应撤回。</div>
+
+<h2 id="ccf-exp">8. CCF：不压缩、纵向、E2 与已有思路的存储/CACTI</h2>
+<h3>8.1 仅复现旧 11-cycle mapper 片段</h3>
+<table>
+<thead><tr><th>方案</th><th class="num">未取整信息量<br>(bit)</th><th class="num">SRAM 总 bit</th><th class="num">vs 不压缩</th><th class="num">CACTI SRAM 面积<br>(mm²)</th><th class="num">1 GHz SRAM<br>总功耗 (mW)</th><th>证据等级</th></tr></thead>
+<tbody>
+<tr><td>不压缩</td><td class="num">11,264</td><td class="num">16,384</td><td class="num">基准</td><td class="num">0.013874</td><td class="num">12.214</td><td>16×(64×16)。</td></tr>
+<tr><td>纵向压缩 / 强 A</td><td class="num">1,520</td><td class="num">16,640</td><td class="num bad">+1.6%</td><td class="num">0.014066</td><td class="num">2.470</td><td>最长 PE 9 项→16 深，16 个等深 bank 仍未减少。</td></tr>
+<tr><td>E2，N=4</td><td class="num">1,520</td><td class="num"><strong>2,304</strong></td><td class="num good"><strong>−85.9%</strong></td><td class="num"><strong>0.003661</strong></td><td class="num"><strong>1.768</strong></td><td>lane 6/5/5/5→8 深；逐拍 occupancy 恢复通过。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>这是为了复核旧报告而保留的表，不是最终 CCF 结果。<code>.sch</code> 只有 node/PE 占用，没有最终 64-bit payload，所以只能比较 NOP 删除类容量；不能在此表伪造字典、相同值多播或 temporal-hold 的真实数。</p>
+
+<h3>8.2 真正的 39-cycle emitted binary</h3>
+<table>
+<thead><tr><th>方案</th><th class="num">未取整信息量<br>(bit)</th><th class="num">SRAM 总 bit</th><th class="num">vs 不压缩</th><th class="num">CACTI SRAM 面积<br>(mm²)</th><th class="num">1 GHz SRAM<br>总功耗 (mW)</th><th>能否原周期恢复</th></tr></thead>
+<tbody>
+<tr><td>不压缩</td><td class="num">39,936</td><td class="num">65,536</td><td class="num">基准</td><td class="num">0.020470</td><td class="num">13.898</td><td class="good">能。</td></tr>
+<tr><td>纵向压缩 / 强 A</td><td class="num">4,912</td><td class="num">33,792</td><td class="num good">−48.4%</td><td class="num">0.014200</td><td class="num">2.370</td><td class="good">能；16 个专属 bank。</td></tr>
+<tr><td><strong>纯 E2，N=4</strong></td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="bad"><strong>不能；存在 16 槽同拍。</strong></td></tr>
+<tr><td>固定分区 temporal-hold</td><td class="num">6,512</td><td class="num">33,792</td><td class="num good">−48.4%</td><td class="num">0.014200</td><td class="num">2.822</td><td class="good">能；但宏档位与 A 相同。</td></tr>
+<tr><td>静态整-bundle 字典</td><td class="num">22,723</td><td class="num">33,088</td><td class="num good">−49.5%</td><td class="num">0.014068</td><td class="num">12.355</td><td class="good">能；22 个唯一 bundle，读能量仍高。</td></tr>
+<tr><td><strong>4 value-lane + 同值多播</strong></td><td class="num">5,888</td><td class="num"><strong>8,192</strong></td><td class="num good"><strong>−87.5%</strong></td><td class="num"><strong>0.004748</strong></td><td class="num"><strong>2.060</strong></td><td class="good">软件能；每拍最多 3 种不同有效字，首拍 16 槽只有 2 种值。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>“未取整信息量”不含三个文件头；“SRAM 总 bit”假设一个可替换的本地指令存储并将各独立 bank 深度取 2 的幂。CCF 公开项目主要是编译/模拟框架，没有给这一级物理 SRAM RTL，因此面积和功耗是<strong>假设实现的 CACTI 筛选</strong>，不是 CCF 原论文硅后数据。</p>
+
+<h3>8.3 多播结果能否救 CCF 成为 E2 平台</h3>
+<p>它能救 <code>simple_loop_1</code> 的完整 binary，是因为首拍虽然 16 槽有效，却只有两个不同值：两个值各配一个 16-bit 目的位图即可发给全部 PE。整条 39-cycle trace 每拍最多只有三种不同有效字，所以四条 value lane 足够。</p>
+<div class="box warnbox"><strong>但这不能写成“E2 在 CCF 上零损失”。</strong>它把接纳条件从“每拍有效槽数≤4”改成“每拍不同有效字数≤4”，metadata 从每拍一个 16-bit slot mask 增到四个 16-bit destination bitmap（64 bit），散布器还要支持一对多广播。它属于“E2 条带存储 + 已有 CGRA multicast 原理”的新混合候选。更重要的是，另外三组 CCF schedule 中只有 node ID、没有最终机器字，无法证明那些 10–12 槽同拍也只有≤4种值。故目前只能作为值得扩展 trace 的观察，不能把 CCF 恢复为论文正向平台。</div>
+
+<h2 id="limits">9. 已有方法比较的证据边界</h2>
+<table>
+<thead><tr><th>已有工作</th><th>其原始贡献</th><th>本次如何比较</th><th>仍缺什么</th></tr></thead>
+<tbody>
+<tr><td>Li et al., IEEE Access 2020（Candidate A）</td><td>按逻辑字段纵向删 NOP，slot-private bank + ifnull + FPCR/BAR，一周期吞吐。</td><td>实现更强的等深、无效 bank 可关读版本，并 bit-exact 恢复。</td><td>CISP 原 trace/RTL 不公开。</td></tr>
+<tr><td>Lee et al., ACM TACO 2018</td><td>对 SRP 的 383 个配置实体静态分区，编译器用 ASAP-ALAN 集中变化，删除连续重复行并由各分区独立 PC/offset 恢复。</td><td>只实现固定“每 slot 一分区”的 store-on-change/hold 子集；这是可复现下界，不是论文 63% 平均结果复刻。</td><td>SRP 私有编译器、247 loops 和实体级配置 trace。</td></tr>
+<tr><td>Sargolzaei &amp; Mohammadi 2018 CUC</td><td>按 opcode 识别 don't-care bit，改写无关位以制造连续重复配置，再做地址翻译/行级 power gating。</td><td>只作理论研判，没有给伪数字。</td><td>需要为 OpenEdge/CCF 逐 opcode 定义形式化 don't-care mask；CCF 的 token-based 前提也不同。</td></tr>
+<tr><td>Multanen et al. 2024 programmable dictionaries</td><td>面向 TTA/VLIW 的多并行可编程字典、bundle-aware 选择和运行时字典 frame。</td><td>完整论文已读；数值表只放最简单的静态整-bundle 字典，避免假装复现其控制指令与多字典搜索。</td><td>若要严肃 baseline，需把公开/作者代码接入目标 ISA，计字典编程开销。</td></tr>
+<tr><td>MorphoSys / RoMultiC / FloRA 类 broadcast</td><td>相同配置在行/列/选定 PE 间广播或多播，减少重复配置。</td><td>实现“每个不同 W-bit 值 + M-bit 目的位图”的透明软件模型，验证 CCF 首拍。</td><td><strong>RoMultiC 与 Park/Choi 原文不在本地 paper/，本次未取得完整正文</strong>，所以不能声称逐字段复现。若论文要把多播列为正式 baseline，请上传这两篇全文。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>“原始贡献”只总结论文自己的平台；“本次如何比较”说明本报告真正写了什么；最后一列是把辅助模型升级为论文 baseline 前必须补齐的材料。</p>
+
+<h2 id="paper">10. 对第四篇论文方向的重新判断</h2>
+<h3>10.1 仍然成立的核心命题</h3>
+<p>可以保留一个一般性问题，但必须把必要条件写完整：</p>
+<div class="formula">给定 M 个等宽逻辑槽、N 个等宽物理 payload lane：<br>若完整可执行 trace 的每拍有效槽数 k[t]≤N，E2 可不改调度地逐拍恢复；<br>是否节省 SRAM，还要求条带化后的最大 lane 长度跨过比 Candidate A 更低的宏深度档位。</div>
+<p>这比“平均每拍只用 2–3 槽，所以共享 bank 一定更省”严格得多。OpenEdge 7 应用池说明满足峰值条件也未必省宏；CCF 说明 mapper 片段满足峰值条件也不代表最终 executable 满足。</p>
+
+<h3>10.2 OpenEdge 和 CCF 在论文中的合适角色</h3>
+<table>
+<thead><tr><th>平台</th><th>现在的证据</th><th>建议在论文中的角色</th><th>不应再说什么</th></tr></thead>
+<tbody>
+<tr><td>第三篇 174-bit VLIW</td><td>完整调度、软件 bit-exact、E2 RTL、SRAM/综合/功耗。</td><td><strong>唯一主平台</strong>，承载创新和硬件结论。</td><td>—</td></tr>
+<tr><td>OpenEdgeCGRA</td><td>真实公开 mapping、真实 RTL 存储组织；N=M=4 无周期风险。主池无容量收益，压力池需 2-bit phase seed 才有收益。</td><td>宏档位与池边界的<strong>混合/边界案例</strong>；验证方法适用性，不作为平均收益主证据。</td><td>不能只报压力池 −46.9% 而隐去 7 应用池 +3.1%；也不能忽略字典在压力池更好。</td></tr>
+<tr><td>CCF 4×4</td><td>完整 binary 推翻零损失；其它 schedules 更密。</td><td><strong>负向反例</strong>：展示必须分析 final executable，而非只看 mapper schedule。</td><td>不能再称“跨架构正向候选”或“最大 4 槽普遍不影响 CCF 周期”。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>“角色”是写论文时如何使用证据；最后一列列出会被审稿人抓住的过度结论。</p>
+
+<h3>10.3 两个可能继续挖掘、但尚不能升级为主创新的点</h3>
+<ol>
+  <li><strong>程序描述符初始 phase：</strong>只增加 <code>ceil(log2 N)</code> bit/程序，使“单程序内均衡”扩展为“常驻程序池全局均衡”。下一步应在 E2 RTL 加 <code>phase_init</code>，综合确认 2-bit mux/寄存器开销近乎可忽略，并在三个神经网络程序池上重算是否改变任何 lane 深度档位。</li>
+  <li><strong>相同 payload 多播：</strong>对 CCF 的 16-PE 配置拍很有效，但需要 N×M 目的位图和一对多网络。只有取得 15–30 个完整 <code>*_ins.bin</code> 后，比较“有效槽数”和“不同值数”的尾部分布，再决定它是通用扩展还是被一拍初始化指令偶然触发。</li>
+</ol>
+
+<h3>10.4 下一步最小可执行计划</h3>
+<ol>
+  <li>先把本次 CCF 纠错同步进旧的跨平台结论：所有平台必须同时报告 mapper schedule 和最终 executable trace；不存在最终 trace 的平台只能标“待确认”。</li>
+  <li>给 E2 descriptor/RTL 增加 2-bit <code>phase_init</code>，对现有三个模型池、OpenEdge 7/12 池做同一套 bit-exact + 1 GHz 综合。若三个主模型池不跨新档位，把它作为健壮性实现细节，不包装成创新点。</li>
+  <li>若继续 CCF：完整安装工具链，至少生成 15 个 MiBench/Rodinia/Parboil loop 的最终 <code>*_ins.bin</code>；同时统计 <code>max active slots</code> 与 <code>max distinct active words</code>。在此之前不做 4→16 scatter RTL。</li>
+  <li>正式加入多播 baseline 前，请补充上传 <em>RoMultiC</em> 与 Park/Choi <em>An approach to code compression for CGRA</em> 全文；否则正文只能称“受已有 broadcast/multicast 家族启发的辅助模型”。</li>
+  <li>CISP 只保留论文汇总基线，同时发邮件索取 trace；拿不到时明确写 artifact unavailable，不从 Figure 2 的 NOP 百分比合成假 trace。</li>
+</ol>
+
+<h2>11. 可复现文件与一手来源</h2>
+<table>
+<thead><tr><th>文件 / 来源</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td><code>experiments/cross_platform_openedge_ccf_cacti_followup_2026_09_10.py</code></td><td>新脚本；读取固定外部 commit、编码/恢复五类方法、统计 SRAM bit、调用 CACTI。没有修改外部仓库。</td></tr>
+<tr><td><code>analysis_output_cross_platform_followup_2026-09-10/cross_platform_openedge_ccf_cacti_followup.json</code></td><td>完整机器可读数据：每程序占用直方图、event/lane 数、phase seed、宏形状、CACTI 单宏与汇总结果。</td></tr>
+<tr><td><a href="https://github.com/esl-epfl/OpenEdgeCGRA">OpenEdgeCGRA 官方仓库</a>；<a href="https://doi.org/10.1145/3587135.3591437">CF 2023 原论文</a></td><td>RTL、公开映射、真实存储组织。</td></tr>
+<tr><td><a href="https://github.com/MPSLab-ASU/ccf">CCF 官方仓库</a>；<a href="https://mpslab-asu.github.io/publications/papers/Dave2018DATEDEMO.pdf">CCF 原论文</a></td><td>mapper schedule、最终 binary、64-bit ISA、generator。</td></tr>
+<tr><td><a href="https://doi.org/10.1109/ACCESS.2020.2985501">Li et al. 2020</a>；本地 <code>paper/An_Efficient_and_Fast_VLIW_Compression_Scheme_for_Stream_Processor.pdf</code></td><td>Candidate A 的纵向压缩定义、六应用汇总和 65 nm 结果。</td></tr>
+<tr><td><a href="https://doi.org/10.1145/3162018">Lee et al. 2018</a>；本地 <code>paper/Improving Energy Efficiency ... Modulo Schedule Compression:Decompression.pdf</code></td><td>temporal hold、分区配置存储、编译器联合优化与 CACTI 方法。</td></tr>
+<tr><td><a href="https://doi.org/10.1016/j.micpro.2018.06.010">Sargolzaei &amp; Mohammadi 2018</a></td><td>don't-care configuration unification/compression；本次只做理论边界判断。</td></tr>
+<tr><td><a href="https://doi.org/10.1007/s10617-024-09290-2">Multanen et al. 2024</a></td><td>可编程并行字典；本地已有完整 PDF。</td></tr>
+</tbody></table>
+<p class="note"><strong>表头说明：</strong>第一列给本地 artifact 或公开一手入口；第二列说明本报告从它取得哪类证据。外部仓库仅本地读取，未提交、未 push。</p>
+
+<div class="box bluebox"><strong>最终判断：</strong>OpenEdge 证明了 E2 的存储池化机制在 M=N=4 时可以零周期运行，但没有证明它普遍优于不压缩、纵向或字典；CCF 则证明“只看一个稀疏 schedule”会得出错误的跨平台结论。现阶段论文最稳妥的叙事不是“E2 已在多个 CGRA 上都更好”，而是“提出严格的可接纳条件和宏档位判据，以主平台完成硬件证明，再用 OpenEdge/CCF 给出成功边界与失败反例”。这会比保留一个经不起 final trace 检查的漂亮跨平台数字更可信。</div>
+
+</main></body></html>
