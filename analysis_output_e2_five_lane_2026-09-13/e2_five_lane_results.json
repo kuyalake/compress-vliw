@@ -1,0 +1,258 @@
+{
+  "pools": {
+    "BERT": {
+      "n_programs": 4,
+      "config_entries": 7663,
+      "payload_total": 7122,
+      "lane_totals": [
+        1426,
+        1425,
+        1425,
+        1424,
+        1422
+      ],
+      "longest_lane": 1426,
+      "programs": [
+        {
+          "prog": "softmax(y=512)",
+          "cfg_base": 0,
+          "prog_len": 969,
+          "lane_bases": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "prog": "layernorm(y=768)",
+          "cfg_base": 968,
+          "prog_len": 1450,
+          "lane_bases": [
+            218,
+            218,
+            218,
+            217,
+            217
+          ]
+        },
+        {
+          "prog": "bias_gelu(y=3072)",
+          "cfg_base": 2417,
+          "prog_len": 4456,
+          "lane_bases": [
+            693,
+            693,
+            693,
+            692,
+            691
+          ]
+        },
+        {
+          "prog": "tanh(y=768)",
+          "cfg_base": 6872,
+          "prog_len": 792,
+          "lane_bases": [
+            1310,
+            1310,
+            1310,
+            1309,
+            1307
+          ]
+        }
+      ]
+    },
+    "SD-UNet": {
+      "n_programs": 5,
+      "config_entries": 11679,
+      "payload_total": 13520,
+      "lane_totals": [
+        2705,
+        2704,
+        2704,
+        2704,
+        2703
+      ],
+      "longest_lane": 2705,
+      "programs": [
+        {
+          "prog": "groupnorm(y=1280)",
+          "cfg_base": 0,
+          "prog_len": 2457,
+          "lane_bases": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "prog": "silu(y=1280)",
+          "cfg_base": 2456,
+          "prog_len": 1767,
+          "lane_bases": [
+            758,
+            757,
+            757,
+            757,
+            757
+          ]
+        },
+        {
+          "prog": "layernorm(y=768)",
+          "cfg_base": 4222,
+          "prog_len": 1450,
+          "lane_bases": [
+            1014,
+            1013,
+            1013,
+            1013,
+            1013
+          ]
+        },
+        {
+          "prog": "softmax(y=1024)",
+          "cfg_base": 5671,
+          "prog_len": 1877,
+          "lane_bases": [
+            1489,
+            1488,
+            1488,
+            1488,
+            1487
+          ]
+        },
+        {
+          "prog": "geglu(y=3072)",
+          "cfg_base": 7547,
+          "prog_len": 4133,
+          "lane_bases": [
+            1937,
+            1936,
+            1936,
+            1936,
+            1935
+          ]
+        }
+      ]
+    },
+    "LLaMA": {
+      "n_programs": 3,
+      "config_entries": 30701,
+      "payload_total": 33104,
+      "lane_totals": [
+        6622,
+        6622,
+        6620,
+        6620,
+        6620
+      ],
+      "longest_lane": 6622,
+      "programs": [
+        {
+          "prog": "rmsnorm(y=4096)",
+          "cfg_base": 0,
+          "prog_len": 5327,
+          "lane_bases": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "prog": "softmax(y=4096)",
+          "cfg_base": 5326,
+          "prog_len": 7135,
+          "lane_bases": [
+            1488,
+            1488,
+            1488,
+            1488,
+            1488
+          ]
+        },
+        {
+          "prog": "swiglu(y=11008)",
+          "cfg_base": 12460,
+          "prog_len": 18242,
+          "lane_bases": [
+            3319,
+            3319,
+            3318,
+            3318,
+            3318
+          ]
+        }
+      ]
+    }
+  },
+  "capacity": {
+    "E0": {
+      "bits": 5603328,
+      "desc": "1 x 32768 x 171"
+    },
+    "E1-uniform": {
+      "bits": 2949120,
+      "desc": "1 x 32768 x 5 + 5 x 16384 x 34"
+    },
+    "E2-5": {
+      "bits": 1556480,
+      "desc": "1 x 32768 x 5 + 5 x 8192 x 34"
+    }
+  },
+  "plan_check": {
+    "BERT": {
+      "match": true,
+      "got": {
+        "config": 7663,
+        "payload": 7122,
+        "longest_lane": 1426
+      },
+      "want": {
+        "nprog": 4,
+        "config": 7663,
+        "payload": 7122,
+        "longest_lane": 1426
+      }
+    },
+    "SD-UNet": {
+      "match": true,
+      "got": {
+        "config": 11679,
+        "payload": 13520,
+        "longest_lane": 2705
+      },
+      "want": {
+        "nprog": 5,
+        "config": 11679,
+        "payload": 13520,
+        "longest_lane": 2705
+      }
+    },
+    "LLaMA": {
+      "match": true,
+      "got": {
+        "config": 30701,
+        "payload": 33104,
+        "longest_lane": 6622
+      },
+      "want": {
+        "nprog": 3,
+        "config": 30701,
+        "payload": 33104,
+        "longest_lane": 6622
+      }
+    }
+  },
+  "capacity_meta": {
+    "cfg_depth": 32768,
+    "e0_depth": 32768,
+    "e1_bank_depth": 16384,
+    "e2_lane_depth": 8192,
+    "max_cycles": 30704
+  }
+}
