@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>可获取指令 trace 的公开 VLIW 平台调研（指令压缩用）</title>
+<style>
+body { font-family: -apple-system, "PingFang SC", sans-serif; max-width: 1150px; margin: 2em auto; padding: 0 1em; line-height: 1.6; color: #222; }
+h1, h2, h3 { color: #123; }
+table { border-collapse: collapse; margin: 1em 0; font-size: 0.88em; }
+th, td { border: 1px solid #bbb; padding: 4px 8px; text-align: left; vertical-align: top; }
+th { background: #eef2f7; }
+.good { color: #0a7a0a; font-weight: bold; }
+.warn { color: #a06000; font-weight: bold; }
+.bad { color: #b00020; font-weight: bold; }
+code { background: #f4f4f4; padding: 1px 4px; border-radius: 3px; }
+.box { background: #f7f9fc; border-left: 4px solid #36c; padding: 0.8em 1em; margin: 1em 0; }
+</style>
+</head>
+<body>
+
+<h1>可获取指令 trace 的公开 VLIW 平台调研（指令压缩用）</h1>
+<p>日期：2026-09-14 ｜ 目的：为 E0/E1/E2/字典指令压缩寻找"能拿到逐周期多槽指令 trace"的公开 VLIW 平台（FRV 主平台之外的独立对照）。检索范围：公开工具链、学术论文、模拟器文档（网络检索 + 本地 paper/ 参考文献）。</p>
+
+<div class="box">
+<b>核心结论（2026-09-14 二次修正）：</b>两条硬性筛选条件收敛了平台选择：<b>（a）本地 SRAM 程序池</b>（§1.5，排除 cache 层次的通用 VLIW：ρ-VEX/Patmos/Hexagon/C6000/Itanium）；<b>（b）slot 有固定功能/空间身份、不能免费互换</b>（§1.6，排除对称 TTA——等宽+可互换会让编译器把各槽排匀，E2 相对 E1 无收益）。两条都满足的是 <b>FRV（主平台）+ CGRA 类（固定空间身份）</b>。OpenASIP 等宽 TTA 路线已放弃（§1.6）。<b>以后不再考虑（对称）TTA。</b>
+</div>
+
+<h2>1. 评估维度</h2>
+<ul>
+<li><b>真 VLIW</b>：静态调度、每拍多槽并行发射；</li>
+<li><b>逐周期 trace</b>：能导出每拍哪些槽有效 + 各槽 payload 值；</li>
+<li><b>槽等宽</b>：利于 E2（无位宽惩罚）；</li>
+<li><b>benchmark</b>：有可得的真实/标准程序；</li>
+<li><b>可构建性</b>：工具链能否在我们的环境（Linux）跑起来。</li>
+</ul>
+
+<h2>1.5 架构模型匹配性（关键修正，2026-09-14）</h2>
+<div class="box">
+<b>这是比"槽宽是否齐"更根本的筛选条件。</b>本文 E0/E1/E2/字典的隐含前提是：<b>程序池整个驻留在本地片上 SRAM（L0/IMEM/程序池），处理器每拍直接从这块 SRAM 取指</b>；压缩的收益 = 这块 SRAM 的<b>容量（面积）+ 取指能耗</b>。这是"可编程加速器 / SFU / ASIP 本地指令存储"模型。
+</div>
+<table>
+<tr><th></th><th>本文模型（本地 SRAM 程序池）</th><th>通用 VLIW 处理器（cache 层次）</th></tr>
+<tr><td>指令驻留</td><td>全程序在片上 SRAM</td><td>主存 + I-cache 工作集</td></tr>
+<tr><td>压缩对象</td><td>本地 SRAM 容量 + 取指能耗</td><td>I-cache 缺失率 / 取指带宽 / 主存代码大小</td></tr>
+<tr><td>典型场景</td><td>可编程加速器 / SFU / ASIP 本地指令存储</td><td>通用 VLIW 处理器</td></tr>
+<tr><td>对应 prior art</td><td>较少（本文主战场）</td><td class="bad">拥挤：Wolfe(Huffman)、Conte(TINKER/MultiOps)、Lefurgy、Benini、Multanen 本人</td></tr>
+</table>
+<p><b>后果：</b>若把 E2 搬到 cache 层次的通用 VLIW（ρ-VEX/Patmos/Hexagon/C6000/Itanium），就从"加速器本地程序池压缩"漂移到了"cache 代码压缩"——后者是拥挤的成熟领域，新颖性被稀释，且问题定义改变。<b>因此通用 VLIW 不宜作为主平台。</b>它们最多作为"等宽槽 + 稀疏峰值"的参考，不能作为本文压缩模型的直接对照。</p>
+<p><b>本文模型下的匹配平台</b>：FRV（主平台）、OpenASIP TTA（IMEM 为本地 SRAM，Multanen 字典即压此层）、CGRA（OpenEdge context memory、CCF 指令 bin），以及下文 §3.5 新检索到的本地程序存储平台。</p>
+
+<h2>1.6 理想外部平台判据（含放弃等宽 TTA 的原因，2026-09-14）</h2>
+<div class="neg">
+<b>为什么放弃"等宽 TTA"路线（见 openasip_equal_width_tta_chstone_embench_e0e1e2e6_plan_2026-09-11）：</b>
+若把目标机器做成"各槽等宽 <b>且各槽可随意互换</b>"，编译器在调度时就能把各槽排得更均匀——各槽负载被人为拉平后，E1（纵向压缩）已接近最优，<b>E2 条带化相对 E1 就没有额外收益了</b>。E2 的收益来源恰恰是"槽有固定身份、编译器不能免费重排"所造成的稀疏/不均衡。所以对称等宽 TTA 反而把 E2 的优势条件破坏掉了。<b>以后不再考虑（对称）TTA。</b>
+</div>
+<p><b>理想外部平台应同时满足（关键是第 3 条）：</b></p>
+<ol>
+<li>每周期输出完整宽控制字；</li>
+<li>逻辑 slot 等宽，或可按少量宽度类别划分；</li>
+<li><b>slot 具有固定功能或空间身份，不能免费互换</b>（关键——它保证编译器无法把各槽负载拉平，从而保留 E2 相对 E1 的条带化收益空间）；</li>
+<li>指令中存在明确 NOP；</li>
+<li>每周期有效 slot 峰值明显小于总 slot 数，或各 slot 长期负载明显不均；</li>
+<li>有公开 RTL、映射结果或逐周期 trace；</li>
+<li>没有已经使用等价的共享 bank 压缩。</li>
+</ol>
+<div class="box">
+<b>用第 3 条反过来评估已有平台：</b>
+<ul>
+<li><b>FRV</b>：满足——LOAD/STORE/VECTOR/SCALAR/SFU 是固定功能身份，编译器不能把 LOAD 挪到 STORE 槽；</li>
+<li><b>CGRA（OpenEdge/CCF）</b>：满足——每个 PE/context 槽有固定空间身份（PE 位置）；</li>
+<li><b>对称 TTA</b>：<b>不满足</b>——任一 move 可上任一总线，编译器可自由均衡各槽；</li>
+<li><b>经典 VLIW（ρ-VEX/Patmos/Hexagon/C6000）</b>：部分满足——槽↔FU 类型有固定映射（如 slot0=ALU、slot1=MEM），但同类型槽之间常可互换，且它们是 cache 模型（§1.5），双重不匹配。</li>
+</ul>
+<b>结论：</b>判据 3（固定 slot 身份）+ §1.5（本地 SRAM 程序池）共同把筛选收敛到 <b>FRV（主平台）+ CGRA 类（固定空间身份）</b>；对称 TTA 与通用 cache VLIW 都被排除。
+</div>
+
+<h2>2. 候选平台对比（通用 VLIW，按推荐度排序）</h2>
+<p class="warn">注：本节平台均为 cache 层次结构（见 §1.5），与本文"本地 SRAM 程序池"模型不匹配；列于此供参考，<b>不建议作为主平台</b>。真正匹配的平台见 §3.5。</p>
+<table>
+<tr><th>平台</th><th>真 VLIW</th><th>逐周期 trace</th><th>槽等宽</th><th>benchmark</th><th>可构建性/门槛</th><th>对 E0/E1/E2/dict 的契合</th></tr>
+
+<tr>
+<td><b>ρ-VEX（TU Delft）</b><br><a href="https://github.com/tvanas/r-vex">github.com/tvanas/r-vex</a></td>
+<td class="good">是（VEX ISA，1/2/4 发射可配）</td>
+<td class="good">simrvex 直接产全文本 trace（<code>make trace-ucbqsort</code> → <code>simtrace-*</code>）；另有 rvtrace 硬件 trace 解码</td>
+<td class="good">等宽 32-bit syllable</td>
+<td class="good">自带 Powerstone（ucbqsort 等）+ 可接 MiBench/Embench 源码</td>
+<td class="warn">下载需教育机构邮箱注册；FPGA 导向（VHDL + Xilinx 工具），但 simrvex 是纯软件</td>
+<td class="good">强：真 VLIW、trace 直接、宽度可配（可扫 1/2/4 发射看 E2 随宽度变化）</td>
+</tr>
+
+<tr>
+<td><b>Patmos（T-CREST, DTU）</b><br><a href="https://github.com/t-crest/patmos">github.com/t-crest/patmos</a></td>
+<td class="good">是（时间可预测双发射 VLIW）</td>
+<td>pasim（功能 ISA 模拟器，C++）+ patemu（周期精确硬件仿真器，可 dump 状态）；<span class="warn">pasim 无现成 trace 导出选项，需插桩或用 patemu</span></td>
+<td class="good">等宽 32-bit</td>
+<td class="good">TACLeBench（含 DSPstone/MediaBench/MiBench 核）+ 自带例程</td>
+<td class="good">GitHub 活跃维护，build.sh 一键构建，有 Ubuntu VM</td>
+<td>双发射（2 槽）偏窄，但干净现代；适合作为"窄 VLIW"对照点</td>
+</tr>
+
+<tr>
+<td><b>Hexagon DSP（Qualcomm，经 QEMU）</b><br><a href="https://github.com/qemu/qemu/tree/master/target/hexagon">qemu/target/hexagon</a></td>
+<td class="good">是（商业 4 槽/packet VLIW + HVX）</td>
+<td class="warn">QEMU 有完整 packet 译码（<code>decode_packet</code>），但 2024 年起 HEX_DEBUG trace 钩子被移除，需在 translate.c 插桩导出每 packet 的槽内容</td>
+<td class="good">等宽 32-bit/槽</td>
+<td class="good">LLVM 后端可编译任意 C；可接 Embench/MiBench</td>
+<td class="warn">需构建 QEMU + 加 trace 插桩（工作量中等）</td>
+<td>商业真实 VLIW 可信度最高；slot 字段语义清晰（Insn.slot）</td>
+</tr>
+
+<tr>
+<td><b>VEX toolchain（HP Labs 原版）</b><br>vliw.org（archive.org 存档）</td>
+<td class="good">是（VLIW 研究经典平台）</td>
+<td>VEX 模拟器（编译模拟 + 执行统计/剖析，含 cache 模拟）；逐周期 trace 需用其注解/插件机制</td>
+<td class="good">等宽 32-bit syllable</td>
+<td>自带部分；可接 MediBench 等</td>
+<td class="bad">legacy：HP 下载链接可能失效，需 web.archive.org 存档；x86-Linux 时代，现代系统构建困难</td>
+<td>经典但构建成本高；ρ-VEX 是其更可用的继承者</td>
+</tr>
+
+<tr>
+<td><b>Trimaran</b><br><a href="https://trimaran.org/">trimaran.org</a></td>
+<td class="good">是（HPL-PD 参数化 VLIW/EPIC）</td>
+<td>Simu ISS 有 trace 插件（控制流 trace、地址 trace），按指令/块/函数/程序统计</td>
+<td class="good">等宽</td>
+<td>可接 SPEC/媒体程序</td>
+<td class="bad">非商用免费但 1990s–2018 老代码，现代系统构建很难</td>
+<td>学术价值高但工程成本大；不建议优先</td>
+</tr>
+
+<tr>
+<td><b>TI C6000（C64x/C66x）</b><br>CCS 周期精确模拟器</td>
+<td class="good">是（商业 8-FU/2-cluster VLIW DSP）</td>
+<td class="bad">CCS 的 Rewind 是"回放式"执行历史（寄存器/内存/时钟），不是干净的逐拍指令 trace 导出；ETB Core Trace 仅硬件</td>
+<td class="good">等宽 32-bit</td>
+<td>丰富（DSP 库）</td>
+<td class="warn">需 CCS 环境；trace 导出不便</td>
+<td>真实但 trace 难取；除非有现成流程否则不建议</td>
+</tr>
+
+<tr>
+<td><b>Itanium IA-64（Ski）</b><br><a href="https://ski.sourceforge.net/">ski.sourceforge.net</a></td>
+<td>EPIC（VLIW 变体）</td>
+<td>Ski/bski 支持 trace、断点、指令频次统计（<code>bski -stats -icnt</code>）</td>
+<td class="warn">41-bit 指令 ×3/bundle + template 位（非纯净等宽槽）</td>
+<td>可跑 IA-64 程序</td>
+<td class="warn">老；EPIC bundle/template 语义复杂</td>
+<td>EPIC 结构不契合"每槽等宽 + 逐槽 NOP"模型；不推荐</td>
+</tr>
+
+<tr>
+<td><b>VADL / OpenVADL（TU Wien）</b><br><a href="https://arxiv.org/abs/2402.09087">arxiv 2402.09087</a></td>
+<td>生成器（可描述 VLIW）</td>
+<td>从 PDL 生成 ISS/CAS 模拟器；已用 TI C6x / Hexagon 规格验证；trace 靠 co-simulation 状态比对</td>
+<td>取决于描述</td>
+<td>—</td>
+<td class="warn">需自己写 VLIW 规格再生成模拟器（间接）</td>
+<td>适合"自建参考模拟器"而非现成平台</td>
+</tr>
+</table>
+
+<h2>3. 关键洞察：经典 VLIW 的等宽槽正好消除 TTA 的位宽惩罚</h2>
+<div class="box">
+我们在 OpenASIP TTA 上发现 E2 的"位宽异构惩罚"（lane 必须按最宽槽设计，浪费 1.35–3.01×）。<b>经典 VLIW 的每个槽是等宽 32-bit syllable</b>（VEX/ρ-VEX/Patmos/Hexagon/C6000 皆然），所以搬到这些平台后 E2 不再有宽度惩罚——这正是 E2 的"槽宽齐"胜出条件在真实公开 VLIW 上天然成立的地方。<b>但注意（§1.5）：这些经典 VLIW 多为 cache 层次结构，与本文"本地 SRAM 程序池"模型不匹配</b>——等宽槽的优势只有在"本地程序存储"的平台（如 R-Blocks、CGRA context memory）上才对本文有意义。
+</div>
+
+<h2>3.5 带本地程序存储的 ASIP/加速器平台（修正后检索，2026-09-14）</h2>
+<p>按 §1.5 的匹配条件（本地片上 SRAM 程序池，非 cache）重新检索。这些平台与本文模型同构：</p>
+<table>
+<tr><th>平台</th><th>类型</th><th>本地程序存储</th><th>trace 可得性</th><th>与本文契合点</th><th>门槛/备注</th></tr>
+<tr>
+<td><b>R-Blocks</b>（ACM TACO 2024）<br><a href="https://doi.org/10.1145/3656642">doi:10.1145/3656642</a></td>
+<td>VLIW-SIMD CGRA（<b>基于 OpenASIP 工具链</b>）</td>
+<td class="good">本地 scratchpad + 优化指令投递（无 cache 依赖）</td>
+<td class="good">OpenASIP ttasim 可产 trace（同本文 OpenASIP 流程）</td>
+<td class="good"><b>最强匹配</b>：OpenASIP 系、VLIW-SIMD、本地存储；22nm FD-SOI 有 FFT 能效数据</td>
+<td class="bad"><b>不开源</b>（2026-09-14 查证）：用内部版 OpenASIP（含 SIMD 后端）+ 自研 virtArch→ADF / 汇编翻译器 + 改过的后端；无公开 GitHub 仓库/源码；论文公开。要用需联系作者（TU/e de Bruin/Corporaal 或 Tampere Jääskeläinen）</td>
+</tr>
+<tr>
+<td><b>MorphoSys</b><br><a href="https://doi.org/10.1145/337292.337583">doi:10.1145/337292.337583</a></td>
+<td>CGRA（8×8 RC 阵列 + TinyRISC）</td>
+<td class="good">Context Memory（本地配置存储，32 平面）+ Frame Buffer</td>
+<td class="warn">需其工具链/模拟器</td>
+<td>context 字广播 = 配置存储压缩的雏形；本文 E2 可对照</td>
+<td>经典 CGRA；context memory 即本地程序池</td>
+</tr>
+<tr>
+<td><b>ADRES / DRESC</b>（IMEC）</td>
+<td>VLIW + CGRA 紧耦合</td>
+<td class="good">本地配置/指令存储</td>
+<td class="warn">DRESC 工具链</td>
+<td>VLIW 与 CGRA 混合，模调度；与本文"宽指令+本地存储"近</td>
+<td>学术平台，可得性需查</td>
+</tr>
+<tr>
+<td><b>TI C6000（L1P 配成 SRAM 模式）</b></td>
+<td>商业 VLIW DSP</td>
+<td class="good">L1P 可配为<b>可直接寻址的片上 SRAM（scratchpad）</b>，L2 可配 SRAM/cache/混合</td>
+<td class="warn">CCS 周期精确模拟器；trace 导出仍不便（Rewind 为回放式）</td>
+<td>L1P-SRAM 模式 = 本地程序存储；真实商业 VLIW</td>
+<td>L1P 较小（4–32KB）；trace 导出是难点</td>
+</tr>
+<tr>
+<td><b>VTA（Apache TVM）</b></td>
+<td>DL 可编程加速器</td>
+<td class="good">micro-op cache（本地微指令存储）+ SRAM buffer</td>
+<td class="warn">CISC+microcode 两级 ISA，非干净 VLIW 槽模型</td>
+<td>微指令 cache 是本地程序存储的一种</td>
+<td>ISA 模型不契合逐槽压缩</td>
+</tr>
+<tr>
+<td><b>SoCRocket（ilram）</b></td>
+<td>SoC 仿真框架（SPARC/Leon）</td>
+<td class="good">指令 scratchpad（ilram，零等待，≤512KB）</td>
+<td class="warn">TLM 仿真</td>
+<td>展示"指令 scratchpad"模式；但非 VLIW</td>
+<td>非多发射，仅作模式参考</td>
+</tr>
+</table>
+
+<h3>3.5.1 CGRA 指令/context 压缩 prior art（本文 related work 直接相关）</h3>
+<p>这批工作就在"本地配置/指令存储压缩"上，是本文最近的邻居，必须在 related work 中对齐：</p>
+<ul>
+<li><b>Aslam et al. 2008</b>（TVLSI）：CGRA 指令码字典压缩，4×4 阵列平均 CR 0.56；按局部性重排/分组码位、按 kernel 自适应重装字典。</li>
+<li><b>Kim &amp; Mahapatra 2009</b>（TVLSI）：CGRA 动态 context 压缩（低功耗）。</li>
+<li><b>Lee et al. 2018</b>（ACM TACO，本地 paper/ 已有全文）：模调度压缩/解压，分区配置存储 + 各分区独立 PC/offset 恢复。</li>
+<li><b>MorphoSys / RoMultiC / FloRA</b>：行/列广播、多播位图减少配置存储与取指。</li>
+</ul>
+<p class="warn"><b>定位提醒：</b>本文 E2 与这些 CGRA context 压缩的区别在于——它们多依赖"同值广播/多播"或"字典"，而 E2 是"逻辑槽→物理 lane 解耦的条带化存储"。对照时应强调 E2 不依赖值重复、逐拍精确恢复、且面向"每拍有效槽稀疏"的冗余。</p>
+
+<h2>4. 建议的优先级与下一步（2026-09-14 修订）</h2>
+<ol>
+<li><b>主平台仍是 FRV</b>（真实 NN 负载、本地程序池、有 RTL/综合）。</li>
+<li><b>baseline/反例仍是 OpenASIP TTA</b>（Multanen 字典机制 + 稠密 FFT 反例）。</li>
+<li><b>新增同构对照首选 R-Blocks</b>：OpenASIP 系 VLIW-SIMD CGRA + 本地 scratchpad，与本文流程天然兼容（ttasim trace），且有 22nm 能效数据。<b>但 2026-09-14 查证其不开源</b>（内部版 OpenASIP + 自研翻译器/后端，无公开仓库）——要用需联系作者。<b>注意：退回"自造等宽 TTA"的路线已放弃</b>（§1.6：等宽+可互换的槽会让编译器把各槽排匀，E2 相对 E1 无收益）。</li>
+<li><b>对称 TTA 不再考虑</b>（§1.6 判据 3：slot 须固定身份、不能免费互换）。</li>
+<li><b>CGRA context 压缩 prior art 进 related work</b>（Aslam 2008 / Kim 2009 / Lee 2018 / MorphoSys / RoMultiC），明确 E2 与"广播/字典"路线的区别。</li>
+<li><b>通用 VLIW（ρ-VEX/Patmos/Hexagon/C6000/Itanium）不作主平台</b>；如要引用，仅作"等宽槽"参考，并明确标注其 cache 模型与本文不匹配。</li>
+</ol>
+<div class="box">
+<b>与既有工作的关系（2026-09-14 二次修正）：</b>本文的平台分层为——FRV（主平台，真实 NN 负载、本地程序池、固定功能槽身份）证明 E2 的硬件收益；OpenASIP TTA（Multanen 字典机制 + 稠密 FFT）给出 baseline 与反例；CGRA（OpenEdge/CCF，固定空间身份槽）给出边界。<b>对称等宽 TTA 因 slot 可自由互换、编译器可把各槽排匀，使 E2 相对 E1 无收益，已排除（§1.6）；通用 cache VLIW（ρ-VEX/Patmos/Hexagon/C6000/Itanium）因非本地程序池，亦不作主平台（§1.5）。</b>相关工作的指令压缩鼻祖（Conte 的 TINKER/MultiOps，NOP-free + silo cache，IMPACT 编译器 + SPEC92/95 trace 驱动）与 CGRA context 压缩（Aslam 2008 / Kim 2009 / Lee 2018 / MorphoSys / RoMultiC）可作为 E2 的经典对照写进 related work。
+</div>
+
+<h2>5. 证据与来源（检索于 2026-09-14）</h2>
+<ul>
+<li>ρ-VEX：GitHub tvanas/r-vex + rvex.ewi.tudelft.nl（simrvex <code>make trace-*</code> 产全文本文本 trace；Quickstart 用 Powerstone ucbqsort）。</li>
+<li>Patmos：GitHub t-crest/patmos + Patmos Reference Handbook（pasim 功能模拟、patemu 周期精确；TACLeBench 配套）。</li>
+<li>Hexagon：QEMU target/hexagon README + translate.c/decode_packet（packet 译码完整；HEX_DEBUG trace 钩子 2024 年移除，需插桩）。</li>
+<li>VEX：vliw.org（web.archive.org 存档）+ Fisher/Faraboschi/Young《Embedded Computing: A VLIW Approach》。</li>
+<li>Trimaran：trimaran.org + Trimaran-LNCS05 论文（Simu ISS trace 插件）。</li>
+<li>TI C6000：TI SPRU600（ISS 配置）+ SPRU713（Rewind 回放式 trace）+ CCS 21 Trace 文档（ETB 为硬件）。</li>
+<li>Itanium：ski.sourceforge.net（bski -stats -icnt）。</li>
+<li>VADL：TU Wien repositum 2025 VLIW CAS 论文 + arXiv 2402.09087。</li>
+<li>经典对照：Conte et al., "Instruction Fetch Mechanisms for VLIW Architectures with Compressed Encodings", MICRO 1996（TINKER/MultiOps）。</li>
+<li><b>本地程序存储平台（2026-09-14 修正后检索）</b>：R-Blocks（ACM TACO 2024, doi:10.1145/3656642，OpenASIP 系 VLIW-SIMD CGRA + 本地 scratchpad）；MorphoSys（doi:10.1145/337292.337583，Context Memory）；ADRES/DRESC（IMEC）；TI C6000 L1P/L2 可配 SRAM（TI SPRU609/SPRU610/SPRU656）；VTA micro-op cache（Apache TVM）；SoCRocket ilram 指令 scratchpad。</li>
+<li><b>CGRA 指令/context 压缩 prior art</b>：Aslam et al. 2008 TVLSI（CGRA 字典压缩 CR 0.56）；Kim &amp; Mahapatra 2009 TVLSI（动态 context 压缩）；Lee et al. 2018 ACM TACO（模调度压缩/解压，本地 paper/ 有全文）；MorphoSys/RoMultiC/FloRA（广播/多播）。</li>
+</ul>
+<p class="warn">注意：以上"能否出 trace"的判断基于公开文档；ρ-VEX/Patmos/Hexagon 的确切 trace 格式与槽位宽需在真正构建后核实。本调研未在任何平台实际跑通 trace（那是下一步的构建工作）。</p>
+
+</body>
+</html>

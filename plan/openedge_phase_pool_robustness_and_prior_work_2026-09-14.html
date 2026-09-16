@@ -1,0 +1,250 @@
+<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'><title>OpenEdge：条带化＋phase_q程序池鲁棒性与已有工作对比</title><style>
+body{font-family:Inter,'Noto Sans SC','Microsoft YaHei',sans-serif;color:#182433;background:#f4f7fa;line-height:1.72;margin:0}
+main{max-width:1240px;margin:auto;background:#fff;padding:34px 42px 70px;box-shadow:0 1px 16px #dfe6ee}
+h1{font-size:30px;line-height:1.3;color:#123e68}h2{margin-top:36px;color:#15558a;border-bottom:2px solid #dbe9f5;padding-bottom:6px}h3{color:#286a9f;margin-top:25px}
+.box{background:#edf6fd;border-left:5px solid #2d7db7;padding:13px 17px;margin:16px 0}.good{background:#ebf8f0;border-color:#2e9560}.warn{background:#fff5e5;border-color:#df941e}.bad{background:#fff0f0;border-color:#c94c4c}
+.formula{font-family:ui-monospace,Consolas,monospace;background:#f2f5f8;border:1px solid #d9e1e8;padding:12px;overflow:auto}
+.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px;margin:12px 0 5px}th{background:#184f7b;color:#fff;text-align:left;position:sticky;top:0}th,td{border:1px solid #ccd7e1;padding:7px 8px;vertical-align:top}tr:nth-child(even){background:#f7fafc}.focus{background:#e5f5ec!important}.n{text-align:right;white-space:nowrap}.caption{font-size:12.5px;color:#526476;margin-top:4px}small{color:inherit}code{background:#eef2f5;padding:1px 4px;border-radius:3px}a{color:#146aa3}li{margin:6px 0}.verdict{font-size:17px}
+</style></head><body><main>
+<h1>OpenEdgeCGRA：四lane条带化＋外部phase_q的程序池鲁棒性、已有压缩方案与CACTI复核</h1>
+<p>日期：2026-09-14。实验固定OpenEdgeCGRA官方仓库commit <code>4a179fcf6faee18765f66baa0a30af91e3840728</code>，保持4个逻辑row槽与4条物理lane，不限制并发、不改变原始调度。CCF不再作为论文实验平台。</p>
+
+<h2>1. 结论先行</h2>
+<div class='box good verdict'><b>建议保留OpenEdge扩展实验，但必须把论点从“总能得到接近50%的SRAM收益”改成“在不改变调度和吞吐的条件下，消除固定row之间的容量不均衡；跨过宏深度档位时收益很大，没有跨档时仍有较小的容量收益”。</b></div>
+<ul>
+<li><b>phase_q不占配置存储。</b>它与程序起始<code>addr</code>一起由启动接口输入，只初始化一个2-bit运行态寄存器。因此E1与E2的有效逻辑信息完全相同：都是每个context 4-bit mask，加上全部非NOP的32-bit row word。12池二者均为34,032 bit。</li>
+<li><b>12池的正结果仍成立：</b>E1固定row负载为266/255/244/255，最深266；E2经phase后为255/255/255/255，达到理论下界255。若Bank补到2次幂，payload从4×512降为4×256，E2相对E1面积下降37.73% 。</li>
+<li><b>保守口径：</b>不强制2次幂、直接用CACTI建266深和255深宏时，E2相对E1的SRAM面积下降3.69%，一次池能量下降1.00%。论文应同时报告这组数字。</li>
+<li><b>不是挑一个有利池：</b>穷举全部4095个非空mapping子集，E2最深lane在4095/4095个子集中均不超过E1最热row；216个子集跨过2次幂档位，3879个同档，0个更差。12折leave-one-out中6个仍跨档。</li>
+<li><b>程序到达顺序也不破坏结果：</b>穷举全部479,001,600种到达顺序，loader每次只根据当前四个bank占用选择q，100%顺序都能装进256深Bank；93.27%达到255/255/255/255，其余为256/255/255/254。</li>
+<li><b>必须正视完整context字典：</b>12池只有114种不同128-bit context，静态字典的SRAM数字显著优于E2。但它是封闭池、值相关、两级读取的乐观上界；新程序若出现新context，需要更新字典并重编码索引。E2则只看NOP位置，程序值和程序池变化不改变解码规则。</li>
+</ul>
+
+<h2>2. E2到底保存什么：修正phase_q口径</h2>
+<p>每拍先读取4-bit mask。mask指出原来四个row中哪些有效；有效word按row编号从小到大得到rank=0、1、2或3。第rank个有效word来自：</p>
+<p class='formula'>lane = (phase + rank) mod 4<br>phase_next = (phase + popcount(mask)) mod 4</p>
+<p>程序启动时，上层控制器已经要告诉CGRA“从哪个addr启动”。本方案把2-bit <code>phase_q</code>作为同一次启动命令的另一个输入，并装入phase寄存器。这里的addr接口必须足以初始化四条lane各自的读指针——它可以是四个lane基址，也可以是能无损推导这四个基址的统一编码；这部分按用户给定的现有程序启动信息处理，不另计Config RAM。phase_q既不逐拍保存，也不放入Config RAM。因此：</p>
+<p class='formula'>E1逻辑bit = E2逻辑bit = 4 × context数 + 32 × 非NOP word数</p>
+<div class='box warn'>硬件并非绝对“零开销”：仍需要2-bit输入端口/控制字段、2-bit寄存器和phase更新逻辑。但这些是组合逻辑与状态位，不是程序池配置SRAM容量。后续RTL综合必须计入逻辑面积，软件容量表不应每程序加2 bit。</div>
+<p>本轮假定程序装载/启动软件已经持有addr与phase，并采用与E0/E1一致的口径，不把主机或软件中的程序目录计入Config RAM。动态删除程序后产生的Bank空洞、free-list与是否压实尚未建模；论文若强调运行时任意替换，需要把“只在整池重装时重排”或“支持在线空闲块管理”二者说清楚。</p>
+
+<h2>3. 12个公开mapping分别是什么</h2>
+<p>官方仓库完整19个commit已检索，当前ISA格式只有以下12个<code>instructions_*.py</code>。另有一个明确标记为deprecated的旧格式FFT文件，不能与当前平台混用。所谓“12 mapping压力池”包含7个应用mapping和5个测试/压力mapping，论文必须明确区分，不能称为12个真实应用。</p>
+<div class='scroll'><table><thead><tr>
+<th>mapping</th><th>类别</th><th>使用列数</th><th>每列context数</th>
+<th>总context地址数</th><th>按本表顺序常驻时地址范围</th><th>有效32-bit row word数</th>
+<th>平均/峰值有效row数</th><th>固定row 0/1/2/3有效数</th><th>不同128-bit context数</th>
+</tr></thead><tbody><tr><td>check_size</td><td>测试/压力mapping</td><td class='n'>1</td>
+<td class='n'>6</td><td class='n'>6</td>
+<td class='n'>0–5</td>
+<td class='n'>5</td><td class='n'>0.833/1</td>
+<td class='n'>5/0/0/0</td><td class='n'>6</td></tr><tr><td>dbl_max</td><td>应用mapping</td><td class='n'>1</td>
+<td class='n'>14</td><td class='n'>14</td>
+<td class='n'>6–19</td>
+<td class='n'>30</td><td class='n'>2.143/4</td>
+<td class='n'>7/8/7/8</td><td class='n'>14</td></tr><tr><td>dbl_min</td><td>应用mapping</td><td class='n'>1</td>
+<td class='n'>14</td><td class='n'>14</td>
+<td class='n'>20–33</td>
+<td class='n'>29</td><td class='n'>2.071/4</td>
+<td class='n'>7/8/6/8</td><td class='n'>14</td></tr><tr><td>fft_bitrev</td><td>应用mapping</td><td class='n'>1</td>
+<td class='n'>11</td><td class='n'>11</td>
+<td class='n'>34–44</td>
+<td class='n'>31</td><td class='n'>2.818/4</td>
+<td class='n'>8/11/7/5</td><td class='n'>11</td></tr><tr><td>fft_cplx</td><td>应用mapping</td><td class='n'>2</td>
+<td class='n'>14</td><td class='n'>28</td>
+<td class='n'>45–72</td>
+<td class='n'>74</td><td class='n'>2.643/4</td>
+<td class='n'>20/18/16/20</td><td class='n'>28</td></tr><tr><td>fft_cplx_forever</td><td>应用mapping</td><td class='n'>2</td>
+<td class='n'>15</td><td class='n'>30</td>
+<td class='n'>73–102</td>
+<td class='n'>78</td><td class='n'>2.600/4</td>
+<td class='n'>21/18/18/21</td><td class='n'>30</td></tr><tr><td>func_test</td><td>测试/压力mapping</td><td class='n'>4</td>
+<td class='n'>32</td><td class='n'>128</td>
+<td class='n'>103–230</td>
+<td class='n'>467</td><td class='n'>3.648/4</td>
+<td class='n'>118/116/116/117</td><td class='n'>22</td></tr><tr><td>max_peak</td><td>应用mapping</td><td class='n'>1</td>
+<td class='n'>11</td><td class='n'>11</td>
+<td class='n'>231–241</td>
+<td class='n'>29</td><td class='n'>2.636/4</td>
+<td class='n'>7/7/6/9</td><td class='n'>11</td></tr><tr><td>min_max_circular</td><td>应用mapping</td><td class='n'>1</td>
+<td class='n'>10</td><td class='n'>10</td>
+<td class='n'>242–251</td>
+<td class='n'>22</td><td class='n'>2.200/4</td>
+<td class='n'>7/6/5/4</td><td class='n'>10</td></tr><tr><td>while_loop_100percent</td><td>测试/压力mapping</td><td class='n'>4</td>
+<td class='n'>8</td><td class='n'>32</td>
+<td class='n'>252–283</td>
+<td class='n'>113</td><td class='n'>3.531/4</td>
+<td class='n'>29/28/28/28</td><td class='n'>9</td></tr><tr><td>while_loop_50percent</td><td>测试/压力mapping</td><td class='n'>4</td>
+<td class='n'>8</td><td class='n'>32</td>
+<td class='n'>284–315</td>
+<td class='n'>57</td><td class='n'>1.781/4</td>
+<td class='n'>15/14/14/14</td><td class='n'>10</td></tr><tr><td>while_loop_75percent</td><td>测试/压力mapping</td><td class='n'>4</td>
+<td class='n'>8</td><td class='n'>32</td>
+<td class='n'>316–347</td>
+<td class='n'>85</td><td class='n'>2.656/4</td>
+<td class='n'>22/21/21/21</td><td class='n'>10</td></tr></tbody></table></div>
+<p class='caption'><b>表头说明：</b>OpenEdge每个context地址同时输出4个row的32-bit word，因此一条完整context是128 bit。“使用列数×每列context数”就是该kernel在context memory占用的地址数；多列kernel把各列的context连续存放。“有效word”是非NOP row word。最后一列用于解释完整context字典为什么有效：例如func_test虽占128个地址，却只有22种不同context。</p>
+<p>按表中顺序同时常驻时，总地址范围为0–347，共348个context。官方脚本使用<code>ker_start_add</code>支持顺序放置；row指令中的分支目标是kernel内的局部context编号，因此改变常驻起址不会人为改变本表的128-bit context值。完整字典的高重复率主要来自func_test和三个while压力mapping自身的重复，不是地址解析错误。</p>
+
+<h2>4. 五类压缩方法在OpenEdge上怎样实现</h2>
+<h3>4.1 E1固定row纵向压缩与E2条带化</h3>
+<p>E1为每个逻辑row建一个payload流：row 0的有效word永远写Bank 0，依此类推；4-bit mask负责恢复NOP。为了保持Bank结构统一，四个Bank都必须按最热row定深。E2保存的信息不变，但把同拍有效word依次写入从phase开始的lane，解码后再散布回原row，因此存储lane与逻辑row解耦。</p>
+
+<h3>4.2 静态完整指令字典怎样构建，是否有论文</h3>
+<ol><li>把同一context地址的四个32-bit row word拼成一个128-bit完整context。</li><li>扫描整个常驻程序池；首次见到一种128-bit值时，将它加入字典并分配编号。</li><li>本池共114个字典项，所以每个原context用7-bit索引表示。</li><li>硬件先从索引SRAM读7-bit编号，再用该编号并行读取四个32-bit字典Bank，重建128-bit context。流水化后可以每拍输出一个，但启动/跳转至少涉及两级存储路径。</li></ol>
+<p>这个具体“把OpenEdge完整128-bit context作为字典项”的实现是本实验构造的强基线，不应声称复现了某一篇论文。它属于经典dictionary code compression；可引用Lefurgy等MICRO 1997的<a href='https://doi.org/10.1109/MICRO.1997.645830'>Improving Code Density Using Compression Techniques</a>作为基础文献。VLIW领域还可引用Xie等2006的variable-to-fixed code compression。Multanen 2024则是更接近本问题、且能运行时改字典的现代方案。</p>
+<div class='box warn'>当前CACTI表对静态字典是偏乐观的：计入索引SRAM和四个字典Bank的读能量，但未综合两级地址路径、流水寄存器、分支重定向、字典更新控制。它适合作为“封闭池可达到的强上界”，不能只凭该行CACTI SRAM就宣称完整系统一定优于E2。</div>
+
+<h3>4.3 Lee 2018：论文完整方法与本次可复现部分</h3>
+<p><a href='https://doi.org/10.1145/3162018'>Lee等2018</a>针对逐周期读取超宽context的模调度CGRA。原方法先在编译器中利用inactive entity的don't-care周期，把配置值向前或向后传播，使多个硬件实体尽量在同一周期改变；再把超宽context按统计相关性做entity级分区。每个分区保存“发生变化的新值流”和逐原周期的1-bit decompression-offset，并有独立压缩PC。值不变时不读新payload，保持上一值，因此可无额外输出周期地恢复。</p>
+<p>OpenEdge没有论文所用的SRP编译器、entity级don't-care信息和247个loop数据。本实验只能做一个严格无损子集：将四个现成32-bit row各视为固定分区；若当前row word与上一拍完全相同，change mask写0并保持，否则写1并保存新word。每个程序边界重置为NOP，所有trace均逐拍恢复验证通过。</p>
+<ul><li>12池共4×348=1,392个row位置；固定row时间保持仍需保存1166次变化，逻辑bit为38,704。</li><li>2次幂宏下它与E1都需要4×512 payload，但读取次数更多，CACTI一次池能量为1.826 nJ，高于E1。</li><li>这只能说明“Lee的原始trace固定row子集不适合OpenEdge这12个mapping”，不能声称完整Lee算法比E2差；完整复现必须重建字段级entity、证明don't-care传播不改变功能，并实现其调度器和分区器。</li></ul>
+
+<h3>4.4 Multanen 2024：在OpenEdge上的机制级实现</h3>
+<p><a href='https://doi.org/10.1007/s10617-024-09290-2'>Multanen等2024</a>把指令切成多个字段，每个字段有独立小字典。进入适合压缩的控制流区域前，header后跟dictionary frame，运行时把本区域常用字段写入字典。随后，若连续B条指令的所有字段都能命中字典，就把这些索引打包进一个与原指令等宽的固定bundle；无法命中的指令保持raw。固定bundle避免任意变长取指，但frame装载会停顿。</p>
+<p>映射到OpenEdge时，本模型建立四个32-bit row字典。原论文的TTA把62-bit原指令扩成64 bit来容纳2-bit控制标记；OpenEdge原context已经是完整128 bit，因此本实验不能假设有免费空位，而是增加独立的2-bit raw/compressed/header tag流。CACTI按最小8-bit物理字宽计算该tag SRAM。搜索后选择每row 32项，索引总宽20 bit，因此一个128-bit bundle可容纳6个原context的四路索引。由于原作者CFG region builder和精确entry-selection代码未公开，本实验将每个mapping作为一个region，用可复现启发式选择字典项，并完整模拟raw旁路、frame和恢复；这是机制级模型，不是原作者编译器复现。</p>
+<div class='scroll'><table><thead><tr><th>mapping</th><th>选择</th><th>原context数</th><th>存储word数（含frame）</th><th>被bundle覆盖的原context数</th><th>四字典实际项数</th></tr></thead><tbody><tr><td>check_size</td><td>raw旁路</td><td class='n'>6</td><td class='n'>6</td><td class='n'>0</td><td class='n'>0/0/0/0</td></tr><tr><td>dbl_max</td><td>raw旁路</td><td class='n'>14</td><td class='n'>14</td><td class='n'>0</td><td class='n'>0/0/0/0</td></tr><tr><td>dbl_min</td><td>raw旁路</td><td class='n'>14</td><td class='n'>14</td><td class='n'>0</td><td class='n'>0/0/0/0</td></tr><tr><td>fft_bitrev</td><td>raw旁路</td><td class='n'>11</td><td class='n'>11</td><td class='n'>0</td><td class='n'>0/0/0/0</td></tr><tr><td>fft_cplx</td><td>raw旁路</td><td class='n'>28</td><td class='n'>28</td><td class='n'>0</td><td class='n'>0/0/0/0</td></tr><tr><td>fft_cplx_forever</td><td>压缩</td><td class='n'>30</td><td class='n'>27</td><td class='n'>30</td><td class='n'>15/16/16/21</td></tr><tr><td>func_test</td><td>压缩</td><td class='n'>128</td><td class='n'>45</td><td class='n'>126</td><td class='n'>21/19/19/20</td></tr><tr><td>max_peak</td><td>raw旁路</td><td class='n'>11</td><td class='n'>11</td><td class='n'>0</td><td class='n'>0/0/0/0</td></tr><tr><td>min_max_circular</td><td>raw旁路</td><td class='n'>10</td><td class='n'>10</td><td class='n'>0</td><td class='n'>0/0/0/0</td></tr><tr><td>while_loop_100percent</td><td>压缩</td><td class='n'>32</td><td class='n'>17</td><td class='n'>30</td><td class='n'>9/7/7/7</td></tr><tr><td>while_loop_50percent</td><td>压缩</td><td class='n'>32</td><td class='n'>18</td><td class='n'>30</td><td class='n'>10/8/8/8</td></tr><tr><td>while_loop_75percent</td><td>压缩</td><td class='n'>32</td><td class='n'>18</td><td class='n'>30</td><td class='n'>10/8/8/8</td></tr></tbody></table></div>
+<p class='caption'><b>表头说明：</b>只有压缩后连同header/frame仍比raw更短的mapping才启用字典。12个mapping中5个启用；总存储word为219，frame占76周期，单次顺序执行整个池由348增至424周期（+21.8%）。如果同一kernel反复执行，frame可以摊薄；若频繁替换kernel，本表的一次池口径更接近实际。</p>
+
+<h2>5. 七应用池：为什么它没有显示物理优势</h2>
+<p>七应用池排除check_size、func_test和三个while压力mapping，共118个context、293个有效row word。E1最热row为77，E2最深lane为74，但二者都必须落在128深payload宏，因此条带化没有跨档。</p>
+<div class='scroll'><table><thead><tr>
+<th>方案</th><th>有效/逻辑bit<br><small>相对E0节省</small></th>
+<th>各Bank补到2次幂后的请求SRAM bit<br><small>相对E0节省</small></th>
+<th>CACTI面积/mm²<br><small>相对E0变化</small></th>
+<th>一次池读取能量/nJ<br><small>相对E0变化</small></th>
+<th>1GHz活跃SRAM总功耗/mW<br><small>相对E0变化</small></th>
+<th>运行周期</th><th>复现边界</th></tr></thead><tbody><tr><td>E0：不压缩，逐拍读取四个32-bit row word</td><td class='n'>15,104<br><small>0.0%节省</small></td><td class='n'>16,384<br><small>0.0%节省</small></td><td class='n'>0.004324<br><small>+0.0%</small></td><td class='n'>0.216<br><small>+0.0%</small></td><td class='n'>2.293<br><small>+0.0%</small></td><td class='n'>118</td><td>exact</td></tr><tr><td>E1：固定row纵向压缩，四个payload Bank等深</td><td class='n'>9,848<br><small>34.8%节省</small></td><td class='n'>16,896<br><small>3.1%膨胀</small></td><td class='n'>0.004650<br><small>+7.5%</small></td><td class='n'>0.155<br><small>-28.4%</small></td><td class='n'>1.809<br><small>-21.1%</small></td><td class='n'>118</td><td>exact mechanism reproduction</td></tr><tr class='focus'><td>E2：四lane条带化＋启动接口输入phase_q</td><td class='n'>9,848<br><small>34.8%节省</small></td><td class='n'>16,896<br><small>3.1%膨胀</small></td><td class='n'>0.004650<br><small>+7.5%</small></td><td class='n'>0.155<br><small>-28.4%</small></td><td class='n'>1.809<br><small>-21.1%</small></td><td class='n'>118</td><td>proposed; exact trace implementation</td></tr><tr><td>E2消融：条带化，但所有程序phase_q=0</td><td class='n'>9,848<br><small>34.8%节省</small></td><td class='n'>16,896<br><small>3.1%膨胀</small></td><td class='n'>0.004650<br><small>+7.5%</small></td><td class='n'>0.155<br><small>-28.4%</small></td><td class='n'>1.809<br><small>-21.1%</small></td><td class='n'>118</td><td>exact ablation; intentionally omits per-program phase optimization</td></tr><tr><td>Lee 2018可复现子集：固定row时间保持</td><td class='n'>12,440<br><small>17.6%节省</small></td><td class='n'>16,896<br><small>3.1%膨胀</small></td><td class='n'>0.004650<br><small>+7.5%</small></td><td class='n'>0.192<br><small>-11.2%</small></td><td class='n'>2.124<br><small>-7.4%</small></td><td class='n'>118</td><td>exact fixed-partition subset; no scheduler/bin-packing reproduction</td></tr><tr><td>静态完整128-bit context字典</td><td class='n'>11,322<br><small>25.0%节省</small></td><td class='n'>17,280<br><small>5.5%膨胀</small></td><td class='n'>0.004651<br><small>+7.6%</small></td><td class='n'>0.236<br><small>+9.1%</small></td><td class='n'>2.497<br><small>+8.9%</small></td><td class='n'>118</td><td>exact strong control baseline; workload-pool-specific dictionary</td></tr><tr><td>Multanen 2024机制级模型：四个可编程并行字典</td><td class='n'>16,234<br><small>7.5%膨胀</small></td><td class='n'>18,432<br><small>12.5%膨胀</small></td><td class='n'>0.006228<br><small>+44.0%</small></td><td class='n'>0.257<br><small>+19.1%</small></td><td class='n'>2.669<br><small>+16.4%</small></td><td class='n'>126</td><td>paper-shaped reconstruction: public paper mechanism, original CFG region builder/selection code unavailable</td></tr></tbody></table></div>
+<p class='caption'><b>表头说明：</b>“逻辑bit”只数真正需要表达的信息；“请求SRAM bit”将每个独立Bank的深度补至2的幂。面积、能量和功耗只包含CACTI SRAM，不包含解码组合逻辑。面积等变化率为负表示下降。功耗按实际访问次数折算到1GHz，运行周期不同的方法还应同时观察总能量。</p>
+<div class='box'><b>正确解读：</b>七应用池并非E2算法失效。E2把最深流从77降到74，但当前宏档位无法兑现面积差。论文应保留该负结果，说明收益取决于“固定slot不均衡是否足以跨过物理Bank深度/面积台阶”。</div>
+
+<h2>6. 十二mapping压力池：主结果与保守敏感性</h2>
+<h3>6.1 Bank深度补到2次幂</h3>
+<div class='scroll'><table><thead><tr>
+<th>方案</th><th>有效/逻辑bit<br><small>相对E0节省</small></th>
+<th>各Bank补到2次幂后的请求SRAM bit<br><small>相对E0节省</small></th>
+<th>CACTI面积/mm²<br><small>相对E0变化</small></th>
+<th>一次池读取能量/nJ<br><small>相对E0变化</small></th>
+<th>1GHz活跃SRAM总功耗/mW<br><small>相对E0变化</small></th>
+<th>运行周期</th><th>复现边界</th></tr></thead><tbody><tr><td>E0：不压缩，逐拍读取四个32-bit row word</td><td class='n'>44,544<br><small>0.0%节省</small></td><td class='n'>65,536<br><small>0.0%节省</small></td><td class='n'>0.016638<br><small>+0.0%</small></td><td class='n'>2.013<br><small>+0.0%</small></td><td class='n'>7.648<br><small>+0.0%</small></td><td class='n'>348</td><td>exact</td></tr><tr><td>E1：固定row纵向压缩，四个payload Bank等深</td><td class='n'>34,032<br><small>23.6%节省</small></td><td class='n'>67,584<br><small>3.1%膨胀</small></td><td class='n'>0.017693<br><small>+6.3%</small></td><td class='n'>1.614<br><small>-19.8%</small></td><td class='n'>6.616<br><small>-13.5%</small></td><td class='n'>348</td><td>exact mechanism reproduction</td></tr><tr class='focus'><td>E2：四lane条带化＋启动接口输入phase_q</td><td class='n'>34,032<br><small>23.6%节省</small></td><td class='n'>34,816<br><small>46.9%节省</small></td><td class='n'>0.011017<br><small>-33.8%</small></td><td class='n'>1.365<br><small>-32.2%</small></td><td class='n'>5.006<br><small>-34.5%</small></td><td class='n'>348</td><td>proposed; exact trace implementation</td></tr><tr><td>E2消融：条带化，但所有程序phase_q=0</td><td class='n'>34,032<br><small>23.6%节省</small></td><td class='n'>67,584<br><small>3.1%膨胀</small></td><td class='n'>0.017693<br><small>+6.3%</small></td><td class='n'>1.614<br><small>-19.8%</small></td><td class='n'>6.616<br><small>-13.5%</small></td><td class='n'>348</td><td>exact ablation; intentionally omits per-program phase optimization</td></tr><tr><td>Lee 2018可复现子集：固定row时间保持</td><td class='n'>38,704<br><small>13.1%节省</small></td><td class='n'>67,584<br><small>3.1%膨胀</small></td><td class='n'>0.017693<br><small>+6.3%</small></td><td class='n'>1.826<br><small>-9.3%</small></td><td class='n'>7.223<br><small>-5.5%</small></td><td class='n'>348</td><td>exact fixed-partition subset; no scheduler/bin-packing reproduction</td></tr><tr><td>静态完整128-bit context字典</td><td class='n'>17,028<br><small>61.8%节省</small></td><td class='n'>19,968<br><small>69.5%节省</small></td><td class='n'>0.005441<br><small>-67.3%</small></td><td class='n'>0.819<br><small>-59.3%</small></td><td class='n'>2.926<br><small>-61.7%</small></td><td class='n'>348</td><td>exact strong control baseline; workload-pool-specific dictionary</td></tr><tr><td>Multanen 2024机制级模型：四个可编程并行字典</td><td class='n'>32,566<br><small>26.9%节省</small></td><td class='n'>38,912<br><small>40.6%节省</small></td><td class='n'>0.012134<br><small>-27.1%</small></td><td class='n'>1.543<br><small>-23.4%</small></td><td class='n'>4.798<br><small>-37.3%</small></td><td class='n'>424</td><td>paper-shaped reconstruction: public paper mechanism, original CFG region builder/selection code unavailable</td></tr></tbody></table></div>
+<p class='caption'><b>表头说明：</b>“逻辑bit”只数真正需要表达的信息；“请求SRAM bit”将每个独立Bank的深度补至2的幂。面积、能量和功耗只包含CACTI SRAM，不包含解码组合逻辑。面积等变化率为负表示下降。功耗按实际访问次数折算到1GHz，运行周期不同的方法还应同时观察总能量。</p>
+<p>E2相对E0的请求SRAM节省46.88%，CACTI面积下降33.78%；相对E1的面积下降37.73%。所有phase为0时lane负载为262/256/252/250，仍有一条lane超过256而被迫使用512深；这正是独立phase输入解决的程序边界偏置。</p>
+
+<h3>6.2 不补2次幂：直接按266深与255深建CACTI</h3>
+<div class='scroll'><table><thead><tr>
+<th>方案</th><th>不强制2次幂的CACTI宏：个数×深度×逻辑位宽×作用</th>
+<th>面积/mm²<br><small>相对E0及E1</small></th><th>一次池能量/nJ<br><small>相对E0</small></th>
+<th>1GHz活跃SRAM总功耗/mW<br><small>相对E0</small></th><th>最慢宏周期/ns</th>
+</tr></thead><tbody><tr><td>E0：不压缩，逐拍读取四个32-bit row word</td><td><code>4×348×32×payload</code></td><td class='n'>0.012439<br><small>+0.00% vs E0；+11.80% vs E1</small></td><td class='n'>1.784<br><small>+0.00%</small></td><td class='n'>6.426<br><small>+0.00%</small></td><td class='n'>0.121</td></tr><tr><td>E1：固定row纵向压缩，四个payload Bank等深</td><td><code>1×348×4×mask；4×266×32×payload</code></td><td class='n'>0.011126<br><small>-10.55% vs E0；+0.00% vs E1</small></td><td class='n'>1.354<br><small>-24.07%</small></td><td class='n'>4.996<br><small>-22.25%</small></td><td class='n'>0.117</td></tr><tr class='focus'><td>E2：四lane条带化＋启动接口输入phase_q</td><td><code>1×348×4×mask；4×255×32×payload</code></td><td class='n'>0.010715<br><small>-13.85% vs E0；-3.69% vs E1</small></td><td class='n'>1.341<br><small>-24.83%</small></td><td class='n'>4.902<br><small>-23.72%</small></td><td class='n'>0.116</td></tr><tr><td>E2消融：条带化，但所有程序phase_q=0</td><td><code>1×348×4×mask；4×262×32×payload</code></td><td class='n'>0.010921<br><small>-12.20% vs E0；-1.85% vs E1</small></td><td class='n'>1.347<br><small>-24.45%</small></td><td class='n'>4.949<br><small>-22.98%</small></td><td class='n'>0.116</td></tr><tr><td>Lee 2018可复现子集：固定row时间保持</td><td><code>1×348×4×change_mask；4×301×32×changed_payload</code></td><td class='n'>0.011948<br><small>-3.95% vs E0；+7.38% vs E1</small></td><td class='n'>1.562<br><small>-12.41%</small></td><td class='n'>5.705<br><small>-11.22%</small></td><td class='n'>0.118</td></tr><tr><td>静态完整128-bit context字典</td><td><code>4×114×32×dictionary；1×348×7×index</code></td><td class='n'>0.004525<br><small>-63.62% vs E0；-59.33% vs E1</small></td><td class='n'>0.682<br><small>-61.79%</small></td><td class='n'>2.447<br><small>-61.92%</small></td><td class='n'>0.101</td></tr><tr><td>Multanen 2024机制级模型：四个可编程并行字典</td><td><code>4×219×32×compressed_or_raw_stream；1×219×8×stream_type_tag_logical2_physical8；4×32×32×programmable_dictionary_depth32</code></td><td class='n'>0.011181<br><small>-10.11% vs E0；+0.49% vs E1</small></td><td class='n'>1.532<br><small>-14.12%</small></td><td class='n'>4.646<br><small>-27.69%</small></td><td class='n'>0.114</td></tr></tbody></table></div>
+<p class='caption'><b>为什么要补这一表：</b>上一表的巨大跨档收益依赖256/512深度边界。这里直接让CACTI建模所需深度，例如E1为266深、E2为255深，不人为补到512/256。它是防止审稿人质疑“只靠2次幂取整获利”的保守敏感性实验。CACTI接受这些非2次幂容量，但它仍不是代工厂memory compiler。</p>
+<p>在这一保守口径下，E2的绝对面积为0.010715 mm²，E1为0.011126 mm²。E2仍优于E1，但不再是37.7%的巨大差距。静态字典仍最小；Multanen模型面积与E2接近，但一次池能量比E2高14.25%，且含frame停顿。功耗较低部分来自运行时间变长，不能只看平均mW。</p>
+
+<h2>7. 不挑样本的压力实验</h2>
+<h3>7.1 12个mapping的全部4095个非空子集</h3>
+<div class='scroll'><table><thead><tr><th>池中程序数</th><th>全部组合数</th>
+<th>E2的2次幂SRAM：更小/相同/更大</th><th>跨档组合比例</th>
+<th>平均2次幂容量节省</th><th>不取整时平均容量节省</th><th>不取整时最大容量节省</th>
+</tr></thead><tbody><tr><td class='n'>1</td><td class='n'>12</td>
+<td class='n'>3/9/0</td>
+<td class='n'>25.00%</td><td class='n'>14.14%</td>
+<td class='n'>9.90%</td>
+<td class='n'>57.83%</td></tr><tr><td class='n'>2</td><td class='n'>66</td>
+<td class='n'>9/57/0</td>
+<td class='n'>13.64%</td><td class='n'>6.59%</td>
+<td class='n'>8.08%</td>
+<td class='n'>40.00%</td></tr><tr><td class='n'>3</td><td class='n'>220</td>
+<td class='n'>31/189/0</td>
+<td class='n'>14.09%</td><td class='n'>6.83%</td>
+<td class='n'>6.26%</td>
+<td class='n'>25.20%</td></tr><tr><td class='n'>4</td><td class='n'>495</td>
+<td class='n'>37/458/0</td>
+<td class='n'>7.47%</td><td class='n'>3.62%</td>
+<td class='n'>5.35%</td>
+<td class='n'>17.74%</td></tr><tr><td class='n'>5</td><td class='n'>792</td>
+<td class='n'>61/731/0</td>
+<td class='n'>7.70%</td><td class='n'>3.73%</td>
+<td class='n'>4.88%</td>
+<td class='n'>14.04%</td></tr><tr><td class='n'>6</td><td class='n'>924</td>
+<td class='n'>41/883/0</td>
+<td class='n'>4.44%</td><td class='n'>2.15%</td>
+<td class='n'>4.50%</td>
+<td class='n'>11.30%</td></tr><tr><td class='n'>7</td><td class='n'>792</td>
+<td class='n'>9/783/0</td>
+<td class='n'>1.14%</td><td class='n'>0.55%</td>
+<td class='n'>4.33%</td>
+<td class='n'>10.34%</td></tr><tr><td class='n'>8</td><td class='n'>495</td>
+<td class='n'>7/488/0</td>
+<td class='n'>1.41%</td><td class='n'>0.69%</td>
+<td class='n'>4.14%</td>
+<td class='n'>8.55%</td></tr><tr><td class='n'>9</td><td class='n'>220</td>
+<td class='n'>10/210/0</td>
+<td class='n'>4.55%</td><td class='n'>2.20%</td>
+<td class='n'>4.08%</td>
+<td class='n'>7.85%</td></tr><tr><td class='n'>10</td><td class='n'>66</td>
+<td class='n'>1/65/0</td>
+<td class='n'>1.52%</td><td class='n'>0.73%</td>
+<td class='n'>3.97%</td>
+<td class='n'>7.21%</td></tr><tr><td class='n'>11</td><td class='n'>12</td>
+<td class='n'>6/6/0</td>
+<td class='n'>50.00%</td><td class='n'>24.24%</td>
+<td class='n'>3.88%</td>
+<td class='n'>5.81%</td></tr><tr><td class='n'>12</td><td class='n'>1</td>
+<td class='n'>1/0/0</td>
+<td class='n'>100.00%</td><td class='n'>48.48%</td>
+<td class='n'>3.97%</td>
+<td class='n'>3.97%</td></tr></tbody></table></div>
+<p class='caption'><b>表头说明：</b>每个程序最多出现一次，避免用重复拷贝虚增benchmark数量。对每个子集，动态规划穷举每个程序的4个phase选择，得到精确最小的最深lane。“更大”为0意味着条带化在全部公开程序组合上从未需要比固定row纵向压缩更深的payload Bank；“跨档比例”较低则说明2次幂宏下的收益不是每个池都出现。</p>
+<div class='box good'><b>全体统计：</b>E2在4095/4095个子集中最深lane不超过E1最热row。按2次幂SRAM，216个子集更小（5.27%），3879个相同，0个更大。这个结果同时证明优势不是普遍跨档：多数小池只能得到逻辑负载均衡，不能转换为离散宏容量下降。</div>
+
+<h3>7.2 Leave-one-out：满池结论是否由某一个mapping偶然造成</h3>
+<div class='scroll'><table><thead><tr><th>从12池中删掉的mapping</th>
+<th>E1四个固定row负载</th><th>E1最深payload</th><th>E2最深lane</th>
+<th>E1/E2补2次幂后的payload深度</th><th>结果</th></tr></thead><tbody><tr><td>check_size</td><td class='n'>261/255/244/255</td><td class='n'>261</td>
+<td class='n'>254</td><td class='n'>512/256</td><td>E2跨档</td></tr><tr><td>dbl_max</td><td class='n'>259/247/237/247</td><td class='n'>259</td>
+<td class='n'>248</td><td class='n'>512/256</td><td>E2跨档</td></tr><tr><td>dbl_min</td><td class='n'>259/247/238/247</td><td class='n'>259</td>
+<td class='n'>248</td><td class='n'>512/256</td><td>E2跨档</td></tr><tr><td>fft_bitrev</td><td class='n'>258/244/237/250</td><td class='n'>258</td>
+<td class='n'>248</td><td class='n'>512/256</td><td>E2跨档</td></tr><tr><td>fft_cplx</td><td class='n'>246/237/228/235</td><td class='n'>246</td>
+<td class='n'>237</td><td class='n'>256/256</td><td>同档</td></tr><tr><td>fft_cplx_forever</td><td class='n'>245/237/226/234</td><td class='n'>245</td>
+<td class='n'>236</td><td class='n'>256/256</td><td>同档</td></tr><tr><td>func_test</td><td class='n'>148/139/128/138</td><td class='n'>148</td>
+<td class='n'>139</td><td class='n'>256/256</td><td>同档</td></tr><tr><td>max_peak</td><td class='n'>259/248/238/246</td><td class='n'>259</td>
+<td class='n'>248</td><td class='n'>512/256</td><td>E2跨档</td></tr><tr><td>min_max_circular</td><td class='n'>259/249/239/251</td><td class='n'>259</td>
+<td class='n'>250</td><td class='n'>512/256</td><td>E2跨档</td></tr><tr><td>while_loop_100percent</td><td class='n'>237/227/216/227</td><td class='n'>237</td>
+<td class='n'>227</td><td class='n'>256/256</td><td>同档</td></tr><tr><td>while_loop_50percent</td><td class='n'>251/241/230/241</td><td class='n'>251</td>
+<td class='n'>241</td><td class='n'>256/256</td><td>同档</td></tr><tr><td>while_loop_75percent</td><td class='n'>244/234/223/234</td><td class='n'>244</td>
+<td class='n'>234</td><td class='n'>256/256</td><td>同档</td></tr></tbody></table></div>
+<p class='caption'><b>表头说明：</b>这是12折leave-one-out：每次只删除一个mapping再重做phase优化。6/12个池仍然让E2从512深降到256深，另外6个池两者都在256深；不存在E2更差的情况。</p>
+
+<h3>7.3 程序按未知顺序到达时，phase_q怎样选</h3>
+<p>不必预先为每个程序永久保存phase。loader知道当前四条Bank尾地址，程序到达时只试四个q，选择让装载后最深Bank最小的那个，然后把q与对应的lane基址信息一起传给启动接口。本实验用状态动态规划精确统计全部12!种到达顺序，而非随机抽样。</p>
+<ul><li>总顺序：479,001,600。</li>
+<li>得到255/255/255/255：446,757,120种，占93.268%。</li>
+<li>得到256/255/255/254：32,244,480种，占6.732%。</li>
+<li><b>所有顺序均不超过256深，因此2次幂SRAM组织不依赖一个精心挑选的装载次序。</b></li></ul>
+
+<h2>8. 能否构造“审稿人不会质疑、又更有利”的扩大池</h2>
+<div class='box bad'><b>不能把复制同一mapping、循环移位row、随机修改立即数或使用deprecated旧ISA文件包装成更多benchmark。</b>复制代码本可共享，不应重复占容量；row轮换会改变物理PE和通信位置；修改立即数可能改变控制流或程序语义。这些做法容易被审稿人直接否定。</div>
+<p>当前公开数据能做的最强、且可审查的实验就是：</p>
+<ol><li>7个真实应用mapping作为非挑选的功能集，诚实报告同档结果；</li><li>全部12个官方mapping作为context-memory容量压力池，明确其中5个是测试/压力程序；</li><li>全部4095子集、12折leave-one-out和全部12!到达顺序，证明满池结果不是由单个样本或特定顺序人为制造；</li><li>同时报告2次幂宏和不取整CACTI，隔离“负载均衡本身”和“跨深度档位放大”两种收益。</li></ol>
+<p>若论文还需要真正扩大benchmark数量，唯一稳妥路径是新增独立、功能可验证的OpenEdge mapping：选择PolyBench/MachSuite等循环kernel，按当前32-bit ISA映射，生成<code>instructions_*.py</code>，用官方行为模拟器对照C参考输出，再纳入池统计。OpenEdge当前没有公开自动mapper；这会是新的手工映射工作，不能由本轮软件压缩脚本凭空生成。</p>
+
+<h2>9. 对论文叙事的影响</h2>
+<div class='box good'><b>建议主张：</b>“针对逐周期、多等宽槽、统一Bank深度的配置存储，提出值无关的slot/lane解耦。外部phase输入消除程序边界偏置，在不减lane、不改调度、不中断一拍一context恢复的情况下，把固定slot峰值容量转化为接近总有效word数/Bank数的均衡容量。”</div>
+<ul><li>不要主张E2压缩的信息熵低于E1：两者逻辑bit完全相同；创新在物理Bank容量均衡和可替换程序池。</li>
+<li>不要只报512→256：必须同时报266→255的exact-depth CACTI结果。</li>
+<li>静态字典是closed-world压缩上界；论文的价值需要通过未知程序替换、固定周期恢复、单级数据读取和RTL逻辑开销来与它区分。</li>
+<li>Lee完整方法可能通过编译器don't-care优化得到更强结果，应诚实标注本次只是固定row、原始trace子集。</li>
+<li>Multanen应报告冷切换和重复执行两种摊销口径；当前frame开销不能代表长时间重复kernel的最终能耗。</li></ul>
+
+<h2>10. 复现文件与来源</h2>
+<ul>
+<li><code>/home/scratch.qinhaoy_gpu_5/gb21b/hw/nvgpu_gb21y/promotion_kpi/compress-vliw/analysis_output_openedge_phase_pool_robustness_2026-09-14/openedge_phase_pool_robustness.json</code>：完整JSON结果。</li>
+<li><code>/home/scratch.qinhaoy_gpu_5/gb21b/hw/nvgpu_gb21y/promotion_kpi/compress-vliw/experiments/openedge_phase_pool_robustness_2026_09_14.py</code>：解析、逐拍恢复、4095子集、12!到达顺序与CACTI脚本。</li>
+<li><a href='https://github.com/esl-epfl/OpenEdgeCGRA'>OpenEdgeCGRA官方仓库</a>：平台、RTL及12个当前格式mapping。</li>
+<li><a href='https://doi.org/10.1145/3162018'>Lee et al., ACM TACO 2018</a>；本地全文：<code>paper/Improving Energy Efficiency of Coarse-Grain Reconfigurable Arrays Through Modulo Schedule Compression:Decompression.pdf</code>。</li>
+<li><a href='https://doi.org/10.1007/s10617-024-09290-2'>Multanen et al., Journal of Signal Processing Systems 2024</a>；本地全文：<code>paper/Energy-Efficient Instruction Compression with Programmable Dictionaries.pdf</code>。</li>
+<li><a href='https://doi.org/10.1109/MICRO.1997.645830'>Lefurgy et al., MICRO 1997</a>：静态dictionary code compression基础文献。</li>
+<li><a href='https://github.com/HewlettPackard/cacti'>CACTI官方仓库</a>。</li>
+</ul>
+<p class='caption'>复现命令：<code>/usr/bin/python3.11 experiments/openedge_phase_pool_robustness_2026_09_14.py</code>，然后运行本报告生成脚本。所有编码方案保留上一轮逐context round-trip断言。本轮只读拉取OpenEdge完整Git历史，没有修改外部平台仓库，也没有git commit或push。</p>
+</main></body></html>

@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>OpenEdgeCGRA跨平台实验：论文正文建议写法</title>
+  <style>
+    :root { --ink:#17202a; --muted:#5c6773; --blue:#165dba; --line:#d7dee7;
+            --pale:#edf5ff; --good:#eaf8f1; --warn:#fff7e5; --bad:#fff0ef; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:#f4f6f9; color:var(--ink);
+           font:15px/1.75 system-ui,-apple-system,"Segoe UI","Noto Sans SC",sans-serif; }
+    main { max-width:1100px; margin:28px auto; padding:42px 50px; background:white;
+           box-shadow:0 8px 28px #25364a18; }
+    h1 { margin:0 0 8px; line-height:1.3; font-size:29px; }
+    h2 { margin-top:38px; padding-bottom:7px; border-bottom:2px solid #dce9f8; }
+    h3 { margin-top:27px; }
+    .meta,.caption { color:var(--muted); }
+    .box { margin:18px 0; padding:14px 18px; border-left:5px solid var(--blue); background:var(--pale); }
+    .good { border-left-color:#087f5b; background:var(--good); }
+    .warn { border-left-color:#a56600; background:var(--warn); }
+    .bad { border-left-color:#b42318; background:var(--bad); }
+    table { width:100%; border-collapse:collapse; margin:14px 0 7px; font-size:14px; }
+    th,td { border:1px solid var(--line); padding:9px 10px; vertical-align:top; }
+    th { background:#edf3fa; text-align:left; }
+    td.num { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+    tr.focus { background:#f0f7ff; font-weight:650; }
+    code { background:#f1f3f5; padding:1px 4px; border-radius:3px; }
+    blockquote { margin:16px 0; padding:13px 18px; border-left:4px solid #8baed8;
+                 background:#f7f9fc; }
+    .caption { font-size:13px; margin:4px 0 17px; }
+    ul,ol { padding-left:24px; }
+    @media(max-width:760px) { main { margin:0; padding:24px 17px; } table { display:block; overflow:auto; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>OpenEdgeCGRA跨平台实验：有说服力且可经受审稿的正文写法</h1>
+  <p class="meta">依据：OpenEdge官方仓库12个公开mapping；CACTI 7.0、32 nm HP、1 GHz访问率归一化。日期：2026-09-15。</p>
+
+  <div class="box bad"><strong>边界：</strong>本文档不会设计“让审稿人发现不了”的选择性呈现。<code>phase_q</code>决定了payload bank能否从512深降到256深，属于影响结论的关键变量，必须出现。下面采用的是更紧凑的组织：主表只比较五个正式方案；消融放在独立的机制验证表；静态完整字典放在理想化上界说明中。</div>
+
+  <h2>1. CGRA的执行特点与静态mapping口径</h2>
+  <p>以下文字可以直接放入论文的实验平台介绍：</p>
+  <blockquote>
+    与按顺序保存完整应用指令流的通用处理器不同，CGRA主要面向计算密集型循环。编译器通常只提取循环体内的数据流图，并将循环体映射为有限数量的阵列配置。运行时，程序计数器或循环控制逻辑反复调用这些配置，而不是将每次循环迭代展开成一段新的直线指令序列。因此，CGRA的静态mapping通常只有数个至数十个配置周期，但同一mapping在实际执行中可能被重复调用数百或数千次。静态配置数量反映配置存储容量，动态执行次数则由循环迭代次数和控制流决定，二者不能混为一谈。
+  </blockquote>
+  <blockquote>
+    OpenEdgeCGRA的一条配置同时控制4×4阵列中的多个处理单元。官方mapping以循环体配置为主体，并通过分支反复执行其中的配置周期。本文统计的348个配置地址是12个mapping同时常驻所需的静态配置存储量，而不是这些程序完整运行时只执行348个时钟周期。基于这一原因，本文的跨平台实验主要评价配置SRAM的静态容量、面积和访问功耗，不利用静态配置地址数推导应用运行时间。
+  </blockquote>
+
+  <h2>2. 建议放入论文正文的实验设置</h2>
+  <blockquote>
+    为考察所提存储组织能否迁移到不同于本文主平台的等宽多槽架构，我们进一步选择OpenEdgeCGRA作为跨平台验证对象。该平台的4×4阵列按行组织四个32-bit配置槽，并要求每个配置周期恢复四槽完整状态。实验使用官方仓库中全部12个公开mapping构成全常驻程序池，其中包括7个应用mapping和5个功能/压力测试mapping。该程序池共有348个配置地址、1020个有效32-bit槽词，平均每个配置地址包含2.93个有效槽。
+  </blockquote>
+  <blockquote>
+    所有方法均保持原始mapping和四槽峰值并发能力不变。E0直接保存完整配置；E1采用固定逻辑槽纵向压缩；本文方法将逻辑slot身份与物理lane位置解耦，并在程序启动时由加载接口随起始地址输入2-bit初始相位<code>phase_q</code>。相位不占用配置SRAM，运行过程中根据每周期有效槽数递推。Lee 2018和Multanen 2024分别作为时间保持压缩和可编程并行字典的代表性比较。
+  </blockquote>
+
+  <div class="box warn"><strong>必须使用“12个公开mapping”，不能写成“12个应用”。</strong>后五个包含功能测试和人为占用率测试。把它们全部称为应用会给审稿人留下更严重的可信度问题。</div>
+
+  <h2>3. 正文主表：五个正式方案</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>方法</th>
+        <th>方法定位</th>
+        <th>逻辑压缩率<br>相对E0</th>
+        <th>SRAM面积<br>相对E0</th>
+        <th>1 GHz SRAM总功耗<br>相对E0</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>E0：不压缩</td><td>四个固定32-bit bank保存所有槽，包括NOP</td>
+        <td class="num">0%</td><td class="num">基准</td><td class="num">基准</td>
+      </tr>
+      <tr>
+        <td>E1：固定槽纵向压缩</td><td>复现2020年纵向压缩的固定槽机制；四个payload bank统一深度</td>
+        <td class="num">23.6%</td><td class="num">+6.3%</td><td class="num">−13.5%</td>
+      </tr>
+      <tr class="focus">
+        <td>本文：4-lane条带化＋<code>phase_q</code></td><td>slot/lane解耦；不减少lane，不改变调度</td>
+        <td class="num">23.6%</td><td class="num">−33.8%</td><td class="num">−34.5%</td>
+      </tr>
+      <tr>
+        <td>Lee 2018固定槽时间保持</td><td>复现固定槽状态保持子机制；不包含未公开的完整调度器和实体分组</td>
+        <td class="num">13.1%</td><td class="num">+6.3%</td><td class="num">−5.5%</td>
+      </tr>
+      <tr>
+        <td>Multanen 2024可编程并行字典</td><td>机制级重建，包含共享片上字典、选择性压缩与未压缩旁路</td>
+        <td class="num">26.9%</td><td class="num">−27.1%</td><td class="num">−37.3%*</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="caption"><strong>表头说明：</strong>“逻辑压缩率”按尚未进行bank深度取整和byte对齐的有效存储bit计算，正数表示比E0节省；它不等于最终SRAM面积压缩率。面积来自组成SRAM的CACTI面积之和；总功耗为按实际读写次数折算的1 GHz动态功耗加SRAM泄漏，不包含mask/rank/scatter组合逻辑、互连和时钟树。E0绝对值为44,544逻辑bit、0.016638 mm²和7.648 mW；Multanen模型为32,566逻辑bit和0.012134 mm²。星号表示Multanen功耗使用当前共享字典模型，已计入frame读写及装载阶段；由于缺少完整动态执行trace，该比例不是应用级稳态功耗结论。仅给比例的总图可以使用，但正文或附录应保留绝对基准和具体SRAM组织。</p>
+
+  <h3>常驻读取口径下的完整功耗分解</h3>
+  <div class="box good"><strong>是否需要重算：</strong>不需要重新运行CACTI。现有软件模型对E0、E1、本文方法和Lee 2018本来就把配置SRAM写次数设为0，只统计执行时的读访问；Multanen模型则保留了245次工作字典写入。因此，新口径不会改变上表的任何数值，但必须增加下面的分解表，明确哪些功耗来自读、哪些来自字典装载，避免读者误以为所有方案都计入了初次配置写入。</div>
+  <table>
+    <thead>
+      <tr>
+        <th>方法</th>
+        <th>常驻SRAM读能量<br>一次池遍历（nJ）</th>
+        <th>动态字典装载写能量<br>一次池遍历（nJ）</th>
+        <th>读动态功耗<br>@1 GHz（mW）</th>
+        <th>字典装载写功耗<br>@1 GHz（mW）</th>
+        <th>SRAM泄漏功耗<br>（mW）</th>
+        <th>SRAM合计功耗<br>（mW）</th>
+        <th>合计功耗相对E0</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>E0：不压缩</td>
+        <td class="num">2.0132</td><td class="num">0</td><td class="num">5.7851</td>
+        <td class="num">0</td><td class="num">1.8625</td><td class="num">7.6475</td><td class="num">基准</td>
+      </tr>
+      <tr>
+        <td>E1：固定槽纵向压缩</td>
+        <td class="num">1.6144</td><td class="num">0</td><td class="num">4.6391</td>
+        <td class="num">0</td><td class="num">1.9773</td><td class="num">6.6165</td><td class="num">−13.5%</td>
+      </tr>
+      <tr class="focus">
+        <td>本文：4-lane条带化＋<code>phase_q</code></td>
+        <td class="num">1.3651</td><td class="num">0</td><td class="num">3.9227</td>
+        <td class="num">0</td><td class="num">1.0837</td><td class="num">5.0064</td><td class="num">−34.5%</td>
+      </tr>
+      <tr>
+        <td>Lee 2018固定槽时间保持</td>
+        <td class="num">1.8256</td><td class="num">0</td><td class="num">5.2459</td>
+        <td class="num">0</td><td class="num">1.9773</td><td class="num">7.2232</td><td class="num">−5.5%</td>
+      </tr>
+      <tr>
+        <td>Multanen 2024可编程并行字典*</td>
+        <td class="num">1.4518</td><td class="num">0.0913</td><td class="num">3.4240</td>
+        <td class="num">0.2153</td><td class="num">1.1585</td><td class="num">4.7978</td><td class="num">−37.3%*</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="caption"><strong>表头与计算口径说明：</strong>“常驻SRAM读能量”是按当前静态模型顺序访问一次12-mapping池时，所有配置流、标记和必要字典查询消耗的读能量；它不是一个完整应用执行一次的能量。“动态字典装载写能量”只保留Multanen共享工作字典的245次更新，E0、E1、本文方法和Lee的初次配置写入均不计入。读动态功耗按<code>P_read=E_read/(C/f)</code>计算，字典装载写功耗按<code>P_load=E_write/(C/f)</code>计算，其中<code>f=1 GHz</code>；合计功耗等于读动态功耗、保留的字典装载写功耗与SRAM泄漏功耗之和。泄漏功耗与是否发生写访问无关，因此必须保留。该表仍只统计SRAM，不包含解码、mask/rank/scatter、互连和时钟树逻辑。</p>
+  <p class="caption"><strong>Multanen星号说明：</strong>前四种方法使用348个原始配置周期进行功耗归一化；Multanen当前机制级模型使用424个存储访问周期，其中包含压缩/旁路数据以及dictionary frame装载。由此得到的0.2153 mW是“每完成当前模型的一次池遍历就装载这些字典”时的平均写功耗。真实应用中，共享字典仅在程序或压缩区域切换且字典内容不同时更新，其长期平均写功耗取决于切换频率。由于公开mapping没有完整动态循环次数和切换trace，1.4518 nJ读能量与0.0913 nJ装载写能量是更直接、可复核的数据，−37.3%不能表述成已测得的应用级稳态功耗优势。</p>
+
+  <h3>正文可直接采用的结果分析</h3>
+  <blockquote>
+    如表X所示，固定槽纵向压缩虽然删除了NOP，但其四个payload bank必须按最热逻辑槽统一定深，因此在该程序池上并未形成SRAM面积收益。相比之下，本文方法在不修改mapping、不降低四槽峰值并发且不增加运行周期的条件下，将有效配置词均匀分布到四个物理lane，使CACTI SRAM面积和1 GHz SRAM总功耗相对E0分别降低33.8%和34.5%。相较E1，本文方法的优势并非来自删除更多有效信息——两者保存相同的mask与payload——而是来自消除固定slot与固定bank绑定造成的容量碎片。
+  </blockquote>
+  <blockquote>
+    Multanen 2024机制级模型获得了略低于本文方法的SRAM功耗。该方法使用可在运行时改写的共享片上字典，因此在切换到采用不同字典内容的程序或压缩区域时，需要从指令流读取dictionary frame并更新片上字典，产生额外的动态字典装载开销。由于OpenEdge公开mapping只提供静态循环体配置，缺少完整应用的循环迭代次数和程序切换频率，本文不将该一次性装载量换算为应用运行周期比例。本文方法不依赖具体指令值重复，也不需要随程序内容更新字典，因此不存在相同的动态字典装载过程。
+  </blockquote>
+
+  <h3>Multanen模型的片上SRAM配置</h3>
+  <p>以下文字可以直接放入论文的比较方法说明：</p>
+  <blockquote>
+    将Multanen并行可编程字典机制适配到OpenEdge的四个32-bit逻辑槽后，本模型为每个槽配置一张独立的32项×32-bit片上字典。每个字典索引为5 bit，四个槽的一组索引共20 bit，因此一个128-bit压缩存储词最多打包6个配置周期的索引。压缩及未压缩指令流采用4个256×32-bit SRAM并行组成128-bit取指宽度；另设一个256×8-bit SRAM保存压缩词、原始词和字典frame的类型标记；四张工作字典采用4个32×32-bit小型存储体。计入深度取整和byte对齐后，该模型共分配38,912 bit片上存储，CACTI面积为0.012134 mm²，其中四张字典本体面积为0.001582 mm²，已包含在表X的面积结果中。
+  </blockquote>
+  <blockquote>
+    上述配置只保留一套可复用的片上工作字典，而不是为每个常驻程序复制一套专用字典。当程序切换后所需字典内容发生变化时，解压器需要读取该程序的dictionary frame并改写工作字典，因此产生额外的动态装载访问和切换等待。若为每个程序配置独立常驻字典，可以消除该切换装载，但字典容量和选择逻辑将随常驻程序数量增加。本文采用共享字典的面积模型，并将动态装载作为程序切换开销单独说明，不使用缺少动态执行trace的静态mapping数量计算周期增长比例。
+  </blockquote>
+
+  <h2>4. 必须保留的最小消融：为什么需要phase_q</h2>
+  <p>这部分可以不与五个正式方案混在一张主表中，但不能不出现。最紧凑的写法如下。</p>
+  <table>
+    <thead>
+      <tr><th>条带化设置</th><th>四个物理lane的有效词数</th><th>payload bank深度</th><th>SRAM面积相对E0</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>所有程序固定<code>phase_q=0</code></td><td><code>262 / 256 / 252 / 250</code></td><td class="num">512</td><td class="num">+6.3%</td></tr>
+      <tr class="focus"><td>加载时为每个程序选择<code>phase_q</code></td><td><code>255 / 255 / 255 / 255</code></td><td class="num">256</td><td class="num">−33.8%</td></tr>
+    </tbody>
+  </table>
+  <p class="caption"><strong>表头说明：</strong>lane有效词数决定四个等深payload bank的最小统一深度；物理宏采用2的幂次深度。<code>phase_q</code>随程序起始地址从加载接口输入，只初始化一个2-bit运行寄存器，不写入配置SRAM。</p>
+
+  <blockquote>
+    条带化后的最终bank深度还受到各程序初始lane位置的影响。若所有程序均从lane 0开始，最深lane包含262个有效词，仍需512深bank。本文在程序装载时枚举四种可能的2-bit初始相位，并选择使当前程序池最大lane负载最小的相位。优化后四个lane均包含255个有效词，达到理论下界<code>ceil(1020/4)=255</code>，从而使payload bank降至256深。该过程只改变有效词在物理bank中的起始轮转位置，不改变逻辑slot、指令内容或执行周期。
+  </blockquote>
+
+  <div class="good"><strong>这样呈现反而会增强创新性。</strong>消融明确说明：简单round-robin条带化还不够；真正完整的方法是“slot/lane解耦＋程序级初始相位选择”。审稿人看到机制、理论下界和零周期代价后，通常比只看到一个有利百分比更容易相信结果。</div>
+
+  <h2>5. 静态完整指令字典如何放到附录，而不是从论文消失</h2>
+  <p>它可以不进入“近年代表性工作”主表，因为没有对应的近年算法复现身份。但建议保留以下附录文字：</p>
+  <blockquote>
+    我们还评估了一个按当前封闭程序池构建的静态完整指令字典，作为依赖指令值重复性的理想化压缩上界。348个完整128-bit配置中共有114个不同值；该字典的CACTI SRAM面积相对E0降低67.3%，优于本文方法。该结果不包含未知程序换入后的字典扩容或重建成本，也需要索引读取和字典读取两级恢复路径，因此不作为满足未知程序直接替换语义的主要基线。它表明：若程序池永久封闭且允许按工作负载训练字典，值相关压缩可以获得更高容量收益；本文工作的目标则是提供值无关、无需训练且固定周期的存储组织。
+  </blockquote>
+  <p>这种处理不会破坏主结论，反而提前回答“为什么不用完整字典”的审稿问题。</p>
+
+  <h2>6. 可以强调，但不能越界的论文结论</h2>
+  <div class="box good">
+    <strong>可以写：</strong>OpenEdge结果表明，在等宽多槽、每周期完整恢复、统一bank深度和多程序常驻条件下，slot/lane解耦能够把固定槽负载不均衡转化为接近理论下界的物理bank负载，并在不改变调度周期的条件下产生SRAM面积与功耗收益。
+  </div>
+  <div class="box warn">
+    <strong>不能写：</strong>本文方法在OpenEdge上取得最高压缩率；12个mapping均为真实应用；CACTI SRAM收益等同于包含解码逻辑后的总芯片收益；<code>phase_q</code>不是关键因素。
+  </div>
+
+  <h2>7. 最终建议</h2>
+  <ol>
+    <li>跨平台总表使用五个正式方案；执行行为在文字中说明，不使用静态mapping数量推导运行周期。</li>
+    <li>紧接一张很小的<code>phase_q</code>消融表，把它写成机制证明，而不是负面结果。</li>
+    <li>静态完整字典移至附录“理想化值相关上界”，不从论文删除。</li>
+    <li>至少在表注中提供E0绝对逻辑bit、面积和功耗，防止归一化百分比掩盖实验规模。</li>
+    <li>明确CACTI只估计SRAM。最终论文主结论仍需E1/E2解码RTL综合支持。</li>
+  </ol>
+
+  <p class="meta">数据来源：<code>plan/openedge_ccf_NeqM_striping_prior_work_cacti_study_2026-09-13.html</code>第5.2节及对应JSON。本文档未执行git push。</p>
+</main>
+</body>
+</html>
