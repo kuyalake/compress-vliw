@@ -10,9 +10,12 @@
 // 3, so three shared physical lanes suffice (mod-3 phase).
 //
 //   config : 5-bit mask per real execution cycle (implicit EOP via prog_len);
-//            sram_32768x5_wrapper (covers LLaMA config depth).
+//            sram_8192x5_wrapper (BERT config depth 8192).
 //   lanes  : three 34-bit payload lanes, phase-striped (mod-3);
-//            sram_16384x34_wrapper (covers LLaMA longest lane 11035).
+//            3x sram_2048x34_tiled #(TILES=2) -> 4096 deep per lane (BERT
+//            longest lane 2375).  Uniform 2048x34 primitive with per-tile
+//            CEN gating, so a payload read costs the same energy as the
+//            E2-2/E2-4/E2-5 BERT variants (lane-sweep fairness, 2026-09-16).
 //
 // Decode contract: popcount(mask) <= 3 is guaranteed by the max-3 schedule
 // (software exhaustively verified all 26 legal masks x 3 phases = 78 states).
@@ -224,13 +227,13 @@ module exp2_three_lane_pool_top_bert (
         .wdata(cfg_wdata), .wmask(cfg_wmask), .rdata(cfg_rdata)
     );
 
-    sram_4096x34_wrapper u_lane0 (
+    sram_2048x34_tiled #(.TILES(2)) u_lane0 (
         .clk(clk), .cen(lane0_cen), .wen(lane0_wen), .addr(lane0_addr),
         .wdata(load_wdata), .wmask(lane_wmask), .rdata(lane0_rdata));
-    sram_4096x34_wrapper u_lane1 (
+    sram_2048x34_tiled #(.TILES(2)) u_lane1 (
         .clk(clk), .cen(lane1_cen), .wen(lane1_wen), .addr(lane1_addr),
         .wdata(load_wdata), .wmask(lane_wmask), .rdata(lane1_rdata));
-    sram_4096x34_wrapper u_lane2 (
+    sram_2048x34_tiled #(.TILES(2)) u_lane2 (
         .clk(clk), .cen(lane2_cen), .wen(lane2_wen), .addr(lane2_addr),
         .wdata(load_wdata), .wmask(lane_wmask), .rdata(lane2_rdata));
 

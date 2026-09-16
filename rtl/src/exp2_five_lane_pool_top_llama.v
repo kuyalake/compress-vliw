@@ -8,7 +8,8 @@
 //
 // Per plan/e2_five_lane_detailed_experiment_plan_2026-09-13.html:
 //   config : 5-bit mask per real execution cycle (implicit EOP via prog_len);
-//            sram_32768x5_wrapper (covers LLaMA config depth).
+//            sram_8192x5_tiled #(TILES=4) -> 32768 deep (covers LLaMA config;
+//            uniform gated-tile construction with the E1/E2-4 LLaMA baselines).
 //   lanes  : five 34-bit payload lanes, phase-striped (mod-5);
 //            sram_4096x34_tiled #(TILES=2) -> 8192 deep (covers LLaMA lane).
 //
@@ -227,7 +228,11 @@ module exp2_five_lane_pool_top_llama (
     wire [12:0] lane4_addr = load_en ? load_addr[12:0] : ptr4[12:0];
     wire [33:0] lane_wmask = {34{1'b1}};
 
-    sram_32768x5_wrapper u_cfg (
+    // config: 4x 8192x5 gated tiles -> 32768 deep.  Uniform construction with
+    // the E1/E2-4 LLaMA baselines (lane-sweep fairness, 2026-09-16): the
+    // native 32768x5 macro has a higher per-access internal power, which
+    // inflated the measured power of the 5/3/2-lane variants.
+    sram_8192x5_tiled #(.TILES(4)) u_cfg (
         .clk(clk), .cen(cfg_cen), .wen(cfg_wen), .addr(cfg_addr),
         .wdata(cfg_wdata), .wmask(cfg_wmask), .rdata(cfg_rdata)
     );

@@ -11,7 +11,9 @@
 //   lanes  : `ifdef PAY_MC` MC sram_16384x34_wrapper (LLaMA), else
 //            4x sram_4096x34_tiled #(TILES_PAY)  (BERT=1, SD-UNet=2)
 //
-// In-band EOP (config code 11111). Hold-only output stage. No backpressure.
+// Implicit EOP via the program-length counter (no in-band 11111 marker in
+// the config stream; uniform with the E1/E2-5/E2-3/E2-2 tops, 2026-09-16).
+// Hold-only output stage. No backpressure.
 // II=1, 3-cycle latency. See rtl/plan.md section 5.3 for the pipeline detail.
 // -----------------------------------------------------------------------------
 
@@ -89,15 +91,20 @@ module exp2_adaptive_4slot_pool_top #(
 `endif
 
     // ------------------------------------------------------------------
-    // Stage A: config fetch issue (T entries per program, incl. EOP entry)
+    // Stage A: config fetch issue.
+    //   real cycles cnt in [0, prog_len-2] read config; cycle prog_len-1 is
+    //   the implicit EOP (no config read, b_eop=1).
     // ------------------------------------------------------------------
     reg         run_q;
     reg  [14:0] cfg_pc;
     reg  [14:0] cfg_cnt;
     reg  [14:0] len_q;
     reg         b_vld;
+    reg         b_eop;
 
-    wire        cfg_cen_f = run_q & (cfg_cnt < len_q);
+    wire        is_real   = run_q & (cfg_cnt < len_q - 15'd1);
+    wire        is_eopc   = run_q & (cfg_cnt == len_q - 15'd1);
+    wire        cfg_cen_f = is_real;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -106,25 +113,35 @@ module exp2_adaptive_4slot_pool_top #(
             cfg_cnt <= 15'd0;
             len_q   <= 15'd0;
             b_vld   <= 1'b0;
+            b_eop   <= 1'b0;
         end else if (load_en) begin
             b_vld   <= 1'b0;
+            b_eop   <= 1'b0;
         end else if (start) begin
             run_q   <= 1'b1;
             cfg_pc  <= cfg_base;
             cfg_cnt <= 15'd0;
             len_q   <= prog_len;
             b_vld   <= 1'b0;
+            b_eop   <= 1'b0;
         end else if (run_q) begin
-            if (cfg_cnt < len_q) begin
+            if (is_real) begin
                 cfg_pc  <= cfg_pc + 15'd1;
                 cfg_cnt <= cfg_cnt + 15'd1;
                 b_vld   <= 1'b1;
-                if (cfg_cnt == len_q - 15'd1) begin
-                    run_q <= 1'b0;          // last config entry (EOP) issued
-                end
+                b_eop   <= 1'b0;
+            end else if (is_eopc) begin
+                cfg_cnt <= cfg_cnt + 15'd1;
+                b_vld   <= 1'b1;
+                b_eop   <= 1'b1;            // implicit EOP cycle
+                run_q   <= 1'b0;
+            end else begin
+                b_vld   <= 1'b0;
+                b_eop   <= 1'b0;
             end
         end else begin
             b_vld <= 1'b0;
+            b_eop <= 1'b0;
         end
     end
 
@@ -140,7 +157,6 @@ module exp2_adaptive_4slot_pool_top #(
 
     wire [4:0]  cfg_rdata;
     wire [4:0]  mask_w   = cfg_rdata;
-    wire        is_eop_w = (mask_w == 5'b11111);
 
     // popcount and prefix ranks (shared logic)
     wire [2:0]  pre1 = {2'b00, mask_w[0]};
@@ -154,10 +170,11 @@ module exp2_adaptive_4slot_pool_top #(
     wire [1:0]  rk_lane1 = 2'd1 - phase_q;
     wire [1:0]  rk_lane2 = 2'd2 - phase_q;
     wire [1:0]  rk_lane3 = 2'd3 - phase_q;
-    wire        en0 = b_vld & ~is_eop_w & ({1'b0, rk_lane0} < pcnt);
-    wire        en1 = b_vld & ~is_eop_w & ({1'b0, rk_lane1} < pcnt);
-    wire        en2 = b_vld & ~is_eop_w & ({1'b0, rk_lane2} < pcnt);
-    wire        en3 = b_vld & ~is_eop_w & ({1'b0, rk_lane3} < pcnt);
+    wire        live = b_vld & ~b_eop;
+    wire        en0 = live & ({1'b0, rk_lane0} < pcnt);
+    wire        en1 = live & ({1'b0, rk_lane1} < pcnt);
+    wire        en2 = live & ({1'b0, rk_lane2} < pcnt);
+    wire        en3 = live & ({1'b0, rk_lane3} < pcnt);
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -171,9 +188,9 @@ module exp2_adaptive_4slot_pool_top #(
             c_vld   <= 1'b0; c_eop <= 1'b0; mask_c <= 5'b0; phase_c <= 2'b0;
         end else begin
             c_vld   <= b_vld;
-            c_eop   <= b_vld & is_eop_w;
+            c_eop   <= b_eop;
             phase_c <= phase_q;
-            if (b_vld && !is_eop_w) begin
+            if (live) begin
                 mask_c  <= mask_w;
                 phase_q <= phase_q + pcnt[1:0];
                 if (en0) ptr0 <= ptr0 + 14'd1;
@@ -181,7 +198,7 @@ module exp2_adaptive_4slot_pool_top #(
                 if (en2) ptr2 <= ptr2 + 14'd1;
                 if (en3) ptr3 <= ptr3 + 14'd1;
             end else begin
-                mask_c  <= 5'b0;    // idle or EOP: all slots invalid
+                mask_c  <= 5'b0;    // idle or implicit EOP: all slots invalid
             end
         end
     end

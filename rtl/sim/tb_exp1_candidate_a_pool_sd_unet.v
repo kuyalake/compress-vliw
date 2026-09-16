@@ -2,21 +2,24 @@
 `default_nettype none
 
 // -----------------------------------------------------------------------------
-// E2 BERT-pool tb for exp2_adaptive_4slot_pool_top_bert.
-//   Reads rtl/data_model_pools/BERT/e2_*.memh by default and writes
-//   rtl_out_e2_BERT.txt (REV=0) / rtl_out_e2_BERT_rev.txt (REV=1) with
+// E1 SD-UNet-pool tb for exp1_candidate_a_pool_top_sd_unet (Candidate A
+// vertical compression, 5 fixed slot banks of 8192 depth built from 2x
+// 4096x34 gated tiles).  No plusargs.
+//   cwd = repo root.  Reads rtl/data_model_pools/SD-UNet/e1_*.memh; writes
+//   rtl_out_e1_SD-UNet.txt (REV=0) / rtl_out_e1_SD-UNet_rev.txt (REV=1) with
 //   "# prog <k>" segment markers.
 //   REV: 1 = run programs in reverse storage order (out-of-order descriptor
 //   switching, plan 9.4).
-//   Use +pool_dir=<path> when running from a directory without rtl/.
+//   Implicit EOP: config holds prog_len-1 real entries; the last output cycle
+//   is a hardware-generated all-NOP + eop.
 // -----------------------------------------------------------------------------
 
-module tb_exp2_pool_bert;
+module tb_exp1_candidate_a_pool_sd_unet;
 
     parameter REV     = 0;   // 1 = run programs in reverse storage order
 
-    localparam integer CFG_DEPTH     = 8192;
-    localparam integer LANE_DEPTH    = 2048;
+    localparam integer CFG_DEPTH     = 16384;
+    localparam integer PAY_DEPTH     = 8192;
     localparam real    CLK_PERIOD_NS = 1.000;
 
     reg                    clk;
@@ -28,10 +31,11 @@ module tb_exp2_pool_bert;
     reg                    start;
     reg  [14:0]            cfg_base;
     reg  [14:0]            prog_len;
-    reg  [13:0]            lane_base0;
-    reg  [13:0]            lane_base1;
-    reg  [13:0]            lane_base2;
-    reg  [13:0]            lane_base3;
+    reg  [13:0]            slot_base0;
+    reg  [13:0]            slot_base1;
+    reg  [13:0]            slot_base2;
+    reg  [13:0]            slot_base3;
+    reg  [13:0]            slot_base4;
 
     wire [1:0]  load_mem_fmt;
     wire [19:0] load_mem_addr;
@@ -68,7 +72,7 @@ module tb_exp2_pool_bert;
     wire        eop;
     wire        done;
 
-    exp2_adaptive_4slot_pool_top_bert #(.TILES_CFG(1), .TILES_PAY(1)) dut (
+    exp1_candidate_a_pool_top_sd_unet dut (
         .clk           (clk),
         .rst_n         (rst_n),
         .load_en       (load_en),
@@ -78,10 +82,11 @@ module tb_exp2_pool_bert;
         .start         (start),
         .cfg_base      (cfg_base),
         .prog_len      (prog_len),
-        .lane_base0    (lane_base0),
-        .lane_base1    (lane_base1),
-        .lane_base2    (lane_base2),
-        .lane_base3    (lane_base3),
+        .slot_base0    (slot_base0),
+        .slot_base1    (slot_base1),
+        .slot_base2    (slot_base2),
+        .slot_base3    (slot_base3),
+        .slot_base4    (slot_base4),
         .load_mem_fmt  (load_mem_fmt),
         .load_mem_addr (load_mem_addr),
         .load_gpr_fmt  (load_gpr_fmt),
@@ -175,11 +180,12 @@ module tb_exp2_pool_bert;
         forever #(CLK_PERIOD_NS/2.0) clk = ~clk;
     end
 
-    reg  [4:0]    cfg_imem   [0:CFG_DEPTH-1];
-    reg  [33:0]   lane0_imem [0:LANE_DEPTH-1];
-    reg  [33:0]   lane1_imem [0:LANE_DEPTH-1];
-    reg  [33:0]   lane2_imem [0:LANE_DEPTH-1];
-    reg  [33:0]   lane3_imem [0:LANE_DEPTH-1];
+    reg  [4:0]    cfg_imem  [0:CFG_DEPTH-1];
+    reg  [33:0]   pay0_imem [0:PAY_DEPTH-1];
+    reg  [33:0]   pay1_imem [0:PAY_DEPTH-1];
+    reg  [33:0]   pay2_imem [0:PAY_DEPTH-1];
+    reg  [33:0]   pay3_imem [0:PAY_DEPTH-1];
+    reg  [33:0]   pay4_imem [0:PAY_DEPTH-1];
     reg  [31:0]   pool_meta [0:63];
     reg  [1023:0] pool_dir;
     integer       out_fd;
@@ -187,19 +193,22 @@ module tb_exp2_pool_bert;
     integer       p;
     integer       n_prog;
     integer       cfg_total;
-    integer       lane_total [0:3];
+    integer       pay_total [0:4];
     integer       emit_count;
     integer       cfg_reads;
-    integer       lane_reads [0:3];
+    integer       pay_reads [0:4];
     integer       timeout;
     integer       pool_errors;
 
+    // read-cycle stats (hierarchical probes; wrapper-level CEN, valid for
+    // the tiled 4096x34 construction as well)
     always @(posedge clk) begin
         if (rst_n && dut.cfg_cen && !dut.cfg_wen) cfg_reads = cfg_reads + 1;
-        if (rst_n && dut.lane0_cen && !dut.lane0_wen) lane_reads[0] = lane_reads[0] + 1;
-        if (rst_n && dut.lane1_cen && !dut.lane1_wen) lane_reads[1] = lane_reads[1] + 1;
-        if (rst_n && dut.lane2_cen && !dut.lane2_wen) lane_reads[2] = lane_reads[2] + 1;
-        if (rst_n && dut.lane3_cen && !dut.lane3_wen) lane_reads[3] = lane_reads[3] + 1;
+        if (rst_n && dut.pay0_cen && !dut.pay0_wen) pay_reads[0] = pay_reads[0] + 1;
+        if (rst_n && dut.pay1_cen && !dut.pay1_wen) pay_reads[1] = pay_reads[1] + 1;
+        if (rst_n && dut.pay2_cen && !dut.pay2_wen) pay_reads[2] = pay_reads[2] + 1;
+        if (rst_n && dut.pay3_cen && !dut.pay3_wen) pay_reads[3] = pay_reads[3] + 1;
+        if (rst_n && dut.pay4_cen && !dut.pay4_wen) pay_reads[4] = pay_reads[4] + 1;
     end
 
     always @(posedge clk) begin
@@ -246,10 +255,11 @@ module tb_exp2_pool_bert;
                 load_addr  = i[14:0];
                 case (sel)
                     3'd0: load_wdata = {29'b0, cfg_imem[i]};
-                    3'd1: load_wdata = lane0_imem[i];
-                    3'd2: load_wdata = lane1_imem[i];
-                    3'd3: load_wdata = lane2_imem[i];
-                    3'd4: load_wdata = lane3_imem[i];
+                    3'd1: load_wdata = pay0_imem[i];
+                    3'd2: load_wdata = pay1_imem[i];
+                    3'd3: load_wdata = pay2_imem[i];
+                    3'd4: load_wdata = pay3_imem[i];
+                    3'd5: load_wdata = pay4_imem[i];
                     default: load_wdata = 34'b0;
                 endcase
                 @(negedge clk);
@@ -258,37 +268,36 @@ module tb_exp2_pool_bert;
     endtask
 
     initial begin
-        if (!$value$plusargs("pool_dir=%s", pool_dir)) begin
-            pool_dir = "rtl/data_model_pools/BERT";
-        end
-
-        $readmemh({pool_dir, "/e2_meta.hex"}, pool_meta);
-        n_prog        = pool_meta[0];
-        cfg_total     = pool_meta[1];
-        lane_total[0] = pool_meta[2];
-        lane_total[1] = pool_meta[3];
-        lane_total[2] = pool_meta[4];
-        lane_total[3] = pool_meta[5];
+        pool_dir = "rtl/data_model_pools/SD-UNet";
+        $readmemh({pool_dir, "/e1_meta.hex"}, pool_meta);
+        n_prog       = pool_meta[0];
+        cfg_total    = pool_meta[1];
+        pay_total[0] = pool_meta[2];
+        pay_total[1] = pool_meta[3];
+        pay_total[2] = pool_meta[4];
+        pay_total[3] = pool_meta[5];
+        pay_total[4] = pool_meta[6];
 
         if (cfg_total > CFG_DEPTH) begin
-            $display("ERROR: BERT config depth %0d exceeds CFG_DEPTH %0d", cfg_total, CFG_DEPTH);
+            $display("ERROR: SD-UNet config depth %0d exceeds CFG_DEPTH %0d", cfg_total, CFG_DEPTH);
             $finish;
         end
-        for (p = 0; p < 4; p = p + 1) begin
-            if (lane_total[p] > LANE_DEPTH) begin
-                $display("ERROR: BERT lane %0d depth %0d exceeds LANE_DEPTH %0d",
-                         p, lane_total[p], LANE_DEPTH);
+        for (p = 0; p < 5; p = p + 1) begin
+            if (pay_total[p] > PAY_DEPTH) begin
+                $display("ERROR: SD-UNet bank %0d depth %0d exceeds PAY_DEPTH %0d",
+                         p, pay_total[p], PAY_DEPTH);
                 $finish;
             end
         end
 
-        $readmemh({pool_dir, "/e2_config5.memh"}, cfg_imem, 0, cfg_total-1);
-        $readmemh({pool_dir, "/e2_lane0.memh"}, lane0_imem, 0, lane_total[0]-1);
-        $readmemh({pool_dir, "/e2_lane1.memh"}, lane1_imem, 0, lane_total[1]-1);
-        $readmemh({pool_dir, "/e2_lane2.memh"}, lane2_imem, 0, lane_total[2]-1);
-        $readmemh({pool_dir, "/e2_lane3.memh"}, lane3_imem, 0, lane_total[3]-1);
+        $readmemh({pool_dir, "/e1_config5.memh"}, cfg_imem, 0, cfg_total-1);
+        $readmemh({pool_dir, "/e1_slot0.memh"}, pay0_imem, 0, pay_total[0]-1);
+        $readmemh({pool_dir, "/e1_slot1.memh"}, pay1_imem, 0, pay_total[1]-1);
+        $readmemh({pool_dir, "/e1_slot2.memh"}, pay2_imem, 0, pay_total[2]-1);
+        $readmemh({pool_dir, "/e1_slot3.memh"}, pay3_imem, 0, pay_total[3]-1);
+        $readmemh({pool_dir, "/e1_slot4.memh"}, pay4_imem, 0, pay_total[4]-1);
 
-        out_fd = $fopen(REV ? "rtl_out_e2_BERT_rev.txt" : "rtl_out_e2_BERT.txt", "w");
+        out_fd = $fopen(REV ? "rtl_out_e1_SD-UNet_rev.txt" : "rtl_out_e1_SD-UNet.txt", "w");
         if (out_fd == 0) begin
             $display("ERROR: cannot open output");
             $finish;
@@ -296,8 +305,8 @@ module tb_exp2_pool_bert;
 
         emit_count  = 0;
         cfg_reads   = 0;
-        lane_reads[0] = 0; lane_reads[1] = 0;
-        lane_reads[2] = 0; lane_reads[3] = 0;
+        pay_reads[0] = 0; pay_reads[1] = 0; pay_reads[2] = 0;
+        pay_reads[3] = 0; pay_reads[4] = 0;
         pool_errors = 0;
         rst_n       = 1'b0;
         load_en     = 1'b0;
@@ -307,15 +316,17 @@ module tb_exp2_pool_bert;
         start       = 1'b0;
         cfg_base    = 15'd0;
         prog_len    = 15'd0;
-        lane_base0  = 14'd0; lane_base1 = 14'd0;
-        lane_base2  = 14'd0; lane_base3 = 14'd0;
+        slot_base0  = 14'd0; slot_base1 = 14'd0; slot_base2 = 14'd0;
+        slot_base3  = 14'd0; slot_base4 = 14'd0;
 
+        // load all six macros once
         do_reset;
         do_load_macro(3'd0, cfg_total);
-        do_load_macro(3'd1, lane_total[0]);
-        do_load_macro(3'd2, lane_total[1]);
-        do_load_macro(3'd3, lane_total[2]);
-        do_load_macro(3'd4, lane_total[3]);
+        do_load_macro(3'd1, pay_total[0]);
+        do_load_macro(3'd2, pay_total[1]);
+        do_load_macro(3'd3, pay_total[2]);
+        do_load_macro(3'd4, pay_total[3]);
+        do_load_macro(3'd5, pay_total[4]);
         load_en = 1'b0;
 
         // run programs one by one (REV=1: reverse storage order, plan 9.4)
@@ -323,12 +334,13 @@ module tb_exp2_pool_bert;
             p = REV ? (n_prog - 1 - i) : i;
             $fdisplay(out_fd, "# prog %0d", p);
             do_reset;
-            cfg_base   = pool_meta[6 + 6*p][14:0];
-            prog_len   = pool_meta[6 + 6*p + 1][14:0];
-            lane_base0 = pool_meta[6 + 6*p + 2][13:0];
-            lane_base1 = pool_meta[6 + 6*p + 3][13:0];
-            lane_base2 = pool_meta[6 + 6*p + 4][13:0];
-            lane_base3 = pool_meta[6 + 6*p + 5][13:0];
+            cfg_base   = pool_meta[7 + 7*p][14:0];
+            prog_len   = pool_meta[7 + 7*p + 1][14:0];
+            slot_base0 = pool_meta[7 + 7*p + 2][13:0];
+            slot_base1 = pool_meta[7 + 7*p + 3][13:0];
+            slot_base2 = pool_meta[7 + 7*p + 4][13:0];
+            slot_base3 = pool_meta[7 + 7*p + 5][13:0];
+            slot_base4 = pool_meta[7 + 7*p + 6][13:0];
             emit_count = 0;
             @(negedge clk);
             start = 1'b1;
@@ -351,27 +363,28 @@ module tb_exp2_pool_bert;
             end
         end
 
+        // exact-gating read-count checks
         if (cfg_reads != cfg_total) begin
             $display("ERROR: config reads %0d != cfg_total %0d", cfg_reads, cfg_total);
             pool_errors = pool_errors + 1;
         end
-        for (p = 0; p < 4; p = p + 1) begin
-            if (lane_reads[p] != lane_total[p]) begin
-                $display("ERROR: lane %0d reads %0d != total %0d",
-                         p, lane_reads[p], lane_total[p]);
+        for (p = 0; p < 5; p = p + 1) begin
+            if (pay_reads[p] != pay_total[p]) begin
+                $display("ERROR: bank %0d reads %0d != total %0d",
+                         p, pay_reads[p], pay_total[p]);
                 pool_errors = pool_errors + 1;
             end
         end
 
         $fclose(out_fd);
-        $display("[tb] E2 BERT POOL programs=%0d cfg_reads=%0d lanes=%0d/%0d/%0d/%0d errors=%0d",
+        $display("[tb] E1 POOL SD-UNet programs=%0d cfg_reads=%0d pay=%0d/%0d/%0d/%0d/%0d errors=%0d",
                  n_prog, cfg_reads,
-                 lane_reads[0], lane_reads[1], lane_reads[2], lane_reads[3],
+                 pay_reads[0], pay_reads[1], pay_reads[2], pay_reads[3], pay_reads[4],
                  pool_errors);
         if (pool_errors == 0) begin
-            $display("[tb] PASS: E2 BERT pool run completed, %0d programs", n_prog);
+            $display("[tb] PASS: E1 pool SD-UNet run completed, %0d programs", n_prog);
         end else begin
-            $display("[tb] FAIL: E2 BERT pool run had %0d errors", pool_errors);
+            $display("[tb] FAIL: E1 pool SD-UNet run had %0d errors", pool_errors);
         end
         $finish;
     end

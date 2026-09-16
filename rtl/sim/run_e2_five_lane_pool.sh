@@ -3,7 +3,8 @@
 # Each pool has its own top + tb (per-pool macro caliber, plan Table 5):
 #   BERT    : exp2_five_lane_pool_top_bert    + sram_8192x5_wrapper + 5x sram_2048x34_wrapper
 #   SD-UNet : exp2_five_lane_pool_top_sd_unet + sram_8192x5_tiled#2 + 5x sram_4096x34_wrapper
-#   LLaMA   : exp2_five_lane_pool_top_llama   + sram_32768x5_wrapper + 5x sram_4096x34_tiled#2
+#   LLaMA   : exp2_five_lane_pool_top_llama   + sram_8192x5_tiled#4 + 5x sram_4096x34_tiled#2
+#             (uniform gated-tile construction with E1/E2-4; fairness fix 2026-09-16)
 # Real TSMC 28nm macro models; iverilog functional run; per-pool bit-exact
 # check vs golden_issue5.txt; each pool run in forward AND reverse order
 # (out-of-order descriptor switching, plan 9.4).
@@ -45,8 +46,9 @@ run_one() {  # suffix  pool_name  rev(0/1)
             srcs=( "$RTL_DIR/src/sram_8192x5_tiled.v" "$RTL_DIR/src/sram_8192x5_wrapper.v"
                    "$RTL_DIR/src/sram_4096x34_wrapper.v" "${M_8192x5[@]}" "${M_4096x34[@]}" ) ;;
         llama)
-            srcs=( "$RTL_DIR/src/sram_32768x5_wrapper.v" "$RTL_DIR/src/sram_4096x34_tiled.v"
-                   "$RTL_DIR/src/sram_4096x34_wrapper.v" "${M_32768x5[@]}" "${M_4096x34[@]}" ) ;;
+            srcs=( "$RTL_DIR/src/sram_8192x5_tiled.v" "$RTL_DIR/src/sram_8192x5_wrapper.v"
+                   "$RTL_DIR/src/sram_4096x34_tiled.v" "$RTL_DIR/src/sram_4096x34_wrapper.v"
+                   "${M_8192x5[@]}" "${M_4096x34[@]}" ) ;;
         *) echo "unknown pool $sfx" >&2; exit 1 ;;
     esac
     local suffix=""; [ "$rev" = "1" ] && suffix="_rev"

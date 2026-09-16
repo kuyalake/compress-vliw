@@ -10,9 +10,13 @@
 // 3, so three shared physical lanes suffice (mod-3 phase).
 //
 //   config : 5-bit mask per real execution cycle (implicit EOP via prog_len);
-//            sram_32768x5_wrapper (covers LLaMA config depth).
+//            sram_8192x5_tiled #(TILES=4) -> 32768 deep (covers LLaMA config;
+//            uniform gated-tile construction with the E1/E2-4 baselines).
 //   lanes  : three 34-bit payload lanes, phase-striped (mod-3);
-//            sram_16384x34_wrapper (covers LLaMA longest lane 11035).
+//            3x sram_4096x34_tiled #(TILES=4) -> 16384 deep per lane (covers
+//            LLaMA longest lane 11035).  Uniform 4096x34 gated granule, so a
+//            payload read costs the same energy as the E2-2/E2-4/E2-5 LLaMA
+//            variants (lane-sweep fairness, 2026-09-16).
 //
 // Decode contract: popcount(mask) <= 3 is guaranteed by the max-3 schedule
 // (software exhaustively verified all 26 legal masks x 3 phases = 78 states).
@@ -219,18 +223,18 @@ module exp2_three_lane_pool_top_llama (
     wire [13:0] lane2_addr = load_en ? load_addr[13:0] : ptr2[13:0];
     wire [33:0] lane_wmask = {34{1'b1}};
 
-    sram_32768x5_wrapper u_cfg (
+    sram_8192x5_tiled #(.TILES(4)) u_cfg (
         .clk(clk), .cen(cfg_cen), .wen(cfg_wen), .addr(cfg_addr),
         .wdata(cfg_wdata), .wmask(cfg_wmask), .rdata(cfg_rdata)
     );
 
-    sram_16384x34_wrapper u_lane0 (
+    sram_4096x34_tiled #(.TILES(4)) u_lane0 (
         .clk(clk), .cen(lane0_cen), .wen(lane0_wen), .addr(lane0_addr),
         .wdata(load_wdata), .wmask(lane_wmask), .rdata(lane0_rdata));
-    sram_16384x34_wrapper u_lane1 (
+    sram_4096x34_tiled #(.TILES(4)) u_lane1 (
         .clk(clk), .cen(lane1_cen), .wen(lane1_wen), .addr(lane1_addr),
         .wdata(load_wdata), .wmask(lane_wmask), .rdata(lane1_rdata));
-    sram_16384x34_wrapper u_lane2 (
+    sram_4096x34_tiled #(.TILES(4)) u_lane2 (
         .clk(clk), .cen(lane2_cen), .wen(lane2_wen), .addr(lane2_addr),
         .wdata(load_wdata), .wmask(lane_wmask), .rdata(lane2_rdata));
 

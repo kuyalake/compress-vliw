@@ -2,21 +2,21 @@
 `default_nettype none
 
 // -----------------------------------------------------------------------------
-// E2 BERT-pool tb for exp2_adaptive_4slot_pool_top_bert.
-//   Reads rtl/data_model_pools/BERT/e2_*.memh by default and writes
-//   rtl_out_e2_BERT.txt (REV=0) / rtl_out_e2_BERT_rev.txt (REV=1) with
+// E2 SD-UNet-pool tb for exp2_adaptive_4slot_pool_top_sd_unet (four shared
+// lanes, native 4096 deep per lane; implicit EOP via prog_len).
+//   Reads rtl/data_model_pools/SD-UNet/e2_*.memh and writes
+//   rtl_out_e2_SD-UNet.txt (REV=0) / rtl_out_e2_SD-UNet_rev.txt (REV=1) with
 //   "# prog <k>" segment markers.
 //   REV: 1 = run programs in reverse storage order (out-of-order descriptor
 //   switching, plan 9.4).
-//   Use +pool_dir=<path> when running from a directory without rtl/.
 // -----------------------------------------------------------------------------
 
-module tb_exp2_pool_bert;
+module tb_exp2_pool_sd_unet;
 
     parameter REV     = 0;   // 1 = run programs in reverse storage order
 
-    localparam integer CFG_DEPTH     = 8192;
-    localparam integer LANE_DEPTH    = 2048;
+    localparam integer CFG_DEPTH     = 16384;
+    localparam integer LANE_DEPTH    = 4096;
     localparam real    CLK_PERIOD_NS = 1.000;
 
     reg                    clk;
@@ -68,7 +68,7 @@ module tb_exp2_pool_bert;
     wire        eop;
     wire        done;
 
-    exp2_adaptive_4slot_pool_top_bert #(.TILES_CFG(1), .TILES_PAY(1)) dut (
+    exp2_adaptive_4slot_pool_top_sd_unet dut (
         .clk           (clk),
         .rst_n         (rst_n),
         .load_en       (load_en),
@@ -258,9 +258,7 @@ module tb_exp2_pool_bert;
     endtask
 
     initial begin
-        if (!$value$plusargs("pool_dir=%s", pool_dir)) begin
-            pool_dir = "rtl/data_model_pools/BERT";
-        end
+        pool_dir = "rtl/data_model_pools/SD-UNet";
 
         $readmemh({pool_dir, "/e2_meta.hex"}, pool_meta);
         n_prog        = pool_meta[0];
@@ -271,12 +269,12 @@ module tb_exp2_pool_bert;
         lane_total[3] = pool_meta[5];
 
         if (cfg_total > CFG_DEPTH) begin
-            $display("ERROR: BERT config depth %0d exceeds CFG_DEPTH %0d", cfg_total, CFG_DEPTH);
+            $display("ERROR: SD-UNet config depth %0d exceeds CFG_DEPTH %0d", cfg_total, CFG_DEPTH);
             $finish;
         end
         for (p = 0; p < 4; p = p + 1) begin
             if (lane_total[p] > LANE_DEPTH) begin
-                $display("ERROR: BERT lane %0d depth %0d exceeds LANE_DEPTH %0d",
+                $display("ERROR: SD-UNet lane %0d depth %0d exceeds LANE_DEPTH %0d",
                          p, lane_total[p], LANE_DEPTH);
                 $finish;
             end
@@ -288,7 +286,7 @@ module tb_exp2_pool_bert;
         $readmemh({pool_dir, "/e2_lane2.memh"}, lane2_imem, 0, lane_total[2]-1);
         $readmemh({pool_dir, "/e2_lane3.memh"}, lane3_imem, 0, lane_total[3]-1);
 
-        out_fd = $fopen(REV ? "rtl_out_e2_BERT_rev.txt" : "rtl_out_e2_BERT.txt", "w");
+        out_fd = $fopen(REV ? "rtl_out_e2_SD-UNet_rev.txt" : "rtl_out_e2_SD-UNet.txt", "w");
         if (out_fd == 0) begin
             $display("ERROR: cannot open output");
             $finish;
@@ -364,14 +362,14 @@ module tb_exp2_pool_bert;
         end
 
         $fclose(out_fd);
-        $display("[tb] E2 BERT POOL programs=%0d cfg_reads=%0d lanes=%0d/%0d/%0d/%0d errors=%0d",
+        $display("[tb] E2 SD-UNet POOL programs=%0d cfg_reads=%0d lanes=%0d/%0d/%0d/%0d errors=%0d",
                  n_prog, cfg_reads,
                  lane_reads[0], lane_reads[1], lane_reads[2], lane_reads[3],
                  pool_errors);
         if (pool_errors == 0) begin
-            $display("[tb] PASS: E2 BERT pool run completed, %0d programs", n_prog);
+            $display("[tb] PASS: E2 SD-UNet pool run completed, %0d programs", n_prog);
         end else begin
-            $display("[tb] FAIL: E2 BERT pool run had %0d errors", pool_errors);
+            $display("[tb] FAIL: E2 SD-UNet pool run had %0d errors", pool_errors);
         end
         $finish;
     end

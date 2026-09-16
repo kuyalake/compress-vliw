@@ -2,33 +2,26 @@
 `default_nettype none
 
 // -----------------------------------------------------------------------------
-// E2 two-lane (model-pool): two shared payload lanes for the LLaMA pool,
-// max-2 schedule (at most two slots active
-// per cycle).  Supplementary lane-sweep experiment to E2-5: the E2 striping
-// scheme is unchanged (5-bit mask per cycle, phase-rotated striping, implicit
-// EOP via prog_len); only the scheduler's max concurrent slots is reduced to
-// 2, so two shared physical lanes suffice (mod-2 phase).
+// E2 (model-pool): adaptive 4-slot (four shared lanes) instruction supply for
+// the SD-UNet program pool.
 //
-//   config : 5-bit mask per real execution cycle (implicit EOP via prog_len);
-//            sram_8192x5_tiled #(TILES=4) -> 32768 deep (covers LLaMA config;
-//            uniform gated-tile construction with the E1/E2-4 baselines).
-//   lanes  : two 34-bit payload lanes, phase-striped (mod-2);
-//            2x sram_4096x34_tiled #(TILES=8) -> 32768 deep per lane (covers
-//            LLaMA longest lane 16552).  Uniform 4096x34 gated granule, so a
-//            payload read costs the same energy as the E2-3/E2-4/E2-5 LLaMA
-//            variants (lane-sweep fairness, 2026-09-16).
+// Same fetch/decode/hold logic as exp2_adaptive_4slot_top, with SD-UNet-fixed
+// SRAM caliber (uniform construction, lane-sweep fairness 2026-09-16):
+//   config : sram_8192x5_tiled #(TILES=2) -> 16384 deep (SD-UNet config)
+//   lanes  : 4x sram_4096x34_wrapper (native 4096 deep per lane; SD-UNet
+//            longest lane 3381).  A native 4096x34 read costs the same energy
+//            as the single active tile in the E1/E2-3/E2-2 gated-tile banks.
 //
-// Decode contract: popcount(mask) <= 2 is guaranteed by the max-2 schedule
-// (software exhaustively verified all 16 legal masks x 2 phases = 32 states).
-// Implicit EOP: config holds (prog_len-1) real entries; output cycle
-// prog_len-1 is a hardware-generated all-NOP + eop=1 (no config/payload read).
-// Hold-only output stage. No backpressure. II=1, 3-cycle latency.
+// Implicit EOP via the program-length counter (no in-band 11111 marker in
+// the config stream; uniform with the E1/E2-5/E2-3/E2-2 tops, 2026-09-16).
+// Hold-only output stage. No backpressure.
+// II=1, 3-cycle latency. See rtl/plan.md section 5.3 for the pipeline detail.
 // -----------------------------------------------------------------------------
 
-module exp2_two_lane_pool_top_llama (
+module exp2_adaptive_4slot_pool_top_sd_unet (
     input  wire         clk,
     input  wire         rst_n,
-    // load port: load_sel 0 = config macro, 1..2 = payload lane 0..1
+    // load port: load_sel 0 = config macro, 1..4 = payload lane 0..3
     input  wire         load_en,
     input  wire [2:0]   load_sel,
     input  wire [14:0]  load_addr,
@@ -36,9 +29,11 @@ module exp2_two_lane_pool_top_llama (
     // run control: program descriptor
     input  wire         start,
     input  wire [14:0]  cfg_base,
-    input  wire [14:0]  prog_len,     // total output cycles T (incl. implicit EOP)
-    input  wire [14:0]  lane_base0,
-    input  wire [14:0]  lane_base1,
+    input  wire [14:0]  prog_len,     // total cycles T (incl. the EOP cycle)
+    input  wire [13:0]  lane_base0,
+    input  wire [13:0]  lane_base1,
+    input  wire [13:0]  lane_base2,
+    input  wire [13:0]  lane_base3,
     // LOAD slot fields
     output reg  [1:0]   load_mem_fmt,
     output reg  [19:0]  load_mem_addr,
@@ -81,6 +76,11 @@ module exp2_two_lane_pool_top_llama (
     output reg          done
 );
 
+    // config / payload SRAM address widths (SD-UNet: 16384-deep config from
+    // 2x 8192x5 tiles, native 4096-deep payload lanes)
+    localparam integer CFG_AW = 14;
+    localparam integer PAY_AW = 12;
+
     // ------------------------------------------------------------------
     // Stage A: config fetch issue.
     //   real cycles cnt in [0, prog_len-2] read config; cycle prog_len-1 is
@@ -88,20 +88,20 @@ module exp2_two_lane_pool_top_llama (
     // ------------------------------------------------------------------
     reg         run_q;
     reg  [14:0] cfg_pc;
-    reg  [14:0] cnt;
+    reg  [14:0] cfg_cnt;
     reg  [14:0] len_q;
     reg         b_vld;
     reg         b_eop;
 
-    wire        is_real   = run_q & (cnt < len_q - 15'd1);
-    wire        is_eopc   = run_q & (cnt == len_q - 15'd1);
+    wire        is_real   = run_q & (cfg_cnt < len_q - 15'd1);
+    wire        is_eopc   = run_q & (cfg_cnt == len_q - 15'd1);
     wire        cfg_cen_f = is_real;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             run_q   <= 1'b0;
             cfg_pc  <= 15'd0;
-            cnt     <= 15'd0;
+            cfg_cnt <= 15'd0;
             len_q   <= 15'd0;
             b_vld   <= 1'b0;
             b_eop   <= 1'b0;
@@ -111,24 +111,24 @@ module exp2_two_lane_pool_top_llama (
         end else if (start) begin
             run_q   <= 1'b1;
             cfg_pc  <= cfg_base;
-            cnt     <= 15'd0;
+            cfg_cnt <= 15'd0;
             len_q   <= prog_len;
             b_vld   <= 1'b0;
             b_eop   <= 1'b0;
         end else if (run_q) begin
             if (is_real) begin
-                cfg_pc <= cfg_pc + 15'd1;
-                cnt    <= cnt + 15'd1;
-                b_vld  <= 1'b1;
-                b_eop  <= 1'b0;
+                cfg_pc  <= cfg_pc + 15'd1;
+                cfg_cnt <= cfg_cnt + 15'd1;
+                b_vld   <= 1'b1;
+                b_eop   <= 1'b0;
             end else if (is_eopc) begin
-                cnt    <= cnt + 15'd1;
-                b_vld  <= 1'b1;
-                b_eop  <= 1'b1;     // implicit EOP cycle
-                run_q  <= 1'b0;
+                cfg_cnt <= cfg_cnt + 15'd1;
+                b_vld   <= 1'b1;
+                b_eop   <= 1'b1;            // implicit EOP cycle
+                run_q   <= 1'b0;
             end else begin
-                b_vld  <= 1'b0;
-                b_eop  <= 1'b0;
+                b_vld   <= 1'b0;
+                b_eop   <= 1'b0;
             end
         end else begin
             b_vld <= 1'b0;
@@ -136,58 +136,58 @@ module exp2_two_lane_pool_top_llama (
         end
     end
 
-    // forward declarations (Icarus needs declaration before use)
-    wire [4:0]  cfg_rdata;
-    wire [33:0] lane0_rdata, lane1_rdata;
-
     // ------------------------------------------------------------------
-    // Stage B: mask decode -> two lane enables; phase/pointer pipeline regs.
-    //   lane i carries rank (i - phase) mod 2; enabled iff rank < popcount.
-    //   popcount <= 2 is a schedule contract (max-2); the mod-2 update below
-    //   is a single conditional subtract, valid for phase+popcount <= 3.
+    // Stage B: mask decode -> lane enables; phase/pointer/mask pipeline regs
     // ------------------------------------------------------------------
-    reg         phase_q;
-    reg  [14:0] ptr0, ptr1;
+    reg  [1:0]  phase_q;
+    reg  [13:0] ptr0, ptr1, ptr2, ptr3;
     reg         c_vld;
     reg         c_eop;
     reg  [4:0]  mask_c;
-    reg         phase_c;
+    reg  [1:0]  phase_c;
 
+    wire [4:0]  cfg_rdata;
     wire [4:0]  mask_w   = cfg_rdata;
 
-    // popcount (0..5, 3-bit; <=2 for legal schedules)
-    wire [2:0]  pcnt = {2'b00, mask_w[0]} + {2'b00, mask_w[1]}
-                     + {2'b00, mask_w[2]} + {2'b00, mask_w[3]}
-                     + {2'b00, mask_w[4]};
+    // popcount and prefix ranks (shared logic)
+    wire [2:0]  pre1 = {2'b00, mask_w[0]};
+    wire [2:0]  pre2 = pre1 + {2'b00, mask_w[1]};
+    wire [2:0]  pre3 = pre2 + {2'b00, mask_w[2]};
+    wire [2:0]  pre4 = pre3 + {2'b00, mask_w[3]};
+    wire [2:0]  pcnt = pre4 + {2'b00, mask_w[4]};
 
-    // rank of lane i = (i - phase) mod 2:  rk0 = phase, rk1 = ~phase
+    // lane i carries rank (i - phase) mod 4; enabled iff rank < popcount
+    wire [1:0]  rk_lane0 = 2'd0 - phase_q;
+    wire [1:0]  rk_lane1 = 2'd1 - phase_q;
+    wire [1:0]  rk_lane2 = 2'd2 - phase_q;
+    wire [1:0]  rk_lane3 = 2'd3 - phase_q;
     wire        live = b_vld & ~b_eop;
-    wire        en0 = live & ({2'b00, phase_q} < pcnt);
-    wire        en1 = live & ({2'b00, ~phase_q} < pcnt);
-
-    // phase update: (phase + popcount) mod 2 is simply the sum LSB
-    // (no conditional subtract needed for mod 2)
-    wire [2:0]  ph_sum  = {2'b00, phase_q} + pcnt;
-    wire        ph_next = ph_sum[0];
+    wire        en0 = live & ({1'b0, rk_lane0} < pcnt);
+    wire        en1 = live & ({1'b0, rk_lane1} < pcnt);
+    wire        en2 = live & ({1'b0, rk_lane2} < pcnt);
+    wire        en3 = live & ({1'b0, rk_lane3} < pcnt);
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            phase_q <= 1'b0;
-            ptr0 <= 15'd0; ptr1 <= 15'd0;
-            c_vld   <= 1'b0; c_eop <= 1'b0; mask_c <= 5'b0; phase_c <= 1'b0;
+            phase_q <= 2'b0;
+            ptr0 <= 14'd0; ptr1 <= 14'd0; ptr2 <= 14'd0; ptr3 <= 14'd0;
+            c_vld   <= 1'b0; c_eop <= 1'b0; mask_c <= 5'b0; phase_c <= 2'b0;
         end else if (start) begin
-            phase_q <= 1'b0;
+            phase_q <= 2'b0;
             ptr0 <= lane_base0; ptr1 <= lane_base1;
-            c_vld   <= 1'b0; c_eop <= 1'b0; mask_c <= 5'b0; phase_c <= 1'b0;
+            ptr2 <= lane_base2; ptr3 <= lane_base3;
+            c_vld   <= 1'b0; c_eop <= 1'b0; mask_c <= 5'b0; phase_c <= 2'b0;
         end else begin
             c_vld   <= b_vld;
             c_eop   <= b_eop;
             phase_c <= phase_q;
             if (live) begin
                 mask_c  <= mask_w;
-                phase_q <= ph_next;
-                if (en0) ptr0 <= ptr0 + 15'd1;
-                if (en1) ptr1 <= ptr1 + 15'd1;
+                phase_q <= phase_q + pcnt[1:0];
+                if (en0) ptr0 <= ptr0 + 14'd1;
+                if (en1) ptr1 <= ptr1 + 14'd1;
+                if (en2) ptr2 <= ptr2 + 14'd1;
+                if (en3) ptr3 <= ptr3 + 14'd1;
             end else begin
                 mask_c  <= 5'b0;    // idle or implicit EOP: all slots invalid
             end
@@ -199,54 +199,74 @@ module exp2_two_lane_pool_top_llama (
     // ------------------------------------------------------------------
     wire        cfg_cen   = load_en ? (load_sel == 3'd0) : cfg_cen_f;
     wire        cfg_wen   = load_en & (load_sel == 3'd0);
-    wire [14:0] cfg_addr  = load_en ? load_addr[14:0] : cfg_pc[14:0];
+    wire [CFG_AW-1:0] cfg_addr = load_en ? load_addr[CFG_AW-1:0] : cfg_pc[CFG_AW-1:0];
     wire [4:0]  cfg_wdata = load_wdata[4:0];
     wire [4:0]  cfg_wmask = 5'b11111;
 
-    wire        lane0_cen = load_en ? (load_sel == 3'd1) : en0;
-    wire        lane1_cen = load_en ? (load_sel == 3'd2) : en1;
-    wire        lane0_wen = load_en & (load_sel == 3'd1);
-    wire        lane1_wen = load_en & (load_sel == 3'd2);
-    wire [14:0] lane0_addr = load_en ? load_addr[14:0] : ptr0[14:0];
-    wire [14:0] lane1_addr = load_en ? load_addr[14:0] : ptr1[14:0];
+    wire        lane0_cen  = load_en ? (load_sel == 3'd1) : en0;
+    wire        lane1_cen  = load_en ? (load_sel == 3'd2) : en1;
+    wire        lane2_cen  = load_en ? (load_sel == 3'd3) : en2;
+    wire        lane3_cen  = load_en ? (load_sel == 3'd4) : en3;
+    wire        lane0_wen  = load_en & (load_sel == 3'd1);
+    wire        lane1_wen  = load_en & (load_sel == 3'd2);
+    wire        lane2_wen  = load_en & (load_sel == 3'd3);
+    wire        lane3_wen  = load_en & (load_sel == 3'd4);
+    wire [PAY_AW-1:0] lane0_addr = load_en ? load_addr[PAY_AW-1:0] : ptr0[PAY_AW-1:0];
+    wire [PAY_AW-1:0] lane1_addr = load_en ? load_addr[PAY_AW-1:0] : ptr1[PAY_AW-1:0];
+    wire [PAY_AW-1:0] lane2_addr = load_en ? load_addr[PAY_AW-1:0] : ptr2[PAY_AW-1:0];
+    wire [PAY_AW-1:0] lane3_addr = load_en ? load_addr[PAY_AW-1:0] : ptr3[PAY_AW-1:0];
     wire [33:0] lane_wmask = {34{1'b1}};
+    wire [33:0] lane0_rdata, lane1_rdata, lane2_rdata, lane3_rdata;
 
-    sram_8192x5_tiled #(.TILES(4)) u_cfg (
+    // config macro: 2x 8192x5 gated tiles -> 16384 deep
+    sram_8192x5_tiled #(.TILES(2)) u_cfg (
         .clk(clk), .cen(cfg_cen), .wen(cfg_wen), .addr(cfg_addr),
         .wdata(cfg_wdata), .wmask(cfg_wmask), .rdata(cfg_rdata)
     );
 
-    sram_4096x34_tiled #(.TILES(8)) u_lane0 (
+    // payload lanes: 4x native 4096x34 (SD-UNet longest lane 3381)
+    sram_4096x34_wrapper u_lane0 (
         .clk(clk), .cen(lane0_cen), .wen(lane0_wen), .addr(lane0_addr),
         .wdata(load_wdata), .wmask(lane_wmask), .rdata(lane0_rdata));
-    sram_4096x34_tiled #(.TILES(8)) u_lane1 (
+    sram_4096x34_wrapper u_lane1 (
         .clk(clk), .cen(lane1_cen), .wen(lane1_wen), .addr(lane1_addr),
         .wdata(load_wdata), .wmask(lane_wmask), .rdata(lane1_rdata));
+    sram_4096x34_wrapper u_lane2 (
+        .clk(clk), .cen(lane2_cen), .wen(lane2_wen), .addr(lane2_addr),
+        .wdata(load_wdata), .wmask(lane_wmask), .rdata(lane2_rdata));
+    sram_4096x34_wrapper u_lane3 (
+        .clk(clk), .cen(lane3_cen), .wen(lane3_wen), .addr(lane3_addr),
+        .wdata(load_wdata), .wmask(lane_wmask), .rdata(lane3_rdata));
 
     // ------------------------------------------------------------------
-    // Stage C: 2:1 scatter (selects from mask_c/phase_c registers) + hold.
-    //   slot s with prefix rank r reads lane (phase_c + r) mod 2
-    //   = phase_c ^ r[0].
+    // Stage C: 4:1 scatter (selects from mask_c/phase_c registers) + hold
     // ------------------------------------------------------------------
     wire [2:0]  c_pre1 = {2'b00, mask_c[0]};
     wire [2:0]  c_pre2 = c_pre1 + {2'b00, mask_c[1]};
     wire [2:0]  c_pre3 = c_pre2 + {2'b00, mask_c[2]};
     wire [2:0]  c_pre4 = c_pre3 + {2'b00, mask_c[3]};
 
-    wire        sel0 = phase_c;
-    wire        sel1 = phase_c ^ c_pre1[0];
-    wire        sel2 = phase_c ^ c_pre2[0];
-    wire        sel3 = phase_c ^ c_pre3[0];
-    wire        sel4 = phase_c ^ c_pre4[0];
+    wire [1:0]  sel0 = phase_c;
+    wire [1:0]  sel1 = phase_c + c_pre1[1:0];
+    wire [1:0]  sel2 = phase_c + c_pre2[1:0];
+    wire [1:0]  sel3 = phase_c + c_pre3[1:0];
+    wire [1:0]  sel4 = phase_c + c_pre4[1:0];
 
     wire [33:0] data0 = lane0_rdata;
     wire [33:0] data1 = lane1_rdata;
+    wire [33:0] data2 = lane2_rdata;
+    wire [33:0] data3 = lane3_rdata;
 
-    wire [33:0] sc_load   = sel0 ? data1 : data0;
-    wire [33:0] sc_store  = sel1 ? data1 : data0;
-    wire [33:0] sc_vector = sel2 ? data1 : data0;
-    wire [33:0] sc_scalar = sel3 ? data1 : data0;
-    wire [33:0] sc_sfu    = sel4 ? data1 : data0;
+    wire [33:0] sc_load   = (sel0 == 2'd0) ? data0 : (sel0 == 2'd1) ? data1 :
+                            (sel0 == 2'd2) ? data2 : data3;
+    wire [33:0] sc_store  = (sel1 == 2'd0) ? data0 : (sel1 == 2'd1) ? data1 :
+                            (sel1 == 2'd2) ? data2 : data3;
+    wire [33:0] sc_vector = (sel2 == 2'd0) ? data0 : (sel2 == 2'd1) ? data1 :
+                            (sel2 == 2'd2) ? data2 : data3;
+    wire [33:0] sc_scalar = (sel3 == 2'd0) ? data0 : (sel3 == 2'd1) ? data1 :
+                            (sel3 == 2'd2) ? data2 : data3;
+    wire [33:0] sc_sfu    = (sel4 == 2'd0) ? data0 : (sel4 == 2'd1) ? data1 :
+                            (sel4 == 2'd2) ? data2 : data3;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin

@@ -2,9 +2,11 @@
 # E2 three-lane per-pool regression (supplementary lane-sweep experiment to
 # E2-5; max-3 schedule, mod-3 phase striping, implicit EOP).
 # Each pool has its own top + tb (per-pool macro caliber):
-#   BERT    : exp2_three_lane_pool_top_bert    + sram_8192x5_wrapper + 3x sram_4096x34_wrapper
+#   BERT    : exp2_three_lane_pool_top_bert    + sram_8192x5_wrapper + 3x sram_2048x34_tiled#2
+#             (uniform 2048x34 primitive, per-tile CEN gating; fairness fix 2026-09-16)
 #   SD-UNet : exp2_three_lane_pool_top_sd_unet + sram_8192x5_tiled#2 + 3x sram_4096x34_tiled#2
-#   LLaMA   : exp2_three_lane_pool_top_llama   + sram_32768x5_wrapper + 3x sram_16384x34_wrapper
+#   LLaMA   : exp2_three_lane_pool_top_llama   + sram_8192x5_tiled#4 + 3x sram_4096x34_tiled#4
+#             (uniform gated-tile construction with E1/E2-4; fairness fix 2026-09-16)
 # Real TSMC 28nm macro models; iverilog functional run; per-pool bit-exact
 # check vs golden_issue3.txt (hold semantics of the max-3 schedule); each
 # pool run in forward AND reverse order (out-of-order descriptor switching).
@@ -30,6 +32,7 @@ rm -f /tmp/.ivl_probe.v /tmp/.ivl_probe.vvp
 
 M_8192x5=(  "$RTL_DIR/src/ts1n28hpcphvtb8192x5m8swbasod_180a_ffg0p88v0p99v0c.v" )
 M_32768x5=( "$RTL_DIR/src/ts1n28hpcphvtb32768x5m16swbasod_180a_ffg0p88v0p99v0c.v" )
+M_2048x34=( "$RTL_DIR/src/ts1n28hpcphvtb2048x34m8swbasod_180a_ffg0p88v0p99v0c.v" )
 M_4096x34=( "$RTL_DIR/src/ts1n28hpcphvtb4096x34m8swbasod_180a_ffg0p88v0p99v0c.v" )
 M_16384x34=( "$RTL_DIR/src/ts1n28hpcphvtb16384x34m8swbasod_180a_ffg0p88v0p99v0c.v" )
 
@@ -40,15 +43,17 @@ run_one() {  # suffix  pool_name  rev(0/1)
     local srcs
     case "$sfx" in
         bert)
-            srcs=( "$RTL_DIR/src/sram_8192x5_wrapper.v" "$RTL_DIR/src/sram_4096x34_wrapper.v"
-                   "${M_8192x5[@]}" "${M_4096x34[@]}" ) ;;
+            srcs=( "$RTL_DIR/src/sram_8192x5_wrapper.v" "$RTL_DIR/src/sram_2048x34_tiled.v"
+                   "$RTL_DIR/src/sram_2048x34_wrapper.v"
+                   "${M_8192x5[@]}" "${M_2048x34[@]}" ) ;;
         sd_unet)
             srcs=( "$RTL_DIR/src/sram_8192x5_tiled.v" "$RTL_DIR/src/sram_8192x5_wrapper.v"
                    "$RTL_DIR/src/sram_4096x34_tiled.v" "$RTL_DIR/src/sram_4096x34_wrapper.v"
                    "${M_8192x5[@]}" "${M_4096x34[@]}" ) ;;
         llama)
-            srcs=( "$RTL_DIR/src/sram_32768x5_wrapper.v" "$RTL_DIR/src/sram_16384x34_wrapper.v"
-                   "${M_32768x5[@]}" "${M_16384x34[@]}" ) ;;
+            srcs=( "$RTL_DIR/src/sram_8192x5_tiled.v" "$RTL_DIR/src/sram_8192x5_wrapper.v"
+                   "$RTL_DIR/src/sram_4096x34_tiled.v" "$RTL_DIR/src/sram_4096x34_wrapper.v"
+                   "${M_8192x5[@]}" "${M_4096x34[@]}" ) ;;
         *) echo "unknown pool $sfx" >&2; exit 1 ;;
     esac
     local suffix=""; [ "$rev" = "1" ] && suffix="_rev"

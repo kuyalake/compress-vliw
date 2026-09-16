@@ -2,18 +2,25 @@
 `default_nettype none
 
 // -----------------------------------------------------------------------------
-// Depth-tiled payload SRAM: TILES x sram_4096x34_wrapper -> 34-bit x (4096*TILES)
-// (rtl/plan_sram_tiled_wrapper_2026-09-08.md section 4)
+// Depth-tiled payload SRAM: TILES x sram_2048x34_wrapper -> 34-bit x (2048*TILES)
 //
-// Same structure as sram_8192x5_tiled: single-tile CEN gating, delayed
-// chip-select (sel_q) for the output mux, balanced two-level 2:1 tree for
-// TILES=4. No extra read-latency stage; II=1 unchanged.
+// Uniform 2048x34 primitive for the BERT-pool lane-sweep fairness fix
+// (2026-09-16): every payload bank/lane of E1 / E2-2 / E2-3 / E2-4 / E2-5 on
+// BERT is built from the same 2048x34 base macro, so a payload read costs the
+// same energy in every scheme (per-read energy of a native 4096x34 is ~1.32x
+// a 2048x34; mixing native depths made the measured power of E2-2/E2-3 look
+// worse than E2-5 despite identical read counts).
+//
+// Same structure as sram_4096x34_tiled: single-tile CEN gating (only the
+// addressed tile activates), delayed chip-select (sel_q) for the output mux,
+// balanced two-level 2:1 tree for TILES=4. No extra read-latency stage;
+// II=1 unchanged.
 // -----------------------------------------------------------------------------
 
-module sram_4096x34_tiled #(
-    parameter TILES  = 2,   // 1, 2, 4, or 8
-    parameter ADDR_W = 12 + ((TILES == 8) ? 3 : (TILES == 4) ? 2 : (TILES == 2) ? 1 : 0),
-    parameter SEL_W  = (TILES == 8) ? 3 : (TILES == 4) ? 2 : 1
+module sram_2048x34_tiled #(
+    parameter TILES  = 2,   // 1, 2, or 4
+    parameter ADDR_W = 11 + ((TILES == 4) ? 2 : (TILES == 2) ? 1 : 0),
+    parameter SEL_W  = (TILES == 4) ? 2 : 1
 ) (
     input  wire              clk,
     input  wire              cen,
@@ -24,7 +31,7 @@ module sram_4096x34_tiled #(
     output wire [33:0]       rdata
 );
 
-    localparam integer BASE_AW = 12;
+    localparam integer BASE_AW = 11;
 
     wire [BASE_AW-1:0] addr_lo = addr[BASE_AW-1:0];
     wire [SEL_W-1:0]   addr_hi;
@@ -54,7 +61,7 @@ module sram_4096x34_tiled #(
         for (gi = 0; gi < TILES; gi = gi + 1) begin : g_tile
             wire cen_i = cen & (addr_hi == gi[SEL_W-1:0]);
             wire wen_i = wen & (addr_hi == gi[SEL_W-1:0]);
-            sram_4096x34_wrapper u_tile (
+            sram_2048x34_wrapper u_tile (
                 .clk   (clk),
                 .cen   (cen_i),
                 .wen   (wen_i),
@@ -72,20 +79,11 @@ module sram_4096x34_tiled #(
             assign rdata = tq[33:0];
         end else if (TILES == 2) begin : g_mux2
             assign rdata = sel_q[0] ? tq[67:34] : tq[33:0];
-        end else if (TILES == 4) begin : g_mux4
+        end else begin : g_mux4
             // balanced two-level 2:1 tree
             wire [33:0] lo = sel_q[0] ? tq[67:34]   : tq[33:0];
             wire [33:0] hi = sel_q[0] ? tq[135:102] : tq[101:68];
             assign rdata = sel_q[1] ? hi : lo;
-        end else begin : g_mux8
-            // balanced three-level 2:1 tree (TILES=8)
-            wire [33:0] q0 = sel_q[0] ? tq[67:34]    : tq[33:0];
-            wire [33:0] q1 = sel_q[0] ? tq[135:102]  : tq[101:68];
-            wire [33:0] q2 = sel_q[0] ? tq[203:170]  : tq[169:136];
-            wire [33:0] q3 = sel_q[0] ? tq[271:238]  : tq[237:204];
-            wire [33:0] lo = sel_q[1] ? q1 : q0;
-            wire [33:0] hi = sel_q[1] ? q3 : q2;
-            assign rdata = sel_q[2] ? hi : lo;
         end
     endgenerate
 
