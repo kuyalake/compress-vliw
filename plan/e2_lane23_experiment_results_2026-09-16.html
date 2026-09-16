@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>E2 补充实验：Lane 数扫描（E2-3 / E2-2）—— 软件编码 + 功能 RTL 验证</title>
+<style>
+body { font-family: -apple-system, "PingFang SC", sans-serif; max-width: 1100px; margin: 2em auto; padding: 0 1em; line-height: 1.6; color: #222; }
+h1, h2, h3 { color: #123; }
+table { border-collapse: collapse; margin: 1em 0; font-size: 0.92em; }
+th, td { border: 1px solid #bbb; padding: 4px 8px; text-align: right; }
+th { background: #eef2f7; }
+td.l, th.l { text-align: left; }
+.good { color: #0a7a0a; font-weight: bold; }
+.warn { color: #9a5a08; font-weight: bold; }
+code { background: #f4f4f4; padding: 1px 4px; border-radius: 3px; }
+.box { background: #f7f9fc; border-left: 4px solid #36c; padding: 0.8em 1em; margin: 1em 0; }
+.box.neg { border-left-color: #9a5a08; background: #fffaf0; }
+</style>
+</head>
+<body>
+
+<h1>E2 补充实验：Lane 数扫描（E2-3 / E2-2）</h1>
+<p>日期：2026-09-16 ｜ 补充自：<code>plan/e2_five_lane_experiment_results_2026-09-13.html</code>（E2-5 主实验）｜ 范围：max-3 / max-2 调度 + E2 条带化编码 + bit-exact 往返 + 穷举 + 三池容量 + 功能级 RTL 逐周期回归（每池独立 top/tb，正+反序）。<b>全部通过。</b></p>
+
+<div class="box">
+<b>实验设定（与 E2-5 的唯一差异）：</b>维持 E2 条带化存储核心方案不变（每周期 5-bit mask、phase 轮转条带化、隐式 EOP、hold 输出语义），目标操作池不变（BERT 4 / SD-UNet 5 / LLaMA 3，共 12 个程序，每程序沿用 max-5 选定的调度 mode）。<b>只把调度器最大并发槽位改为 3 和 2</b>，对应 3 条 / 2 条共享物理 lane（phase 模 3 / 模 2）。
+</div>
+
+<div class="box neg">
+<b>一句话结论：</b>E2-3 / E2-2 功能正确性全部验证通过，但在统一最大物理配置下 <b>E2-5（1,556,480 bit）仍最优</b>：E2-3 = 1,835,008 bit（E2-5 的 117.9%）、E2-2 = 2,392,064 bit（153.7%）。原因是有效 payload 信息量守恒（LLaMA 池 33,104 个 34-bit 事件与调度无关），E2 的 phase 条带化已把 lane 长度均衡到相差 ≤1；减少 lane 数只能加深单条 lane，2 的幂深度填充浪费反而更大（payload 利用率：E2-5 80.8% → E2-3 67.3% → E2-2 50.5%）。<b>lane 数不宜低于逻辑槽数。</b>性能侧：max-3 几乎无代价（多数程序 T3=T5），max-2 最差 +4.6%。
+</div>
+
+<h2>1. 每程序调度结果（性能代价）</h2>
+<p>12 个程序在 max-5 / max-3 / max-2 下的周期数。max_active 为该调度下实际最大并发槽数：</p>
+<table>
+<tr><th class="l">程序</th><th>mode</th><th>T5</th><th>T3</th><th>T3/T5</th><th>T2</th><th>T2/T5</th><th>max_active@5</th></tr>
+<tr><td class="l">bias_gelu y3072</td><td>2</td><td>4456</td><td>4456</td><td>100.0%</td><td>4516</td><td class="warn">101.3%</td><td>4</td></tr>
+<tr><td class="l">geglu y3072</td><td>2</td><td>4133</td><td>4133</td><td>100.0%</td><td>4043</td><td>97.8%</td><td>4</td></tr>
+<tr><td class="l">groupnorm y1280</td><td>0</td><td>2457</td><td>2449</td><td>99.7%</td><td>2496</td><td class="warn">101.6%</td><td>4</td></tr>
+<tr><td class="l">layernorm y768</td><td>0</td><td>1450</td><td>1424</td><td>98.2%</td><td>1516</td><td class="warn">104.6%</td><td>5</td></tr>
+<tr><td class="l">rmsnorm y4096</td><td>0</td><td>5327</td><td>5327</td><td>100.0%</td><td>5348</td><td>100.4%</td><td>3</td></tr>
+<tr><td class="l">silu y1280</td><td>2</td><td>1767</td><td>1767</td><td>100.0%</td><td>1668</td><td>94.4%</td><td>4</td></tr>
+<tr><td class="l">softmax y512</td><td>2</td><td>969</td><td>948</td><td>97.8%</td><td>1014</td><td class="warn">104.6%</td><td>5</td></tr>
+<tr><td class="l">softmax y1024</td><td>2</td><td>1877</td><td>1877</td><td>100.0%</td><td>1932</td><td class="warn">102.9%</td><td>4</td></tr>
+<tr><td class="l">softmax y4096</td><td>1</td><td>7135</td><td>7129</td><td>99.9%</td><td>7281</td><td class="warn">102.0%</td><td>4</td></tr>
+<tr><td class="l">swiglu y11008</td><td>2</td><td>18242</td><td>18242</td><td>100.0%</td><td>18242</td><td>100.0%</td><td>2</td></tr>
+<tr><td class="l">tanh y768</td><td>2</td><td>792</td><td>792</td><td>100.0%</td><td>792</td><td>100.0%</td><td>2</td></tr>
+</table>
+<p>注：个别程序 T2/T3 略低于 T5（如 silu 94.4%）是调度启发式（index 优先级）的噪声，不代表压缩收益；三池总周期 max-3 与 max-5 相差在 ±0.7% 以内（12 程序中 7 个完全相等），max-2 略增（BERT +2.2%、SD-UNet −0.2%、LLaMA +0.5%）。</p>
+
+<h2>2. 软件验证</h2>
+<ul>
+<li><b>bit-exact 往返</b>：12 程序 × 2 种 lane 数全部通过（编码→软件解码→逐周期逐 slot 逐 bit 比对原始调度）。</li>
+<li><b>payload 总量不变性</b>：每程序有效 slot 事件数在 max-5/3/2 下完全一致（DAG 固定，调度只改变发射时刻）——这是容量结论的关键前提。</li>
+<li><b>mask×phase 穷举</b>：E2-3 合法 26 mask（popcount≤3）× 3 phase = <b>78/78 态通过</b>；E2-2 合法 16 mask（popcount≤2）× 2 phase = <b>32/32 态通过</b>（lane 读取数==popcount、slot↔lane 双射、phase_next 在界内）。E2-5 原 160 态检查同步复跑通过。</li>
+<li><b>w=5 交叉核对</b>：本脚本重算的 E2-5 三池容量与统一最大配置同 plan Table 5 / Table 6 全部 MATCH。</li>
+</ul>
+
+<h2>3. 三个程序池容量（每池独立宏规格）</h2>
+<table>
+<tr><th class="l">程序池</th><th class="l">方案</th><th>Config 有效条目</th><th>有效 Payload 总数</th><th>最长 Lane</th><th class="l">分池 Config 宏</th><th class="l">分池 Payload 宏</th><th>分池物理 bit</th></tr>
+<tr><td class="l" rowspan="2">BERT</td><td class="l">E2-3</td><td>7,616</td><td>7,122</td><td>2,375</td><td class="l">8192×5</td><td class="l">3×4096×34</td><td>458,752</td></tr>
+<tr><td class="l">E2-2</td><td>7,834</td><td>7,122</td><td>3,561</td><td class="l">8192×5</td><td class="l">2×4096×34</td><td>319,488</td></tr>
+<tr><td class="l" rowspan="2">SD-UNet</td><td class="l">E2-3</td><td>11,645</td><td>13,520</td><td>4,508</td><td class="l">16384×5</td><td class="l">3×8192×34</td><td>917,504</td></tr>
+<tr><td class="l">E2-2</td><td>11,650</td><td>13,520</td><td>6,760</td><td class="l">16384×5</td><td class="l">2×8192×34</td><td>638,976</td></tr>
+<tr><td class="l" rowspan="2">LLaMA</td><td class="l">E2-3</td><td>30,695</td><td>33,104</td><td>11,035</td><td class="l">32768×5</td><td class="l">3×16384×34</td><td>1,835,008</td></tr>
+<tr><td class="l">E2-2</td><td>30,868</td><td>33,104</td><td>16,552</td><td class="l">32768×5</td><td class="l">2×32768×34</td><td>2,392,064</td></tr>
+</table>
+<p>对照 E2-5 分池口径：BERT = 389,120 bit（8192×5 + 5×2048×34）、SD-UNet = 778,240 bit（16384×5 + 5×4096×34）、LLaMA = 1,556,480 bit（32768×5 + 5×8192×34）。lane 事件均衡度与 E2-5 相同（相差 ≤1）。</p>
+<p><b>分池口径的细微发现：</b>对 BERT / SD-UNet 两个小池，E2-2 分池 bit 数反而低于 E2-5 分池口径（319,488 &lt; 389,120；638,976 &lt; 778,240）——小池 payload 总量小，少 lane + 浅深度的 2 的幂粒度更合算；但 LLaMA 大池相反。论文主硬件是覆盖最大池的通用核，此口径不适用（见 §4），但值得在论文中如实说明。</p>
+
+<h2>4. 统一最大物理容量（覆盖 LLaMA 池的通用核，三种调度各自公平对照）</h2>
+<table>
+<tr><th class="l">调度</th><th class="l">方案</th><th class="l">物理 SRAM 组织</th><th>总 bit</th><th>vs E0</th><th>vs E1-uniform</th><th>vs E2-5</th></tr>
+<tr><td class="l" rowspan="3">max-5</td><td class="l">E0</td><td class="l">1×32768×171</td><td>5,603,328</td><td>100%</td><td>—</td><td>—</td></tr>
+<tr><td class="l">E1-uniform</td><td class="l">1×32768×5 + 5×16384×34</td><td>2,949,120</td><td>52.6%</td><td>100%</td><td>—</td></tr>
+<tr><td class="l"><b>E2-5</b></td><td class="l">1×32768×5 + 5×8192×34</td><td><b>1,556,480</b></td><td><b>27.8%</b></td><td><b>52.8%</b></td><td>100%</td></tr>
+<tr><td class="l" rowspan="3">max-3</td><td class="l">E0</td><td class="l">1×32768×171</td><td>5,603,328</td><td>100%</td><td>—</td><td>—</td></tr>
+<tr><td class="l">E1-uniform</td><td class="l">1×32768×5 + 5×16384×34</td><td>2,949,120</td><td>52.6%</td><td>100%</td><td>—</td></tr>
+<tr><td class="l">E2-3</td><td class="l">1×32768×5 + 3×16384×34</td><td>1,835,008</td><td>32.7%</td><td>62.2%</td><td class="warn">117.9%</td></tr>
+<tr><td class="l" rowspan="3">max-2</td><td class="l">E0</td><td class="l">1×32768×171</td><td>5,603,328</td><td>100%</td><td>—</td><td>—</td></tr>
+<tr><td class="l">E1-uniform</td><td class="l">1×32768×5 + 5×16384×34</td><td>2,949,120</td><td>52.6%</td><td>100%</td><td>—</td></tr>
+<tr><td class="l">E2-2</td><td class="l">1×32768×5 + 2×32768×34</td><td>2,392,064</td><td>42.7%</td><td>81.1%</td><td class="warn">153.7%</td></tr>
+</table>
+<p>注：三种调度下 E0 / E1-uniform 相同——三池总周期在 2 的幂粒度内同为 32768（30,704 / 30,698 / 30,871），E1 的 slot bank 深度由调度不变的最大 slot 事件数决定（16,384）。因此唯一的变量是 E2 的 payload lane 组织：<b>5×8192 → 3×16384 → 2×32768</b>，payload 槽位数 40,960 → 49,152 → 65,536，利用率 80.8% → 67.3% → 50.5%。E2 的收益来自<b>均衡</b>而非减少总容量，lane 数低于逻辑槽数后填充浪费主导，总容量不降反升。</p>
+
+<h2>5. 功能级 RTL 验证（每池独立 top/tb，逐周期回归）</h2>
+<p>解码逻辑与 E2-5 同构：三级流水、II=1、3 拍延迟、隐式 EOP、hold 输出级；差异仅在 lane 数与相位运算——E2-3 为模 3（2-bit phase，一次比较+条件减法，合法 popcount≤3 由 max-3 调度保证）、E2-2 为模 2（1-bit phase，直接取和最低位；scatter 选择 = phase⊕rank[0]）。真实 TSMC 28nm 宏模型，iverilog 功能仿真，正序 + 反序（乱序启动）各一遍：</p>
+<table>
+<tr><th class="l">方案</th><th class="l">程序池</th><th class="l">top 文件</th><th class="l">Config 宏</th><th class="l">Payload 宏</th><th>逐周期 bit-exact</th><th class="l">读取计数精确门控</th><th class="l">结论</th></tr>
+<tr><td class="l" rowspan="3">E2-3</td><td class="l">BERT</td><td class="l"><code>exp2_three_lane_pool_top_bert.v</code></td><td class="l">8192×5</td><td class="l">3×4096×34</td><td>948/1424/4456/792 周期全对</td><td class="l">cfg=7616，lanes=2375/2374/2373</td><td class="l good">PASS（正+反）</td></tr>
+<tr><td class="l">SD-UNet</td><td class="l"><code>exp2_three_lane_pool_top_sd_unet.v</code></td><td class="l">16384×5（8192×5 拼接#2）</td><td class="l">3×8192×34（4096×34 拼接#2）</td><td>2449/1767/1424/1877/4133 全对</td><td class="l">cfg=11645，lanes=4508/4507/4505</td><td class="l good">PASS（正+反）</td></tr>
+<tr><td class="l">LLaMA</td><td class="l"><code>exp2_three_lane_pool_top_llama.v</code></td><td class="l">32768×5</td><td class="l">3×16384×34</td><td>5327/7129/18242 全对</td><td class="l">cfg=30695，lanes=11035/11035/11034</td><td class="l good">PASS（正+反）</td></tr>
+<tr><td class="l" rowspan="3">E2-2</td><td class="l">BERT</td><td class="l"><code>exp2_two_lane_pool_top_bert.v</code></td><td class="l">8192×5</td><td class="l">2×4096×34</td><td>1014/1516/4516/792 周期全对</td><td class="l">cfg=7834，lanes=3561/3561</td><td class="l good">PASS（正+反）</td></tr>
+<tr><td class="l">SD-UNet</td><td class="l"><code>exp2_two_lane_pool_top_sd_unet.v</code></td><td class="l">16384×5（拼接#2）</td><td class="l">2×8192×34（拼接#2）</td><td>2496/1668/1516/1932/4043 全对</td><td class="l">cfg=11650，lanes=6760/6760</td><td class="l good">PASS（正+反）</td></tr>
+<tr><td class="l">LLaMA</td><td class="l"><code>exp2_two_lane_pool_top_llama.v</code></td><td class="l">32768×5</td><td class="l">2×32768×34（16384×34 拼接#2）</td><td>5348/7281/18242 全对</td><td class="l">cfg=30868，lanes=16552/16552</td><td class="l good">PASS（正+反）</td></tr>
+</table>
+<p>golden 为本次新生成的 <code>golden_issue3.txt</code> / <code>golden_issue2.txt</code>（max-3 / max-2 调度的 hold 语义），<b>不是</b>复用 max-5 的 golden_issue5.txt。另有统一最大配置的通用 top/tb：<code>exp2_three_lane_pool_top.v</code> / <code>tb_exp2_three_lane_pool.v</code>、<code>exp2_two_lane_pool_top.v</code> / <code>tb_exp2_two_lane_pool.v</code>。</p>
+
+<h2>6. 交付物</h2>
+<ul>
+<li>软件研究：<code>experiments/e2_lane23_model_pool_study_2026_09_16.py</code> → <code>analysis_output_e2_lane23_2026-09-16/e2_lane23_results.json</code>；新调度持久化在 <code>analysis_output_model_pool_2026-09-08/schedules/*_issue{2,3}/</code></li>
+<li>数据生成：<code>rtl/tools/gen_e2_lane23_streams.py</code> → <code>rtl/data_model_pools/&lt;pool&gt;/e2_{2,3}_*</code> + <code>golden/&lt;func&gt;/golden_issue{2,3}.txt</code></li>
+<li>RTL 通用 top：<code>rtl/src/exp2_three_lane_pool_top.v</code>、<code>rtl/src/exp2_two_lane_pool_top.v</code>；新拼接宏 <code>rtl/src/sram_16384x34_tiled.v</code>（E2-2 LLaMA 用 2×16384×34 → 32768×34）</li>
+<li>每池 top/tb 生成器：<code>rtl/tools/gen_e2_lane23_pool_tops.py</code> → 6 个 top + 6 个 tb（<code>exp2_{three,two}_lane_pool_top_{bert,sd_unet,llama}.v</code> 等）</li>
+<li>回归脚本：<code>rtl/sim/run_e2_three_lane_pool.sh</code>、<code>rtl/sim/run_e2_two_lane_pool.sh</code>（bert/sd_unet/llama/all，正+反序）</li>
+</ul>
+
+<h2>7. 结论与论文用法</h2>
+<ul>
+<li>E2 条带化方案对 lane 数 2/3/5 均功能正确（软件穷举 + RTL 逐周期回归），方案本身可参数化。</li>
+<li>统一最大配置下 <b>E2-5 是最优点</b>：lane 数 = 逻辑槽数时 payload 利用率最高（80.8%）；lane 数降至 3/2 后，信息量守恒 + 2 的幂填充使总容量升至 117.9% / 153.7%。这从反方向支撑了 E2-5 的设计选择。</li>
+<li>性能维度：max-3 调度对本池 12 程序几乎免费，max-2 最差 +4.6%——若未来面向更小池或允许每池定制硬件，E2-2/E2-3 仍有价值（分池口径 BERT/SD-UNet 上 E2-2 更省）。</li>
+<li>未做（与 E2-5 相同）：28nm 门级时序签收、SAIF 功耗拆分、专用宏 PPA 对照——需商业工具环境。</li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,697 @@
+{
+  "issue_widths": {
+    "5": {
+      "nlanes": 5,
+      "pools": {
+        "BERT": {
+          "n_programs": 4,
+          "config_entries": 7663,
+          "payload_total": 7122,
+          "lane_totals": [
+            1426,
+            1425,
+            1425,
+            1424,
+            1422
+          ],
+          "longest_lane": 1426,
+          "programs": [
+            {
+              "prog": "softmax(y=512)",
+              "cfg_base": 0,
+              "prog_len": 969,
+              "lane_bases": [
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "prog": "layernorm(y=768)",
+              "cfg_base": 968,
+              "prog_len": 1450,
+              "lane_bases": [
+                218,
+                218,
+                218,
+                217,
+                217
+              ]
+            },
+            {
+              "prog": "bias_gelu(y=3072)",
+              "cfg_base": 2417,
+              "prog_len": 4456,
+              "lane_bases": [
+                693,
+                693,
+                693,
+                692,
+                691
+              ]
+            },
+            {
+              "prog": "tanh(y=768)",
+              "cfg_base": 6872,
+              "prog_len": 792,
+              "lane_bases": [
+                1310,
+                1310,
+                1310,
+                1309,
+                1307
+              ]
+            }
+          ]
+        },
+        "SD-UNet": {
+          "n_programs": 5,
+          "config_entries": 11679,
+          "payload_total": 13520,
+          "lane_totals": [
+            2705,
+            2704,
+            2704,
+            2704,
+            2703
+          ],
+          "longest_lane": 2705,
+          "programs": [
+            {
+              "prog": "groupnorm(y=1280)",
+              "cfg_base": 0,
+              "prog_len": 2457,
+              "lane_bases": [
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "prog": "silu(y=1280)",
+              "cfg_base": 2456,
+              "prog_len": 1767,
+              "lane_bases": [
+                758,
+                757,
+                757,
+                757,
+                757
+              ]
+            },
+            {
+              "prog": "layernorm(y=768)",
+              "cfg_base": 4222,
+              "prog_len": 1450,
+              "lane_bases": [
+                1014,
+                1013,
+                1013,
+                1013,
+                1013
+              ]
+            },
+            {
+              "prog": "softmax(y=1024)",
+              "cfg_base": 5671,
+              "prog_len": 1877,
+              "lane_bases": [
+                1489,
+                1488,
+                1488,
+                1488,
+                1487
+              ]
+            },
+            {
+              "prog": "geglu(y=3072)",
+              "cfg_base": 7547,
+              "prog_len": 4133,
+              "lane_bases": [
+                1937,
+                1936,
+                1936,
+                1936,
+                1935
+              ]
+            }
+          ]
+        },
+        "LLaMA": {
+          "n_programs": 3,
+          "config_entries": 30701,
+          "payload_total": 33104,
+          "lane_totals": [
+            6622,
+            6622,
+            6620,
+            6620,
+            6620
+          ],
+          "longest_lane": 6622,
+          "programs": [
+            {
+              "prog": "rmsnorm(y=4096)",
+              "cfg_base": 0,
+              "prog_len": 5327,
+              "lane_bases": [
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "prog": "softmax(y=4096)",
+              "cfg_base": 5326,
+              "prog_len": 7135,
+              "lane_bases": [
+                1488,
+                1488,
+                1488,
+                1488,
+                1488
+              ]
+            },
+            {
+              "prog": "swiglu(y=11008)",
+              "cfg_base": 12460,
+              "prog_len": 18242,
+              "lane_bases": [
+                3319,
+                3319,
+                3318,
+                3318,
+                3318
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "3": {
+      "nlanes": 3,
+      "pools": {
+        "BERT": {
+          "n_programs": 4,
+          "config_entries": 7616,
+          "payload_total": 7122,
+          "lane_totals": [
+            2375,
+            2374,
+            2373
+          ],
+          "longest_lane": 2375,
+          "programs": [
+            {
+              "prog": "softmax(y=512)",
+              "cfg_base": 0,
+              "prog_len": 948,
+              "lane_bases": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "prog": "layernorm(y=768)",
+              "cfg_base": 947,
+              "prog_len": 1424,
+              "lane_bases": [
+                363,
+                363,
+                362
+              ]
+            },
+            {
+              "prog": "bias_gelu(y=3072)",
+              "cfg_base": 2370,
+              "prog_len": 4456,
+              "lane_bases": [
+                1155,
+                1154,
+                1153
+              ]
+            },
+            {
+              "prog": "tanh(y=768)",
+              "cfg_base": 6825,
+              "prog_len": 792,
+              "lane_bases": [
+                2183,
+                2182,
+                2181
+              ]
+            }
+          ]
+        },
+        "SD-UNet": {
+          "n_programs": 5,
+          "config_entries": 11645,
+          "payload_total": 13520,
+          "lane_totals": [
+            4508,
+            4507,
+            4505
+          ],
+          "longest_lane": 4508,
+          "programs": [
+            {
+              "prog": "groupnorm(y=1280)",
+              "cfg_base": 0,
+              "prog_len": 2449,
+              "lane_bases": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "prog": "silu(y=1280)",
+              "cfg_base": 2448,
+              "prog_len": 1767,
+              "lane_bases": [
+                1262,
+                1262,
+                1262
+              ]
+            },
+            {
+              "prog": "layernorm(y=768)",
+              "cfg_base": 4214,
+              "prog_len": 1424,
+              "lane_bases": [
+                1689,
+                1689,
+                1688
+              ]
+            },
+            {
+              "prog": "softmax(y=1024)",
+              "cfg_base": 5637,
+              "prog_len": 1877,
+              "lane_bases": [
+                2481,
+                2480,
+                2479
+              ]
+            },
+            {
+              "prog": "geglu(y=3072)",
+              "cfg_base": 7513,
+              "prog_len": 4133,
+              "lane_bases": [
+                3228,
+                3227,
+                3225
+              ]
+            }
+          ]
+        },
+        "LLaMA": {
+          "n_programs": 3,
+          "config_entries": 30695,
+          "payload_total": 33104,
+          "lane_totals": [
+            11035,
+            11035,
+            11034
+          ],
+          "longest_lane": 11035,
+          "programs": [
+            {
+              "prog": "rmsnorm(y=4096)",
+              "cfg_base": 0,
+              "prog_len": 5327,
+              "lane_bases": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "prog": "softmax(y=4096)",
+              "cfg_base": 5326,
+              "prog_len": 7129,
+              "lane_bases": [
+                2480,
+                2480,
+                2480
+              ]
+            },
+            {
+              "prog": "swiglu(y=11008)",
+              "cfg_base": 12454,
+              "prog_len": 18242,
+              "lane_bases": [
+                5531,
+                5531,
+                5530
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "2": {
+      "nlanes": 2,
+      "pools": {
+        "BERT": {
+          "n_programs": 4,
+          "config_entries": 7834,
+          "payload_total": 7122,
+          "lane_totals": [
+            3561,
+            3561
+          ],
+          "longest_lane": 3561,
+          "programs": [
+            {
+              "prog": "softmax(y=512)",
+              "cfg_base": 0,
+              "prog_len": 1014,
+              "lane_bases": [
+                0,
+                0
+              ]
+            },
+            {
+              "prog": "layernorm(y=768)",
+              "cfg_base": 1013,
+              "prog_len": 1516,
+              "lane_bases": [
+                544,
+                544
+              ]
+            },
+            {
+              "prog": "bias_gelu(y=3072)",
+              "cfg_base": 2528,
+              "prog_len": 4516,
+              "lane_bases": [
+                1731,
+                1731
+              ]
+            },
+            {
+              "prog": "tanh(y=768)",
+              "cfg_base": 7043,
+              "prog_len": 792,
+              "lane_bases": [
+                3273,
+                3273
+              ]
+            }
+          ]
+        },
+        "SD-UNet": {
+          "n_programs": 5,
+          "config_entries": 11650,
+          "payload_total": 13520,
+          "lane_totals": [
+            6760,
+            6760
+          ],
+          "longest_lane": 6760,
+          "programs": [
+            {
+              "prog": "groupnorm(y=1280)",
+              "cfg_base": 0,
+              "prog_len": 2496,
+              "lane_bases": [
+                0,
+                0
+              ]
+            },
+            {
+              "prog": "silu(y=1280)",
+              "cfg_base": 2495,
+              "prog_len": 1668,
+              "lane_bases": [
+                1893,
+                1893
+              ]
+            },
+            {
+              "prog": "layernorm(y=768)",
+              "cfg_base": 4162,
+              "prog_len": 1516,
+              "lane_bases": [
+                2533,
+                2533
+              ]
+            },
+            {
+              "prog": "softmax(y=1024)",
+              "cfg_base": 5677,
+              "prog_len": 1932,
+              "lane_bases": [
+                3720,
+                3720
+              ]
+            },
+            {
+              "prog": "geglu(y=3072)",
+              "cfg_base": 7608,
+              "prog_len": 4043,
+              "lane_bases": [
+                4840,
+                4840
+              ]
+            }
+          ]
+        },
+        "LLaMA": {
+          "n_programs": 3,
+          "config_entries": 30868,
+          "payload_total": 33104,
+          "lane_totals": [
+            16552,
+            16552
+          ],
+          "longest_lane": 16552,
+          "programs": [
+            {
+              "prog": "rmsnorm(y=4096)",
+              "cfg_base": 0,
+              "prog_len": 5348,
+              "lane_bases": [
+                0,
+                0
+              ]
+            },
+            {
+              "prog": "softmax(y=4096)",
+              "cfg_base": 5347,
+              "prog_len": 7281,
+              "lane_bases": [
+                3720,
+                3720
+              ]
+            },
+            {
+              "prog": "swiglu(y=11008)",
+              "cfg_base": 12627,
+              "prog_len": 18242,
+              "lane_bases": [
+                8296,
+                8296
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "capacity": {
+    "5": {
+      "schemes": {
+        "E0": {
+          "bits": 5603328,
+          "desc": "1 x 32768 x 171"
+        },
+        "E1-uniform": {
+          "bits": 2949120,
+          "desc": "1 x 32768 x 5 + 5 x 16384 x 34"
+        },
+        "E2-5": {
+          "bits": 1556480,
+          "desc": "1 x 32768 x 5 + 5 x 8192 x 34"
+        }
+      },
+      "meta": {
+        "cfg_depth": 32768,
+        "e0_depth": 32768,
+        "e1_bank_depth": 16384,
+        "e2_lane_depth": 8192,
+        "max_cycles": 30704,
+        "max_cfg_entries": 30701,
+        "max_longest_lane": 6622,
+        "max_slot_total": 13696
+      }
+    },
+    "3": {
+      "schemes": {
+        "E0": {
+          "bits": 5603328,
+          "desc": "1 x 32768 x 171"
+        },
+        "E1-uniform": {
+          "bits": 2949120,
+          "desc": "1 x 32768 x 5 + 5 x 16384 x 34"
+        },
+        "E2-3": {
+          "bits": 1835008,
+          "desc": "1 x 32768 x 5 + 3 x 16384 x 34"
+        }
+      },
+      "meta": {
+        "cfg_depth": 32768,
+        "e0_depth": 32768,
+        "e1_bank_depth": 16384,
+        "e2_lane_depth": 16384,
+        "max_cycles": 30698,
+        "max_cfg_entries": 30695,
+        "max_longest_lane": 11035,
+        "max_slot_total": 13696
+      }
+    },
+    "2": {
+      "schemes": {
+        "E0": {
+          "bits": 5603328,
+          "desc": "1 x 32768 x 171"
+        },
+        "E1-uniform": {
+          "bits": 2949120,
+          "desc": "1 x 32768 x 5 + 5 x 16384 x 34"
+        },
+        "E2-2": {
+          "bits": 2392064,
+          "desc": "1 x 32768 x 5 + 2 x 32768 x 34"
+        }
+      },
+      "meta": {
+        "cfg_depth": 32768,
+        "e0_depth": 32768,
+        "e1_bank_depth": 16384,
+        "e2_lane_depth": 32768,
+        "max_cycles": 30871,
+        "max_cfg_entries": 30868,
+        "max_longest_lane": 16552,
+        "max_slot_total": 13696
+      }
+    }
+  },
+  "plan_check_w5": {
+    "BERT": true,
+    "SD-UNet": true,
+    "LLaMA": true
+  },
+  "programs": [
+    {
+      "func": "bias_gelu",
+      "y": 3072,
+      "mode": 2,
+      "T5": 4456,
+      "T3": 4456,
+      "T2": 4516,
+      "max_active5": 4
+    },
+    {
+      "func": "geglu",
+      "y": 3072,
+      "mode": 2,
+      "T5": 4133,
+      "T3": 4133,
+      "T2": 4043,
+      "max_active5": 4
+    },
+    {
+      "func": "groupnorm",
+      "y": 1280,
+      "mode": 0,
+      "T5": 2457,
+      "T3": 2449,
+      "T2": 2496,
+      "max_active5": 4
+    },
+    {
+      "func": "layernorm",
+      "y": 768,
+      "mode": 0,
+      "T5": 1450,
+      "T3": 1424,
+      "T2": 1516,
+      "max_active5": 5
+    },
+    {
+      "func": "rmsnorm",
+      "y": 4096,
+      "mode": 0,
+      "T5": 5327,
+      "T3": 5327,
+      "T2": 5348,
+      "max_active5": 3
+    },
+    {
+      "func": "silu",
+      "y": 1280,
+      "mode": 2,
+      "T5": 1767,
+      "T3": 1767,
+      "T2": 1668,
+      "max_active5": 4
+    },
+    {
+      "func": "softmax",
+      "y": 512,
+      "mode": 2,
+      "T5": 969,
+      "T3": 948,
+      "T2": 1014,
+      "max_active5": 5
+    },
+    {
+      "func": "softmax",
+      "y": 1024,
+      "mode": 2,
+      "T5": 1877,
+      "T3": 1877,
+      "T2": 1932,
+      "max_active5": 4
+    },
+    {
+      "func": "softmax",
+      "y": 4096,
+      "mode": 1,
+      "T5": 7135,
+      "T3": 7129,
+      "T2": 7281,
+      "max_active5": 4
+    },
+    {
+      "func": "swiglu",
+      "y": 11008,
+      "mode": 2,
+      "T5": 18242,
+      "T3": 18242,
+      "T2": 18242,
+      "max_active5": 2
+    },
+    {
+      "func": "tanh",
+      "y": 768,
+      "mode": 2,
+      "T5": 792,
+      "T3": 792,
+      "T2": 792,
+      "max_active5": 2
+    }
+  ]
+}
