@@ -1,0 +1,46 @@
+{
+ "2624bomhof_1": {
+  "C": 46557,
+  "dirty": {
+   "sel1": 0,
+   "sel2": 0,
+   "addr": 0,
+   "op": 0
+  },
+  "ghost_wea_bits": 0,
+  "missing_wea_bits": 0
+ },
+ "1041rajat04": {
+  "C": 5516,
+  "dirty": {
+   "sel1": 0,
+   "sel2": 0,
+   "addr": 0,
+   "op": 0
+  },
+  "ghost_wea_bits": 0,
+  "missing_wea_bits": 0
+ },
+ "2395add20": {
+  "C": 6113,
+  "dirty": {
+   "sel1": 0,
+   "sel2": 0,
+   "addr": 0,
+   "op": 0
+  },
+  "ghost_wea_bits": 0,
+  "missing_wea_bits": 0
+ },
+ "430oscil_dcop_11": {
+  "C": 471,
+  "dirty": {
+   "sel1": 0,
+   "sel2": 0,
+   "addr": 0,
+   "op": 0
+  },
+  "ghost_wea_bits": 0,
+  "missing_wea_bits": 0
+ }
+}

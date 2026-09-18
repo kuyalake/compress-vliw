@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Kultala与Brandon方案在FRV上的编码、空周期与通用性复核</title>
+  <style>
+    :root{--ink:#17202a;--muted:#5d6975;--blue:#165dba;--line:#d6dee8;--pale:#edf5ff;--good:#eaf8f1;--warn:#fff7e5;--bad:#fff0ef;--violet:#f4efff;--bg:#f3f6f9}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.75 system-ui,-apple-system,"Segoe UI","Noto Sans SC",sans-serif}
+    main{max-width:1180px;margin:28px auto;padding:42px 50px 64px;background:#fff;box-shadow:0 8px 28px #25364a18}
+    h1{margin:0 0 8px;line-height:1.3;font-size:29px} h2{margin-top:40px;padding-bottom:7px;border-bottom:2px solid #dce9f8} h3{margin-top:27px}
+    .meta,.caption{color:var(--muted)} .caption{font-size:13px}.box{margin:18px 0;padding:14px 18px;border-left:5px solid var(--blue);background:var(--pale)}
+    .good{border-left-color:#087f5b;background:var(--good)}.warn{border-left-color:#a56600;background:var(--warn)}.bad{border-left-color:#b42318;background:var(--bad)}.violet{border-left-color:#6741a5;background:var(--violet)}
+    table{width:100%;border-collapse:collapse;margin:14px 0 7px;font-size:13.5px}th,td{border:1px solid var(--line);padding:8px 9px;vertical-align:top}th{background:#edf3fa;text-align:left}td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+    tr.focus{background:#eff7ff;font-weight:650}code{background:#f1f3f5;padding:1px 4px;border-radius:3px}pre{background:#f5f7fa;border:1px solid #e0e5eb;padding:12px 15px;overflow:auto;line-height:1.55}
+    blockquote{margin:16px 0;padding:13px 18px;border-left:4px solid #8baed8;background:#f7f9fc}ul,ol{padding-left:24px}a{color:#145aa8}
+    @media(max-width:820px){main{margin:0;padding:24px 17px}table{display:block;overflow:auto}}
+  </style>
+</head>
+<body><main>
+  <h1>Kultala与Brandon方案在FRV上的编码、空周期与通用性复核</h1>
+  <p class="meta">日期：2026-09-16 ｜ 对象：Kultala等JSP 2016、Brandon等ReConFig 2015、Li等IEEE Access 2020 ｜ 目的：纠正上一版FRV软件模型中过于乐观的变长编码假设</p>
+
+  <div class="box bad"><strong>首先撤回上一版结论：</strong>此前报告中Kultala/Brandon的逻辑压缩率、CACTI面积和功耗不能作为正式论文数字。模型把全NOP周期分别压成2 bit和4 bit，却没有证明这种短码在真实FRV码流中如何与普通指令无歧义地区分；同时也没有证明174-bit取指加有限buffer可以在最坏连续长指令下每拍恢复一条VLIW。修正空周期以后，BERT和LLaMA的变长主SRAM深度翻倍，二者不再表现为接近或优于E2。</div>
+
+  <h2>1. Kultala 2016：原论文方法</h2>
+  <p>原文：<a href="../paper/Improving%20Code%20Density%20with%20Variable%20Length%20Encoding%20Aware%20Instruction%20Scheduling.pdf">Improving Code Density with Variable Length Encoding Aware Instruction Scheduling</a>。该方法不是“任意mask都能变短”，而是为TTA/VLIW预先定义少量固定指令模板。</p>
+  <table>
+    <thead><tr><th>论文实验机器</th><th>完整指令</th><th>四种模板</th><th>模板含义</th></tr></thead>
+    <tbody>
+      <tr><td>threeway</td><td>96 bit</td><td>32、48、96、96 bit</td><td>短模板只允许特定bus携带move，其他bus隐含NOP；两个完整模板用于长立即数等情况。</td></tr>
+      <tr><td>fourway</td><td>128 bit</td><td>40、72、128、128 bit</td><td>40-bit模板保留前两个bus，其余隐含NOP；72-bit模板另带32-bit立即数。</td></tr>
+    </tbody>
+  </table>
+  <p>假设FRV五个逻辑槽为<code>[Load, Store, Vector, Scalar, SFU]</code>，硬件只有以下模板：</p>
+  <pre>T0：只允许 Load + Scalar，其余槽隐含 NOP
+T1：只允许 Vector + SFU，其余槽隐含 NOP
+T2：完整五槽</pre>
+  <p><code>[Load1,NOP,NOP,Scalar1,NOP]</code>可以用T0；但<code>[Load1,NOP,Vector1,NOP,NOP]</code>若没有对应短模板，即使只有两个有效操作，也只能使用完整T2。</p>
+
+  <h3>1.1 编译器为何参与压缩</h3>
+  <p>Kultala通过功能单元优先级和调度后NOP优化器，在不破坏数据依赖的前提下移动操作，让更多周期命中短模板。例如：</p>
+  <pre>原调度：
+周期0 [Load, NOP, Vector, NOP, NOP]  → 无短模板匹配
+周期1 [NOP,  NOP, NOP,    Scalar, NOP] → 无短模板匹配
+
+若Vector允许延后：
+周期0 [Load, NOP, NOP,    Scalar, NOP] → T0
+周期1 [NOP,  NOP, Vector, NOP,    NOP] → T1</pre>
+  <p>这种优化并非免费：只有在操作具有调度余量时才能移动，论文也报告了轻微性能变化。FRV五个槽功能不同，Vector操作不能搬到Load槽，因此TTA中的bus重分配能力不能原样照搬。</p>
+
+  <h2>2. 之前的Kultala模型为什么不成立</h2>
+  <p>此前脚本实际上定义了一个新的FRV格式：</p>
+  <pre>00：空周期
+01：该程序池最常见的非空mask 1
+10：该程序池最常见的非空mask 2
+11：escape，后接5-bit mask</pre>
+  <ol>
+    <li><strong>模板按程序池训练：</strong>BERT、SD-UNet和LLaMA分别选择各自的两个常见mask，等于一颗核使用三套不同的硬连线模板。对于未知程序覆盖替换的通用核不成立。</li>
+    <li><strong>空周期只计2 bit：</strong>原论文中全NOP周期仍要占用一条最短合法指令，如32或40 bit，并不是只保存模板号。</li>
+    <li><strong>没有复现调度优化：</strong>没有实现论文的function-unit prioritization和NOPOptimizer，因而既不是原论文编译器复现，也不能引用原论文收益。</li>
+    <li><strong>变长前端未计：</strong>没有计入跨字对齐、预取buffer、变长PC、分支入口映射以及最坏码率。</li>
+  </ol>
+  <div class="box warn"><strong>通用性约束：</strong>五槽共有32种mask。少量固定模板不能覆盖所有组合；如果把模板增加到覆盖32种，模板标识至少需要5 bit，逐渐接近E1的5-bit mask。若改成可编程模板，还要计入模板表、装载协议和可编程路由，这已经不是Kultala原硬连线方法。</div>
+
+  <h2>3. Brandon 2015 stop-bit：原论文方法</h2>
+  <p>原文：<a href="../paper/A_sparse_VLIW_instruction_encoding_scheme_compatible_with_generic_binaries.pdf">A Sparse VLIW Instruction Encoding Scheme Compatible with Generic Binaries</a>。它把一拍并行执行的有效操作称为一个bundle，每个有效操作是一个syllable；最后一个syllable的stop bit置1。</p>
+  <p>例如FRV周期：</p>
+  <pre>[Load=L1, Store=NOP, Vector=V1, Scalar=NOP, SFU=NOP]</pre>
+  <p>安全的FRV移植至少需要：</p>
+  <pre>[slot=Load   | payload=L1 | stop=0]
+[slot=Vector | payload=V1 | stop=1]</pre>
+  <p>解码器读到<code>stop=1</code>后，才知道当前周期结束，然后把两个syllable散布回Load和Vector槽，输出完整五槽指令。此前模型按<code>34-bit payload + 3-bit slot ID + 1-bit stop = 38 bit</code>计算一个有效syllable。</p>
+
+  <h3>3.1 为什么ρ-VEX上的代价不能直接套到FRV</h3>
+  <p>Brandon的ρ-VEX具有重复功能单元、动态2/4/8 issue组合和已有dispatch网络，opcode还能限制syllable可路由到哪些lane。论文实际实现了instruction buffer、未对齐取指、跨cache-line拼接、变长NextPC和分支目标检测，并指出新增流水级会增加分支延迟。FRV五槽固定异构，如果payload本身不能唯一指示逻辑槽，就必须增加slot ID或更复杂路由。</p>
+
+  <h2>4. stop-bit无法自然表示零syllable空周期</h2>
+  <p>对FRV必须保留的全NOP周期：</p>
+  <pre>周期t：[NOP, NOP, NOP, NOP, NOP]</pre>
+  <p>纯stop-bit格式出现根本问题：空周期有零个有效syllable，因此没有任何stop bit。解码器看不到周期边界，会把下一周期第一个syllable错误地并入当前bundle，时间轴也会少一拍。</p>
+  <table>
+    <thead><tr><th>正确处理方式</th><th>需要保存什么</th><th>代价与风险</th></tr></thead>
+    <tbody>
+      <tr><td>显式NOP syllable</td><td><code>[slot/empty tag | NOP payload | stop=1]</code></td><td>按当前FRV安全格式约38 bit；容易证明正确。</td></tr>
+      <tr><td>专用EMPTY短码</td><td>一个固定、前缀无歧义的EMPTY token</td><td>必须证明存在保留opcode、长度可判定、分支可落入以及不会与普通syllable冲突。</td></tr>
+      <tr><td>额外周期边界位图</td><td>为每个逻辑周期保存边界/空周期信息</td><td>逐渐退化为mask或纵向压缩，不再是纯stop-bit。</td></tr>
+    </tbody>
+  </table>
+  <div class="box bad"><strong>此前错误：</strong>脚本把空周期计成4 bit，却没有定义这4 bit如何与普通38-bit syllable无歧义地区分。因此它只是理想信息量，不是可实现编码。</div>
+
+  <h2>5. 修正空周期后的定量影响</h2>
+  <table>
+    <thead><tr><th>程序池</th><th class="num">全NOP周期</th><th class="num">旧Kultala压缩率</th><th class="num">Kultala至少一个34-bit NOP后</th><th class="num">旧stop-bit压缩率</th><th class="num">stop-bit一个38-bit NOP后</th></tr></thead>
+    <tbody>
+      <tr><td>BERT</td><td class="num">2,591</td><td class="num">79.11%</td><td class="num">72.34%</td><td class="num">78.43%</td><td class="num">71.67%</td></tr>
+      <tr><td>SD-UNet</td><td class="num">2,832</td><td class="num">74.05%</td><td class="num">69.13%</td><td class="num">73.21%</td><td class="num">68.29%</td></tr>
+      <tr><td>LLaMA</td><td class="num">7,819</td><td class="num">76.22%</td><td class="num">71.15%</td><td class="num">75.44%</td><td class="num">70.38%</td></tr>
+    </tbody>
+  </table>
+  <p class="caption"><strong>表头说明：</strong>修正后的Kultala数字仍是乐观下界，只在旧2-bit EMPTY基础上增加一个34-bit NOP；真实最短FRV模板可能更宽。stop-bit使用一个38-bit显式NOP syllable。压缩率均为相对171-bit E0减少的逻辑bit。</p>
+  <table>
+    <thead><tr><th>程序池</th><th class="num">旧变长主SRAM深度</th><th class="num">修正空周期后深度</th><th>物理意义</th></tr></thead>
+    <tbody>
+      <tr><td>BERT</td><td class="num">2,048</td><td class="num">4,096</td><td>跨越2次幂档位，旧面积优势失效。</td></tr>
+      <tr><td>SD-UNet</td><td class="num">4,096</td><td class="num">4,096</td><td>暂未跨档，因此仍可能是最接近E2的池。</td></tr>
+      <tr><td>LLaMA</td><td class="num">8,192</td><td class="num">16,384</td><td>跨越2次幂档位，旧面积优势失效。</td></tr>
+    </tbody>
+  </table>
+  <p>因此，上一版Kultala/Brandon的CACTI面积与功耗百分比必须重跑，不能继续引用。仅从深度变化已经可以判断：BERT和LLaMA不再与E2-5接近；SD-UNet是否接近要在加入buffer/aligner后再判断。</p>
+
+  <h2>6. 可以怎样从通用性角度进行公平区分</h2>
+  <table>
+    <thead><tr><th>维度</th><th>Kultala模板</th><th>Brandon stop-bit</th><th>E2-5</th></tr></thead>
+    <tbody>
+      <tr><td>未知程序适应性</td><td>依赖固定模板覆盖率；论文模板还使用adpcm画像选择。</td><td>不依赖mask训练，但依赖ISA、opcode与dispatch结构。</td><td>5-bit mask覆盖全部32种五槽组合，不按程序训练。</td></tr>
+      <tr><td>异构固定槽</td><td>TTA bus可重分配能力在FRV上受限。</td><td>需要slot ID或复杂路由。</td><td>mask直接保留逻辑slot身份。</td></tr>
+      <tr><td>空周期</td><td>必须保存最短合法空指令。</td><td>必须增加显式NOP或EMPTY token。</td><td>config中的零mask自然表示空周期。</td></tr>
+      <tr><td>逐拍确定恢复</td><td>需要变长边界解析和预取buffer。</td><td>最长五syllable约190 bit，超过一次174-bit读取。</td><td>五lane按最坏并发配置，每拍恢复边界明确。</td></tr>
+      <tr><td>跳转/随机入口</td><td>需要压缩地址映射或对齐。</td><td>论文增加buffer和分支处理，并有额外分支延迟。</td><td>config逻辑周期地址固定；FRV当前直线微程序语义更简单。</td></tr>
+      <tr><td>主要优势</td><td>命中短模板时单体程序存储密度高。</td><td>有效操作少时能删除尾部和中间NOP。</td><td>格式固定、所有mask通用、无需按值或模板训练、吞吐可界定。</td></tr>
+    </tbody>
+  </table>
+  <blockquote>建议论文表述：Kultala和Brandon主要面向按字节寻址、带缓存的变长程序存储；E2面向要求每周期确定恢复一条完整宽指令、逻辑槽异构、程序池可替换且SRAM bank统一定深的微程序式VLIW核。前两类方法追求更高理论bit密度，但需要变长边界、buffer、路由和分支处理；E2用固定周期恢复和任意mask覆盖换取可预测硬件。</blockquote>
+
+  <h2>7. 纵向压缩论文是否比较了这两项工作</h2>
+  <p>Li等2020全文：<a href="../paper/An_Efficient_and_Fast_VLIW_Compression_Scheme_for_Stream_Processor.pdf">An Efficient and Fast VLIW Compression Scheme for Stream Processor</a>。全文和参考文献中没有Kultala、Brandon、stop-bit或固定短模板＋调度后优化。其Table 4主要比较Guan 2012、Ji 2013、Jin 2014以及Seong与Mishra 2006的bitmask方案。</p>
+  <p>原论文没有解释为何遗漏。合理推测是平台和目标不同：Li关注CISP片上banked instruction memory的一拍直接执行，而Kultala/Brandon面向变长TTA/ρ-VEX取指前端。但这仍属于相关工作覆盖不完整，不能作为本文不比较它们的理由。</p>
+
+  <h2>8. 为什么此前没有正确完成这一对比</h2>
+  <p>此前工作先把两篇论文作为相关工作讨论，认为其平台前提与FRV差异较大，因而没有立即建立变长取指前端。随后为了补齐第五部分，我用“最常见mask模板”和“短EMPTY token”快速构造了机制模型，却把理想信息量当成了可实现格式，没有首先验证零syllable周期、前缀无歧义和最坏吞吐。这是实验建模错误，而不是论文结果本身对E2不利。</p>
+
+  <h2>9. 下一步正确实验</h2>
+  <ol>
+    <li>撤回旧HTML中Kultala/Brandon三池的正式CACTI百分比。</li>
+    <li>Kultala三个程序池共用一套设计前固定模板，禁止逐池训练；空周期按最短真实FRV模板计费。</li>
+    <li>Brandon主结果用一个38-bit显式NOP syllable表示空周期；专用EMPTY只作为经过前缀编码证明后的乐观敏感性结果。</li>
+    <li>构造真实bitstream和逐bit解析器，验证每个逻辑周期、空周期和程序边界完全恢复。</li>
+    <li>扫描任意窗口内的最大bit产生率，计算174-bit取指下保证不停顿所需的最小buffer；若存在长期平均码率超过174 bit/周期，则必须增加带宽或报告性能下降。</li>
+    <li>计入buffer、barrel aligner、变长PC、边界表和slot scatter后，再重跑CACTI和RTL开销。</li>
+  </ol>
+  <div class="box good"><strong>最终判断：</strong>修正空周期后，现有数据没有证明Kultala或Brandon能在FRV上支配E2。它们仍应作为相关工作和强baseline，但比较重点必须从“理想bit数”升级为“保留所有空周期和程序边界、保证每拍恢复、计入变长前端后的系统成本”。</div>
+
+  <p class="meta">本报告是对<code>frv_28nm_new_results_expansion_and_paper_strategy_2026-09-16.html</code>第五部分的纠错说明。未执行git push。</p>
+</main></body></html>

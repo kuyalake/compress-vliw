@@ -1,0 +1,422 @@
+n: 10
+nnz: 25
+handling column 1
+SubAi: 1 4 
+SubAx: 0.970593 0.80028 Sorted Ai: 1 4 
+Corresponding Ax: 0.970593 0.80028 
+handling column 2
+SubAi: 2 6 
+SubAx: 0.933993 0.655478 Sorted Ai: 2 6 
+Corresponding Ax: 0.933993 0.655478 
+handling column 3
+SubAi: 1 3 4 8 
+SubAx: 0.031833 0.046171 0.097132 0.950222 	Checked!
+Sorted Ai: 1 3 4 8 
+Corresponding Ax: 0.031833 0.046171 0.097132 0.950222 
+handling column 4
+SubAi: 4 5 
+SubAx: 0.445586 0.489764 Sorted Ai: 4 5 
+Corresponding Ax: 0.445586 0.489764 
+handling column 5
+SubAi: 2 3 5 6 
+SubAx: 0.655098 0.162612 0.498364 0.959744 	Checked!
+	Checked!
+	Checked!
+Sorted Ai: 2 3 4 5 6 8 
+Corresponding Ax: 0.655098 0.162612 0 0.498364 0.959744 0 
+handling column 6
+SubAi: 6 
+SubAx: 0.547216 Sorted Ai: 6 
+Corresponding Ax: 0.547216 
+handling column 7
+SubAi: 0 4 7 9 
+SubAx: 0.840717 0.929264 0.251084 0.473289 	Checked!
+	Checked!
+	Checked!
+	Checked!
+	Checked!
+Sorted Ai: 0 2 4 5 6 7 8 9 
+Corresponding Ax: 0.840717 0 0.929264 0 0 0.251084 0 0.473289 
+handling column 8
+SubAi: 3 8 
+SubAx: 0.549724 0.380446 	Checked!
+	Checked!
+	Checked!
+	Checked!
+Sorted Ai: 3 4 5 6 8 
+Corresponding Ax: 0.549724 0 0 0 0.380446 
+handling column 9
+SubAi: 9 
+SubAx: 0.337123 Sorted Ai: 9 
+Corresponding Ax: 0.337123 
+CSC format: after fill in
+Ax: 0.814724 0.126987 0.278498 0.970593 0.80028 0.933993 0.655478 0.031833 0.046171 0.097132 0.950222 0.445586 0.489764 0.655098 0.162612 0 0.498364 0.959744 0 0.547216 0.840717 0 0.929264 0 0 0.251084 0 0.473289 0.549724 0 0 0 0.380446 0.337123 
+Ai: 0 2 6 1 4 2 6 1 3 4 8 4 5 2 3 4 5 6 8 6 0 2 4 5 6 7 8 9 3 4 5 6 8 9 
+Ap: 0 3 5 7 11 13 19 20 28 33 34 
+CAd_fill: 0 3 5 8 11 16 19 25 32 33 
+div count is 11
+ms count is 16
+div + ms count is 27 the ideal cycle is 11
+flops: 43
+SUCCESS: 初始化inst!
+SUCCESS: 分配ocp!
+this is ele : 0
+col is 0, row is 0
+0 returned
+this is ele : 1
+col is 0, row is 2
+1 divided
+1 returned
+this is ele : 2
+col is 0, row is 6
+2 divided
+2 returned
+this is ele : 3
+col is 1, row is 1
+3 returned
+this is ele : 4
+col is 1, row is 4
+4 divided
+4 returned
+this is ele : 5
+col is 2, row is 2
+5 returned
+this is ele : 6
+col is 2, row is 6
+6 divided
+6 returned
+this is ele : 7
+col is 3, row is 1
+7 returned
+this is ele : 8
+col is 3, row is 3
+8 returned
+this is ele : 9
+col is 3, row is 4
+9 divided
+9 returned
+this is ele : 10
+col is 3, row is 8
+10 divided
+10 returned
+this is ele : 11
+col is 4, row is 4
+11 returned
+this is ele : 12
+col is 4, row is 5
+12 divided
+12 returned
+this is ele : 13
+col is 5, row is 2
+13 returned
+this is ele : 14
+col is 5, row is 3
+14 returned
+this is ele : 15
+col is 5, row is 4
+15 returned
+this is ele : 16
+col is 5, row is 5
+16 returned
+this is ele : 17
+col is 5, row is 6
+17 divided
+17 returned
+this is ele : 18
+col is 5, row is 8
+18 divided
+18 returned
+this is ele : 19
+col is 6, row is 6
+19 returned
+this is ele : 20
+col is 7, row is 0
+20 returned
+this is ele : 21
+col is 7, row is 2
+21 returned
+this is ele : 22
+col is 7, row is 4
+22 returned
+this is ele : 23
+col is 7, row is 5
+23 returned
+this is ele : 24
+col is 7, row is 6
+24 returned
+this is ele : 25
+col is 7, row is 7
+25 returned
+this is ele : 26
+col is 7, row is 8
+26 divided
+26 returned
+this is ele : 27
+col is 7, row is 9
+27 divided
+27 returned
+this is ele : 28
+col is 8, row is 3
+28 returned
+this is ele : 29
+col is 8, row is 4
+29 returned
+this is ele : 30
+col is 8, row is 5
+30 returned
+this is ele : 31
+col is 8, row is 6
+31 returned
+this is ele : 32
+col is 8, row is 8
+32 returned
+this is ele : 33
+col is 9, row is 9
+33 returned
+SUCCESS: Build Graph!
+SUCCESS: Initialize waiting list!
+SUCCESS: add ok to do list at time 0
+SUCCESS: schedule at time0
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 1
+SUCCESS: schedule at time 1
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 2
+SUCCESS: schedule at time 2
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 3
+SUCCESS: schedule at time 3
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 4
+SUCCESS: schedule at time 4
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 5
+SUCCESS: schedule at time 5
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 6
+SUCCESS: schedule at time 6
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 7
+SUCCESS: schedule at time 7
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 8
+SUCCESS: schedule at time 8
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 9
+SUCCESS: schedule at time 9
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 10
+SUCCESS: schedule at time 10
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 11
+SUCCESS: schedule at time 11
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 12
+SUCCESS: schedule at time 12
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 13
+SUCCESS: schedule at time 13
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 14
+SUCCESS: schedule at time 14
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 15
+SUCCESS: schedule at time 15
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 16
+SUCCESS: schedule at time 16
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 17
+SUCCESS: schedule at time 17
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 18
+SUCCESS: schedule at time 18
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 19
+SUCCESS: schedule at time 19
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 20
+SUCCESS: schedule at time 20
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 21
+SUCCESS: schedule at time 21
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 22
+SUCCESS: schedule at time 22
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 23
+SUCCESS: schedule at time 23
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 24
+SUCCESS: schedule at time 24
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 25
+SUCCESS: schedule at time 25
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 26
+SUCCESS: schedule at time 26
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 27
+SUCCESS: schedule at time 27
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 28
+SUCCESS: schedule at time 28
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 29
+SUCCESS: schedule at time 29
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 30
+SUCCESS: schedule at time 30
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 31
+SUCCESS: schedule at time 31
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 32
+SUCCESS: schedule at time 32
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 33
+SUCCESS: schedule at time 33
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 34
+SUCCESS: schedule at time 34
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 35
+SUCCESS: schedule at time 35
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 36
+SUCCESS: schedule at time 36
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 37
+SUCCESS: schedule at time 37
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 38
+SUCCESS: schedule at time 38
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 39
+SUCCESS: schedule at time 39
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 40
+SUCCESS: schedule at time 40
+newly_valid list is: 
+SUCCESS: add waiting list
+SUCCESS: add ok to do list at time 41
+SUCCESS: schedule at time 41
+newly_valid list is: 
+SUCCESS: add waiting list
+Finished: schedule!
+this is the instruction from 0 to 44
+0:	(1, 0, 3, 1, 1)	(2, 0, 3, 1, 1)	(4, 3, 3, 1, 1)	(6, 5, 3, 1, 1)
+1:	(10, 8, 3, 1, 1)	(12, 11, 3, 1, 1)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+2:	(27, 25, 3, 1, 1)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+3:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+4:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+5:	(20, 1, 0, 1, 1)	(20, 2, 0, 1, 1)	(13, 6, 0, 1, 1)	(-1, -1, -1, -1, 0)
+6:	(21, -1, 2, -1, 1)	(24, -1, 2, -1, 1)	(17, -1, 2, -1, 1)	(7, 4, 0, 1, 1)
+7:	(14, 10, 0, 1, 1)	(28, 10, 0, 1, 1)	(-1, -1, -1, -1, 0)	(9, -1, 2, -1, 1)
+8:	(18, -1, 2, -1, 1)	(32, -1, 2, -1, 1)	(22, 12, 0, 1, 1)	(-1, -1, -1, -1, 0)
+9:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(23, -1, 2, -1, 1)	(-1, -1, -1, -1, 0)
+10:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+11:	(21, 6, 0, 1, 1)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+12:	(24, -1, 2, -1, 1)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+13:	(9, 8, 3, 1, 1)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+14:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+15:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+16:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+17:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+18:	(14, 9, 0, 1, 1)	(28, 9, 0, 1, 1)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+19:	(15, -1, 2, -1, 1)	(29, -1, 2, -1, 1)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+20:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+21:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+22:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+23:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+24:	(15, 12, 0, 1, 1)	(29, 12, 0, 1, 1)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+25:	(16, -1, 2, -1, 1)	(30, -1, 2, -1, 1)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+26:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+27:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+28:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+29:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+30:	(17, 16, 3, 1, 1)	(18, 16, 3, 1, 1)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+31:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+32:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+33:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+34:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+35:	(23, 17, 0, 1, 1)	(30, 17, 0, 1, 1)	(23, 18, 0, 1, 1)	(-1, -1, -1, -1, 0)
+36:	(24, -1, 2, -1, 1)	(31, -1, 2, -1, 1)	(26, -1, 2, -1, 1)	(-1, -1, -1, -1, 0)
+37:	(30, 18, 0, 1, 1)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+38:	(32, -1, 2, -1, 1)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+39:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+40:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+41:	(26, 25, 3, 1, 1)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+42:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+43:	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)	(-1, -1, -1, -1, 0)
+0.126987 / 0.814724 = 0.155865
+0.278498 / 0.814724 = 0.341831
+0.80028 / 0.970593 = 0.824527
+0.655478 / 0.933993 = 0.701802
+0.950222 / 0.046171 = 20.5805
+0.489764 / 0.445586 = 1.09915
+0.473289 / 0.251084 = 1.88498
+0 - 0.840717 * 0.155865 = -0.131038
+0 - 0.840717 * 0.341831 = -0.287383
+0.959744 - 0.655098 * 0.701802 = 0.499995
+0.097132 - 0.031833 * 0.824527 = 0.0708848
+0 - 0.162612 * 20.5805 = -3.34664
+0.380446 - 0.549724 * 20.5805 = -10.9331
+0 - 0.929264 * 1.09915 = -1.0214
+-0.287383 - -0.131038 * 0.701802 = -0.19542
+0.0708848 / 0.046171 = 1.53527
+0 - 0.162612 * 1.53527 = -0.249653
+0 - 0.549724 * 1.53527 = -0.843973
+0.498364 - -0.249653 * 1.09915 = 0.772769
+0 - -0.843973 * 1.09915 = 0.92765
+0.499995 / 0.772769 = 0.647017
+-3.34664 / 0.772769 = -4.33071
+-0.19542 - -1.0214 * 0.647017 = 0.465441
+0 - 0.92765 * 0.647017 = -0.600206
+0 - -1.0214 * -4.33071 = -4.42337
+-10.9331 - 0.92765 * -4.33071 = -6.91577
+-4.42337 / 0.251084 = -17.6171
+SUCCESS: simulation
+CSC format: after simulation
+Ax: 0.814724 0.155865 0.341831 0.970593 0.824527 0.933993 0.701802 0.031833 0.046171 1.53527 20.5805 0.445586 1.09915 0.655098 0.162612 -0.249653 0.772769 0.647017 -4.33071 0.547216 0.840717 -0.131038 0.929264 -1.0214 0.465441 0.251084 -17.6171 1.88498 0.549724 -0.843973 0.92765 -0.600206 -6.91577 0.337123 
+Ai: 0 2 6 1 4 2 6 1 3 4 8 4 5 2 3 4 5 6 8 6 0 2 4 5 6 7 8 9 3 4 5 6 8 9 
+Ap: 0 3 5 7 11 13 19 20 28 33 34 

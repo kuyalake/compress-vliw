@@ -1,0 +1,314 @@
+{
+ "2624bomhof_1": {
+  "L4": {
+   "A_logical": {
+    "E0": 38735424,
+    "total": 33415360,
+    "ratio": 1.1592101356980742,
+    "meta_per_cycle": 40
+   },
+   "B_logical": {
+    "E0": 38735424,
+    "total": 33229132,
+    "ratio": 1.1657067659787201,
+    "meta_per_cycle": 36
+   },
+   "A_strict": {
+    "E0": 54525952,
+    "total": 52428800,
+    "ratio": 1.04,
+    "meta_per_cycle": 40
+   },
+   "B_strict": {
+    "E0": 54525952,
+    "total": 52166656,
+    "ratio": 1.0452261306532664,
+    "meta_per_cycle": 36
+   },
+   "A_tiled2": {
+    "E0": 40894464,
+    "total": 36962304,
+    "ratio": 1.1063829787234043,
+    "meta_per_cycle": 40
+   },
+   "B_tiled2": {
+    "E0": 40894464,
+    "total": 36765696,
+    "ratio": 1.1122994652406417,
+    "meta_per_cycle": 36
+   }
+  },
+  "L8": {
+   "A_logical": {
+    "E0": 38735424,
+    "total": 31471972,
+    "ratio": 1.2307911305970913,
+    "meta_per_cycle": 48
+   },
+   "B_logical": {
+    "E0": 38735424,
+    "total": 31099516,
+    "ratio": 1.2455314095563417,
+    "meta_per_cycle": 40
+   },
+   "A_strict": {
+    "E0": 54525952,
+    "total": 49152000,
+    "ratio": 1.1093333333333333,
+    "meta_per_cycle": 48
+   },
+   "B_strict": {
+    "E0": 54525952,
+    "total": 48627712,
+    "ratio": 1.1212938005390836,
+    "meta_per_cycle": 40
+   },
+   "A_tiled2": {
+    "E0": 40894464,
+    "total": 35217408,
+    "ratio": 1.1612002791346825,
+    "meta_per_cycle": 48
+   },
+   "B_tiled2": {
+    "E0": 40894464,
+    "total": 34824192,
+    "ratio": 1.1743119266055047,
+    "meta_per_cycle": 40
+   }
+  }
+ },
+ "1041rajat04": {
+  "L4": {
+   "A_logical": {
+    "E0": 4589312,
+    "total": 3477648,
+    "ratio": 1.3196597240433765,
+    "meta_per_cycle": 40
+   },
+   "B_logical": {
+    "E0": 4589312,
+    "total": 3455584,
+    "ratio": 1.3280857881041237,
+    "meta_per_cycle": 36
+   },
+   "A_strict": {
+    "E0": 6815744,
+    "total": 5537792,
+    "ratio": 1.2307692307692308,
+    "meta_per_cycle": 40
+   },
+   "B_strict": {
+    "E0": 6815744,
+    "total": 5505024,
+    "ratio": 1.2380952380952381,
+    "meta_per_cycle": 36
+   },
+   "A_tiled2": {
+    "E0": 5111808,
+    "total": 3801088,
+    "ratio": 1.3448275862068966,
+    "meta_per_cycle": 40
+   },
+   "B_tiled2": {
+    "E0": 5111808,
+    "total": 3776512,
+    "ratio": 1.353579175704989,
+    "meta_per_cycle": 36
+   }
+  },
+  "L8": {
+   "A_logical": {
+    "E0": 4589312,
+    "total": 3173852,
+    "ratio": 1.445975426705467,
+    "meta_per_cycle": 48
+   },
+   "B_logical": {
+    "E0": 4589312,
+    "total": 3129724,
+    "ratio": 1.4663631681260072,
+    "meta_per_cycle": 40
+   },
+   "A_strict": {
+    "E0": 6815744,
+    "total": 5214208,
+    "ratio": 1.3071484681853889,
+    "meta_per_cycle": 48
+   },
+   "B_strict": {
+    "E0": 6815744,
+    "total": 5148672,
+    "ratio": 1.3237867939538583,
+    "meta_per_cycle": 40
+   },
+   "A_tiled2": {
+    "E0": 5111808,
+    "total": 3350016,
+    "ratio": 1.525905547913801,
+    "meta_per_cycle": 48
+   },
+   "B_tiled2": {
+    "E0": 5111808,
+    "total": 3300864,
+    "ratio": 1.5486272684969753,
+    "meta_per_cycle": 40
+   }
+  }
+ },
+ "2395add20": {
+  "L4": {
+   "A_logical": {
+    "E0": 5086016,
+    "total": 4597568,
+    "ratio": 1.1062405167253644,
+    "meta_per_cycle": 40
+   },
+   "B_logical": {
+    "E0": 5086016,
+    "total": 4573116,
+    "ratio": 1.1121554756100653,
+    "meta_per_cycle": 36
+   },
+   "A_strict": {
+    "E0": 6815744,
+    "total": 6389760,
+    "ratio": 1.0666666666666667,
+    "meta_per_cycle": 40
+   },
+   "B_strict": {
+    "E0": 6815744,
+    "total": 6356992,
+    "ratio": 1.0721649484536082,
+    "meta_per_cycle": 36
+   },
+   "A_tiled2": {
+    "E0": 5111808,
+    "total": 4833280,
+    "ratio": 1.0576271186440678,
+    "meta_per_cycle": 40
+   },
+   "B_tiled2": {
+    "E0": 5111808,
+    "total": 4808704,
+    "ratio": 1.0630323679727427,
+    "meta_per_cycle": 36
+   }
+  },
+  "L8": {
+   "A_logical": {
+    "E0": 5086016,
+    "total": 4390740,
+    "ratio": 1.158350528612489,
+    "meta_per_cycle": 48
+   },
+   "B_logical": {
+    "E0": 5086016,
+    "total": 4341836,
+    "ratio": 1.1713975378157997,
+    "meta_per_cycle": 40
+   },
+   "A_strict": {
+    "E0": 6815744,
+    "total": 6250496,
+    "ratio": 1.09043250327654,
+    "meta_per_cycle": 48
+   },
+   "B_strict": {
+    "E0": 6815744,
+    "total": 6184960,
+    "ratio": 1.1019867549668874,
+    "meta_per_cycle": 40
+   },
+   "A_tiled2": {
+    "E0": 5111808,
+    "total": 4612096,
+    "ratio": 1.108348134991119,
+    "meta_per_cycle": 48
+   },
+   "B_tiled2": {
+    "E0": 5111808,
+    "total": 4562944,
+    "ratio": 1.1202872531418313,
+    "meta_per_cycle": 40
+   }
+  }
+ },
+ "430oscil_dcop_11": {
+  "L4": {
+   "A_logical": {
+    "E0": 391872,
+    "total": 265776,
+    "ratio": 1.474444645114683,
+    "meta_per_cycle": 40
+   },
+   "B_logical": {
+    "E0": 391872,
+    "total": 263892,
+    "ratio": 1.4849711245509527,
+    "meta_per_cycle": 36
+   },
+   "A_strict": {
+    "E0": 425984,
+    "total": 373760,
+    "ratio": 1.1397260273972603,
+    "meta_per_cycle": 40
+   },
+   "B_strict": {
+    "E0": 425984,
+    "total": 371712,
+    "ratio": 1.1460055096418733,
+    "meta_per_cycle": 36
+   },
+   "A_tiled2": {
+    "E0": 425984,
+    "total": 293632,
+    "ratio": 1.4507410636442895,
+    "meta_per_cycle": 40
+   },
+   "B_tiled2": {
+    "E0": 425984,
+    "total": 291584,
+    "ratio": 1.4609306409130816,
+    "meta_per_cycle": 36
+   }
+  },
+  "L8": {
+   "A_logical": {
+    "E0": 391872,
+    "total": 240472,
+    "ratio": 1.6295951295784956,
+    "meta_per_cycle": 48
+   },
+   "B_logical": {
+    "E0": 391872,
+    "total": 236704,
+    "ratio": 1.655536028119508,
+    "meta_per_cycle": 40
+   },
+   "A_strict": {
+    "E0": 425984,
+    "total": 355456,
+    "ratio": 1.1984155563557797,
+    "meta_per_cycle": 48
+   },
+   "B_strict": {
+    "E0": 425984,
+    "total": 351360,
+    "ratio": 1.2123861566484517,
+    "meta_per_cycle": 40
+   },
+   "A_tiled2": {
+    "E0": 425984,
+    "total": 269248,
+    "ratio": 1.5821250297123841,
+    "meta_per_cycle": 48
+   },
+   "B_tiled2": {
+    "E0": 425984,
+    "total": 265152,
+    "ratio": 1.6065652908520396,
+    "meta_per_cycle": 40
+   }
+  }
+ }
+}

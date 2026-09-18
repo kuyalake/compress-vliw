@@ -1,0 +1,1157 @@
+Error at position (115, 119):
+A_final(115, 119) = 0.0000000000000000
+AA(115, 119) = -0.0000010746670001
+Absolute Error: 0.00000107, Relative Error: 0.00000000%
+
+Error at position (116, 119):
+A_final(116, 119) = 0.0000000000000000
+AA(116, 119) = -0.0000010084651720
+Absolute Error: 0.00000101, Relative Error: 0.00000000%
+
+Error at position (118, 1035):
+A_final(118, 1035) = 0.0000000000000000
+AA(118, 1035) = -0.0000013271430399
+Absolute Error: 0.00000133, Relative Error: 0.00000000%
+
+Error at position (119, 117):
+A_final(119, 117) = 0.0000000000000000
+AA(119, 117) = -0.0000014503568350
+Absolute Error: 0.00000145, Relative Error: 0.00000000%
+
+Error at position (130, 1030):
+A_final(130, 1030) = 0.0000000000000000
+AA(130, 1030) = 0.0000014915400000
+Absolute Error: 0.00000149, Relative Error: 0.00000000%
+
+Error at position (140, 1033):
+A_final(140, 1033) = 0.0000000000000000
+AA(140, 1033) = -0.0000011431930000
+Absolute Error: 0.00000114, Relative Error: 0.00000000%
+
+Error at position (144, 145):
+A_final(144, 145) = 0.0000000000000000
+AA(144, 145) = 0.0000015865000000
+Absolute Error: 0.00000159, Relative Error: 0.00000000%
+
+Error at position (207, 196):
+A_final(207, 196) = 0.0000000000000000
+AA(207, 196) = 0.0000013109240000
+Absolute Error: 0.00000131, Relative Error: 0.00000000%
+
+Error at position (208, 206):
+A_final(208, 206) = 0.0000000000000000
+AA(208, 206) = 0.0000010354420001
+Absolute Error: 0.00000104, Relative Error: 0.00000000%
+
+Error at position (231, 422):
+A_final(231, 422) = 0.0000000000000000
+AA(231, 422) = 0.0000012739780000
+Absolute Error: 0.00000127, Relative Error: 0.00000000%
+
+Error at position (272, 377):
+A_final(272, 377) = 0.0000000000000000
+AA(272, 377) = 0.0000010265579999
+Absolute Error: 0.00000103, Relative Error: 0.00000000%
+
+Error at position (322, 347):
+A_final(322, 347) = 0.0000000000000000
+AA(322, 347) = 0.0000016809958004
+Absolute Error: 0.00000168, Relative Error: 0.00000000%
+
+Error at position (345, 375):
+A_final(345, 375) = 0.0000000000000000
+AA(345, 375) = 0.0000010265579999
+Absolute Error: 0.00000103, Relative Error: 0.00000000%
+
+Error at position (347, 322):
+A_final(347, 322) = 0.0000000000000000
+AA(347, 322) = 0.0000010655584956
+Absolute Error: 0.00000107, Relative Error: 0.00000000%
+
+Error at position (374, 373):
+A_final(374, 373) = 0.0000000000000000
+AA(374, 373) = -0.0000017535353483
+Absolute Error: 0.00000175, Relative Error: 0.00000000%
+
+Error at position (375, 345):
+A_final(375, 345) = 0.0000000000000000
+AA(375, 345) = 0.0000022007704001
+Absolute Error: 0.00000220, Relative Error: 0.00000000%
+
+Error at position (375, 372):
+A_final(375, 372) = 0.0000000000000000
+AA(375, 372) = 0.0000011963848796
+Absolute Error: 0.00000120, Relative Error: 0.00000000%
+
+Error at position (376, 372):
+A_final(376, 372) = 0.0000000000000000
+AA(376, 372) = 0.0000014649706000
+Absolute Error: 0.00000146, Relative Error: 0.00000000%
+
+Error at position (377, 372):
+A_final(377, 372) = 0.0000000000000000
+AA(377, 372) = 0.0000016060995000
+Absolute Error: 0.00000161, Relative Error: 0.00000000%
+
+Error at position (387, 480):
+A_final(387, 480) = 0.0000000000000000
+AA(387, 480) = 0.0000012892600000
+Absolute Error: 0.00000129, Relative Error: 0.00000000%
+
+Error at position (395, 427):
+A_final(395, 427) = 0.0000000000000000
+AA(395, 427) = -0.0000016804160000
+Absolute Error: 0.00000168, Relative Error: 0.00000000%
+
+Error at position (423, 427):
+A_final(423, 427) = 0.0000000000000000
+AA(423, 427) = -0.0000012424786402
+Absolute Error: 0.00000124, Relative Error: 0.00000000%
+
+Error at position (426, 208):
+A_final(426, 208) = 0.0000000000000000
+AA(426, 208) = -0.0000016245872001
+Absolute Error: 0.00000162, Relative Error: 0.00000000%
+
+Error at position (427, 395):
+A_final(427, 395) = 0.0000000000000000
+AA(427, 395) = 0.0000016878072001
+Absolute Error: 0.00000169, Relative Error: 0.00000000%
+
+Error at position (427, 423):
+A_final(427, 423) = 0.0000000000000000
+AA(427, 423) = 0.0000017878645188
+Absolute Error: 0.00000179, Relative Error: 0.00000000%
+
+Error at position (480, 197):
+A_final(480, 197) = 0.0000000000000000
+AA(480, 197) = -0.0000011289960000
+Absolute Error: 0.00000113, Relative Error: 0.00000000%
+
+Error at position (488, 592):
+A_final(488, 592) = 0.0000000000000000
+AA(488, 592) = 0.0000016904700000
+Absolute Error: 0.00000169, Relative Error: 0.00000000%
+
+Error at position (493, 591):
+A_final(493, 591) = 0.0000000000000000
+AA(493, 591) = 0.0000010428800000
+Absolute Error: 0.00000104, Relative Error: 0.00000000%
+
+Error at position (493, 592):
+A_final(493, 592) = 0.0000000000000000
+AA(493, 592) = 0.0000031647881999
+Absolute Error: 0.00000316, Relative Error: 0.00000000%
+
+Error at position (493, 848):
+A_final(493, 848) = 0.0000000000000000
+AA(493, 848) = -0.0000020234700000
+Absolute Error: 0.00000202, Relative Error: 0.00000000%
+
+Error at position (497, 561):
+A_final(497, 561) = 0.0000000000000000
+AA(497, 561) = 0.0000017350700000
+Absolute Error: 0.00000174, Relative Error: 0.00000000%
+
+Error at position (502, 561):
+A_final(502, 561) = 0.0000000000000000
+AA(502, 561) = 0.0000019728959600
+Absolute Error: 0.00000197, Relative Error: 0.00000000%
+
+Error at position (505, 855):
+A_final(505, 855) = 0.0000000000000000
+AA(505, 855) = 0.0000016696800003
+Absolute Error: 0.00000167, Relative Error: 0.00000000%
+
+Error at position (518, 561):
+A_final(518, 561) = 0.0000000000000000
+AA(518, 561) = 0.0000016874700000
+Absolute Error: 0.00000169, Relative Error: 0.00000000%
+
+Error at position (521, 561):
+A_final(521, 561) = 0.0000000000000000
+AA(521, 561) = 0.0000036211035201
+Absolute Error: 0.00000362, Relative Error: 0.00000000%
+
+Error at position (521, 562):
+A_final(521, 562) = 0.0000000000000000
+AA(521, 562) = -0.0000021340000000
+Absolute Error: 0.00000213, Relative Error: 0.00000000%
+
+Error at position (526, 855):
+A_final(526, 855) = 0.0000000000000000
+AA(526, 855) = -0.0000091959999999
+Absolute Error: 0.00000920, Relative Error: 0.00000000%
+
+Error at position (529, 562):
+A_final(529, 562) = 0.0000000000000000
+AA(529, 562) = 0.0000014785202000
+Absolute Error: 0.00000148, Relative Error: 0.00000000%
+
+Error at position (530, 855):
+A_final(530, 855) = 0.0000000000000000
+AA(530, 855) = -0.0000029469687799
+Absolute Error: 0.00000295, Relative Error: 0.00000000%
+
+Error at position (532, 562):
+A_final(532, 562) = 0.0000000000000000
+AA(532, 562) = -0.0000015824290001
+Absolute Error: 0.00000158, Relative Error: 0.00000000%
+
+Error at position (541, 563):
+A_final(541, 563) = 0.0000000000000000
+AA(541, 563) = -0.0000013676200000
+Absolute Error: 0.00000137, Relative Error: 0.00000000%
+
+Error at position (547, 855):
+A_final(547, 855) = 0.0000000000000000
+AA(547, 855) = -0.0000050963799998
+Absolute Error: 0.00000510, Relative Error: 0.00000000%
+
+Error at position (555, 558):
+A_final(555, 558) = 0.0000000000000000
+AA(555, 558) = -0.0000010515210198
+Absolute Error: 0.00000105, Relative Error: 0.00000000%
+
+Error at position (556, 855):
+A_final(556, 855) = 0.0000000000000000
+AA(556, 855) = 0.0000010650088010
+Absolute Error: 0.00000107, Relative Error: 0.00000000%
+
+Error at position (557, 558):
+A_final(557, 558) = 0.0000000000000000
+AA(557, 558) = -0.0000011699131835
+Absolute Error: 0.00000117, Relative Error: 0.00000000%
+
+Error at position (558, 499):
+A_final(558, 499) = 0.0000000000000000
+AA(558, 499) = -0.0000012779100000
+Absolute Error: 0.00000128, Relative Error: 0.00000000%
+
+Error at position (558, 556):
+A_final(558, 556) = 0.0000000000000000
+AA(558, 556) = -0.0000012971300500
+Absolute Error: 0.00000130, Relative Error: 0.00000000%
+
+Error at position (558, 563):
+A_final(558, 563) = 0.0000000000000000
+AA(558, 563) = -0.0000012683585500
+Absolute Error: 0.00000127, Relative Error: 0.00000000%
+
+Error at position (558, 855):
+A_final(558, 855) = 0.0000000000000000
+AA(558, 855) = -0.0000070693283467
+Absolute Error: 0.00000707, Relative Error: 0.00000000%
+
+Error at position (559, 855):
+A_final(559, 855) = 0.0000000000000000
+AA(559, 855) = -0.0000020841776024
+Absolute Error: 0.00000208, Relative Error: 0.00000000%
+
+Error at position (560, 562):
+A_final(560, 562) = 0.0000000000000000
+AA(560, 562) = 0.0000014160461325
+Absolute Error: 0.00000142, Relative Error: 0.00000000%
+
+Error at position (560, 564):
+A_final(560, 564) = 0.0000000000000000
+AA(560, 564) = 0.0000017075336910
+Absolute Error: 0.00000171, Relative Error: 0.00000000%
+
+Error at position (560, 855):
+A_final(560, 855) = 0.0000000000000000
+AA(560, 855) = 0.0000041966979669
+Absolute Error: 0.00000420, Relative Error: 0.00000000%
+
+Error at position (561, 855):
+A_final(561, 855) = 0.0000000000000000
+AA(561, 855) = -0.0000011892591134
+Absolute Error: 0.00000119, Relative Error: 0.00000000%
+
+Error at position (562, 529):
+A_final(562, 529) = 0.0000000000000000
+AA(562, 529) = -0.0000011496889800
+Absolute Error: 0.00000115, Relative Error: 0.00000000%
+
+Error at position (562, 558):
+A_final(562, 558) = 0.0000000000000000
+AA(562, 558) = 0.0000014578998601
+Absolute Error: 0.00000146, Relative Error: 0.00000000%
+
+Error at position (562, 855):
+A_final(562, 855) = 0.0000000000000000
+AA(562, 855) = -0.0000016658277318
+Absolute Error: 0.00000167, Relative Error: 0.00000000%
+
+Error at position (564, 558):
+A_final(564, 558) = 0.0000000000000000
+AA(564, 558) = 0.0000024081827183
+Absolute Error: 0.00000241, Relative Error: 0.00000000%
+
+Error at position (568, 855):
+A_final(568, 855) = 0.0000000000000000
+AA(568, 855) = -0.0000010106000000
+Absolute Error: 0.00000101, Relative Error: 0.00000000%
+
+Error at position (574, 855):
+A_final(574, 855) = 0.0000000000000000
+AA(574, 855) = 0.0000063702499997
+Absolute Error: 0.00000637, Relative Error: 0.00000000%
+
+Error at position (576, 578):
+A_final(576, 578) = 0.0000000000000000
+AA(576, 578) = 0.0000027180551001
+Absolute Error: 0.00000272, Relative Error: 0.00000000%
+
+Error at position (578, 576):
+A_final(578, 576) = 0.0000000000000000
+AA(578, 576) = -0.0000014235963400
+Absolute Error: 0.00000142, Relative Error: 0.00000000%
+
+Error at position (578, 855):
+A_final(578, 855) = 0.0000000000000000
+AA(578, 855) = -0.0000059134466159
+Absolute Error: 0.00000591, Relative Error: 0.00000000%
+
+Error at position (579, 589):
+A_final(579, 589) = 0.0000000000000000
+AA(579, 589) = 0.0000013063445961
+Absolute Error: 0.00000131, Relative Error: 0.00000000%
+
+Error at position (579, 855):
+A_final(579, 855) = 0.0000000000000000
+AA(579, 855) = 0.0000024291570460
+Absolute Error: 0.00000243, Relative Error: 0.00000000%
+
+Error at position (582, 592):
+A_final(582, 592) = 0.0000000000000000
+AA(582, 592) = 0.0000023522900001
+Absolute Error: 0.00000235, Relative Error: 0.00000000%
+
+Error at position (588, 592):
+A_final(588, 592) = 0.0000000000000000
+AA(588, 592) = 0.0000022933735216
+Absolute Error: 0.00000229, Relative Error: 0.00000000%
+
+Error at position (588, 853):
+A_final(588, 853) = 0.0000000000000000
+AA(588, 853) = 0.0000017327680001
+Absolute Error: 0.00000173, Relative Error: 0.00000000%
+
+Error at position (591, 853):
+A_final(591, 853) = 0.0000000000000000
+AA(591, 853) = 0.0000011983911700
+Absolute Error: 0.00000120, Relative Error: 0.00000000%
+
+Error at position (591, 855):
+A_final(591, 855) = 0.0000000000000000
+AA(591, 855) = 0.0000039770507700
+Absolute Error: 0.00000398, Relative Error: 0.00000000%
+
+Error at position (592, 582):
+A_final(592, 582) = 0.0000000000000000
+AA(592, 582) = -0.0000012490200001
+Absolute Error: 0.00000125, Relative Error: 0.00000000%
+
+Error at position (592, 848):
+A_final(592, 848) = 0.0000000000000000
+AA(592, 848) = -0.0000011091180640
+Absolute Error: 0.00000111, Relative Error: 0.00000000%
+
+Error at position (592, 853):
+A_final(592, 853) = 0.0000000000000000
+AA(592, 853) = 0.0000011658636820
+Absolute Error: 0.00000117, Relative Error: 0.00000000%
+
+Error at position (592, 855):
+A_final(592, 855) = 0.0000000000000000
+AA(592, 855) = -0.0000036490857744
+Absolute Error: 0.00000365, Relative Error: 0.00000000%
+
+Error at position (604, 1040):
+A_final(604, 1040) = 0.0000000000000000
+AA(604, 1040) = -0.0000010483000000
+Absolute Error: 0.00000105, Relative Error: 0.00000000%
+
+Error at position (607, 606):
+A_final(607, 606) = 0.0000000000000000
+AA(607, 606) = 0.0000022289800000
+Absolute Error: 0.00000223, Relative Error: 0.00000000%
+
+Error at position (607, 1041):
+A_final(607, 1041) = 0.0000000000000000
+AA(607, 1041) = -0.0000027081800000
+Absolute Error: 0.00000271, Relative Error: 0.00000000%
+
+Error at position (619, 846):
+A_final(619, 846) = 0.0000000000000000
+AA(619, 846) = -0.0000010655900000
+Absolute Error: 0.00000107, Relative Error: 0.00000000%
+
+Error at position (619, 854):
+A_final(619, 854) = 0.0000000000000000
+AA(619, 854) = -0.0000021914200000
+Absolute Error: 0.00000219, Relative Error: 0.00000000%
+
+Error at position (620, 844):
+A_final(620, 844) = 0.0000000000000000
+AA(620, 844) = -0.0000030073699999
+Absolute Error: 0.00000301, Relative Error: 0.00000000%
+
+Error at position (620, 851):
+A_final(620, 851) = 0.0000000000000000
+AA(620, 851) = 0.0000012518750000
+Absolute Error: 0.00000125, Relative Error: 0.00000000%
+
+Error at position (620, 854):
+A_final(620, 854) = 0.0000000000000000
+AA(620, 854) = -0.0000016668799999
+Absolute Error: 0.00000167, Relative Error: 0.00000000%
+
+Error at position (657, 841):
+A_final(657, 841) = 0.0000000000000000
+AA(657, 841) = 0.0000016674700000
+Absolute Error: 0.00000167, Relative Error: 0.00000000%
+
+Error at position (670, 841):
+A_final(670, 841) = 0.0000000000000000
+AA(670, 841) = -0.0000025960920009
+Absolute Error: 0.00000260, Relative Error: 0.00000000%
+
+Error at position (679, 670):
+A_final(679, 670) = 0.0000000000000000
+AA(679, 670) = -0.0000132495999999
+Absolute Error: 0.00001325, Relative Error: 0.00000000%
+
+Error at position (679, 1041):
+A_final(679, 1041) = 0.0000000000000000
+AA(679, 1041) = 0.0000104891999997
+Absolute Error: 0.00001049, Relative Error: 0.00000000%
+
+Error at position (684, 685):
+A_final(684, 685) = 0.0000000000000000
+AA(684, 685) = -0.0000082779999993
+Absolute Error: 0.00000828, Relative Error: 0.00000000%
+
+Error at position (685, 684):
+A_final(685, 684) = 0.0000000000000000
+AA(685, 684) = -0.0000114759999974
+Absolute Error: 0.00001148, Relative Error: 0.00000000%
+
+Error at position (688, 775):
+A_final(688, 775) = 0.0000000000000000
+AA(688, 775) = 0.0000017718600001
+Absolute Error: 0.00000177, Relative Error: 0.00000000%
+
+Error at position (714, 783):
+A_final(714, 783) = 0.0000000000000000
+AA(714, 783) = 0.0000142144999984
+Absolute Error: 0.00001421, Relative Error: 0.00000000%
+
+Error at position (738, 730):
+A_final(738, 730) = 0.0000000000000000
+AA(738, 730) = 0.0000024446600001
+Absolute Error: 0.00000244, Relative Error: 0.00000000%
+
+Error at position (738, 732):
+A_final(738, 732) = 0.0000000000000000
+AA(738, 732) = 0.0000024446600001
+Absolute Error: 0.00000244, Relative Error: 0.00000000%
+
+Error at position (738, 734):
+A_final(738, 734) = 0.0000000000000000
+AA(738, 734) = 0.0000024446600001
+Absolute Error: 0.00000244, Relative Error: 0.00000000%
+
+Error at position (738, 736):
+A_final(738, 736) = 0.0000000000000000
+AA(738, 736) = 0.0000024446600001
+Absolute Error: 0.00000244, Relative Error: 0.00000000%
+
+Error at position (742, 749):
+A_final(742, 749) = -0.0002480000000000
+AA(742, 749) = -0.0002317139999990
+Absolute Error: 0.00001629, Relative Error: 6.56693548%
+
+Error at position (742, 783):
+A_final(742, 783) = 0.0000000000000000
+AA(742, 783) = -0.0000080180999991
+Absolute Error: 0.00000802, Relative Error: 0.00000000%
+
+Error at position (743, 783):
+A_final(743, 783) = 0.0000000000000000
+AA(743, 783) = 0.0000015976511367
+Absolute Error: 0.00000160, Relative Error: 0.00000000%
+
+Error at position (744, 745):
+A_final(744, 745) = 0.0000000000000000
+AA(744, 745) = 0.0000094754499989
+Absolute Error: 0.00000948, Relative Error: 0.00000000%
+
+Error at position (744, 749):
+A_final(744, 749) = 0.0000000000000000
+AA(744, 749) = -0.0000017249600002
+Absolute Error: 0.00000172, Relative Error: 0.00000000%
+
+Error at position (745, 743):
+A_final(745, 743) = 0.0000000000000000
+AA(745, 743) = 0.0000059728600002
+Absolute Error: 0.00000597, Relative Error: 0.00000000%
+
+Error at position (745, 744):
+A_final(745, 744) = 0.0000000000000000
+AA(745, 744) = -0.0000039711829998
+Absolute Error: 0.00000397, Relative Error: 0.00000000%
+
+Error at position (746, 747):
+A_final(746, 747) = 0.0000000000000000
+AA(746, 747) = 0.0000019191486618
+Absolute Error: 0.00000192, Relative Error: 0.00000000%
+
+Error at position (746, 748):
+A_final(746, 748) = 0.0000000000000000
+AA(746, 748) = -0.0000089495935445
+Absolute Error: 0.00000895, Relative Error: 0.00000000%
+
+Error at position (747, 746):
+A_final(747, 746) = 0.0000000000000000
+AA(747, 746) = -0.0000033953508028
+Absolute Error: 0.00000340, Relative Error: 0.00000000%
+
+Error at position (748, 746):
+A_final(748, 746) = 0.0000000000000000
+AA(748, 746) = -0.0000118603265792
+Absolute Error: 0.00001186, Relative Error: 0.00000000%
+
+Error at position (748, 750):
+A_final(748, 750) = 0.0000000000000000
+AA(748, 750) = -0.0000028232960005
+Absolute Error: 0.00000282, Relative Error: 0.00000000%
+
+Error at position (749, 744):
+A_final(749, 744) = 0.0000000000000000
+AA(749, 744) = -0.0000029475720000
+Absolute Error: 0.00000295, Relative Error: 0.00000000%
+
+Error at position (750, 748):
+A_final(750, 748) = 0.0000000000000000
+AA(750, 748) = -0.0000011998000004
+Absolute Error: 0.00000120, Relative Error: 0.00000000%
+
+Error at position (757, 758):
+A_final(757, 758) = 0.0000000000000000
+AA(757, 758) = 0.0000250560000019
+Absolute Error: 0.00002506, Relative Error: 0.00000000%
+
+Error at position (758, 757):
+A_final(758, 757) = 0.0000000000000000
+AA(758, 757) = 0.0000090342000039
+Absolute Error: 0.00000903, Relative Error: 0.00000000%
+
+Error at position (770, 755):
+A_final(770, 755) = 0.0000000000000000
+AA(770, 755) = -0.0000017839200000
+Absolute Error: 0.00000178, Relative Error: 0.00000000%
+
+Error at position (770, 773):
+A_final(770, 773) = 0.0000000000000000
+AA(770, 773) = 0.0000016103217000
+Absolute Error: 0.00000161, Relative Error: 0.00000000%
+
+Error at position (771, 761):
+A_final(771, 761) = 0.0000000000000000
+AA(771, 761) = -0.0000012334700000
+Absolute Error: 0.00000123, Relative Error: 0.00000000%
+
+Error at position (771, 772):
+A_final(771, 772) = 0.0000000000000000
+AA(771, 772) = -0.0000045455116009
+Absolute Error: 0.00000455, Relative Error: 0.00000000%
+
+Error at position (773, 771):
+A_final(773, 771) = 0.0000000000000000
+AA(773, 771) = 0.0000016029202223
+Absolute Error: 0.00000160, Relative Error: 0.00000000%
+
+Error at position (773, 784):
+A_final(773, 784) = 0.0000000000000000
+AA(773, 784) = -0.0000052405404773
+Absolute Error: 0.00000524, Relative Error: 0.00000000%
+
+Error at position (774, 770):
+A_final(774, 770) = 0.0000000000000000
+AA(774, 770) = 0.0000013656675125
+Absolute Error: 0.00000137, Relative Error: 0.00000000%
+
+Error at position (775, 688):
+A_final(775, 688) = 0.0000000000000000
+AA(775, 688) = -0.0000011243500000
+Absolute Error: 0.00000112, Relative Error: 0.00000000%
+
+Error at position (775, 777):
+A_final(775, 777) = 0.0000000000000000
+AA(775, 777) = 0.0000054740160333
+Absolute Error: 0.00000547, Relative Error: 0.00000000%
+
+Error at position (775, 778):
+A_final(775, 778) = 0.0000000000000000
+AA(775, 778) = 0.0000135978709999
+Absolute Error: 0.00001360, Relative Error: 0.00000000%
+
+Error at position (777, 775):
+A_final(777, 775) = 0.0000000000000000
+AA(777, 775) = 0.0000172459681034
+Absolute Error: 0.00001725, Relative Error: 0.00000000%
+
+Error at position (777, 779):
+A_final(777, 779) = 0.0000000000000000
+AA(777, 779) = 0.0000018427359771
+Absolute Error: 0.00000184, Relative Error: 0.00000000%
+
+Error at position (777, 784):
+A_final(777, 784) = 0.0000000000000000
+AA(777, 784) = 0.0000025844143157
+Absolute Error: 0.00000258, Relative Error: 0.00000000%
+
+Error at position (778, 775):
+A_final(778, 775) = 0.0000000000000000
+AA(778, 775) = 0.0000091792419994
+Absolute Error: 0.00000918, Relative Error: 0.00000000%
+
+Error at position (779, 682):
+A_final(779, 682) = 0.0000000000000000
+AA(779, 682) = -0.0000014602102563
+Absolute Error: 0.00000146, Relative Error: 0.00000000%
+
+Error at position (779, 774):
+A_final(779, 774) = 0.0000000000000000
+AA(779, 774) = -0.0000042177061182
+Absolute Error: 0.00000422, Relative Error: 0.00000000%
+
+Error at position (779, 777):
+A_final(779, 777) = 0.0000000000000000
+AA(779, 777) = -0.0000021420808123
+Absolute Error: 0.00000214, Relative Error: 0.00000000%
+
+Error at position (779, 784):
+A_final(779, 784) = 0.0000000000000000
+AA(779, 784) = 0.0000061067561847
+Absolute Error: 0.00000611, Relative Error: 0.00000000%
+
+Error at position (781, 770):
+A_final(781, 770) = 0.0000000000000000
+AA(781, 770) = -0.0000033896004804
+Absolute Error: 0.00000339, Relative Error: 0.00000000%
+
+Error at position (781, 773):
+A_final(781, 773) = 0.0000000000000000
+AA(781, 773) = -0.0000077550132376
+Absolute Error: 0.00000776, Relative Error: 0.00000000%
+
+Error at position (781, 777):
+A_final(781, 777) = 0.0000000000000000
+AA(781, 777) = 0.0000019810622220
+Absolute Error: 0.00000198, Relative Error: 0.00000000%
+
+Error at position (781, 779):
+A_final(781, 779) = 0.0000000000000000
+AA(781, 779) = -0.0000104803201479
+Absolute Error: 0.00001048, Relative Error: 0.00000000%
+
+Error at position (782, 670):
+A_final(782, 670) = 0.0000000000000000
+AA(782, 670) = -0.0000015771999998
+Absolute Error: 0.00000158, Relative Error: 0.00000000%
+
+Error at position (782, 1041):
+A_final(782, 1041) = 0.0000000000000000
+AA(782, 1041) = -0.0000011751435247
+Absolute Error: 0.00000118, Relative Error: 0.00000000%
+
+Error at position (785, 679):
+A_final(785, 679) = 0.0000000000000000
+AA(785, 679) = -0.0000020764306500
+Absolute Error: 0.00000208, Relative Error: 0.00000000%
+
+Error at position (815, 821):
+A_final(815, 821) = 0.0000000000000000
+AA(815, 821) = 0.0000012499100001
+Absolute Error: 0.00000125, Relative Error: 0.00000000%
+
+Error at position (816, 821):
+A_final(816, 821) = 0.0000000000000000
+AA(816, 821) = 0.0000010984800000
+Absolute Error: 0.00000110, Relative Error: 0.00000000%
+
+Error at position (820, 821):
+A_final(820, 821) = 0.0000000000000000
+AA(820, 821) = 0.0000222873459998
+Absolute Error: 0.00002229, Relative Error: 0.00000000%
+
+Error at position (821, 815):
+A_final(821, 815) = 0.0000000000000000
+AA(821, 815) = -0.0000011606499999
+Absolute Error: 0.00000116, Relative Error: 0.00000000%
+
+Error at position (821, 816):
+A_final(821, 816) = 0.0000000000000000
+AA(821, 816) = 0.0000024208400000
+Absolute Error: 0.00000242, Relative Error: 0.00000000%
+
+Error at position (821, 820):
+A_final(821, 820) = 0.0000000000000000
+AA(821, 820) = -0.0000550834539971
+Absolute Error: 0.00005508, Relative Error: 0.00000000%
+
+Error at position (823, 1041):
+A_final(823, 1041) = 0.0000000000000000
+AA(823, 1041) = 0.0000012803799998
+Absolute Error: 0.00000128, Relative Error: 0.00000000%
+
+Error at position (831, 883):
+A_final(831, 883) = 0.0000000000000000
+AA(831, 883) = -0.0000030754000000
+Absolute Error: 0.00000308, Relative Error: 0.00000000%
+
+Error at position (832, 827):
+A_final(832, 827) = 0.0000000000000000
+AA(832, 827) = -0.0000022764400001
+Absolute Error: 0.00000228, Relative Error: 0.00000000%
+
+Error at position (832, 833):
+A_final(832, 833) = 0.0000000000000000
+AA(832, 833) = 0.0000013996116002
+Absolute Error: 0.00000140, Relative Error: 0.00000000%
+
+Error at position (833, 832):
+A_final(833, 832) = 0.0000000000000000
+AA(833, 832) = -0.0000048160505300
+Absolute Error: 0.00000482, Relative Error: 0.00000000%
+
+Error at position (833, 858):
+A_final(833, 858) = 0.0000000000000000
+AA(833, 858) = -0.0000010944819999
+Absolute Error: 0.00000109, Relative Error: 0.00000000%
+
+Error at position (834, 833):
+A_final(834, 833) = 0.0000000000000000
+AA(834, 833) = -0.0000012658269999
+Absolute Error: 0.00000127, Relative Error: 0.00000000%
+
+Error at position (838, 837):
+A_final(838, 837) = 0.0000000000000000
+AA(838, 837) = -0.0000020638000000
+Absolute Error: 0.00000206, Relative Error: 0.00000000%
+
+Error at position (840, 843):
+A_final(840, 843) = 0.0000000000000000
+AA(840, 843) = 0.0000133075731519
+Absolute Error: 0.00001331, Relative Error: 0.00000000%
+
+Error at position (840, 847):
+A_final(840, 847) = 0.0000000000000000
+AA(840, 847) = -0.0000044909340002
+Absolute Error: 0.00000449, Relative Error: 0.00000000%
+
+Error at position (841, 657):
+A_final(841, 657) = 0.0000000000000000
+AA(841, 657) = 0.0000025525899999
+Absolute Error: 0.00000255, Relative Error: 0.00000000%
+
+Error at position (841, 670):
+A_final(841, 670) = 0.0000000000000000
+AA(841, 670) = -0.0000466903709992
+Absolute Error: 0.00004669, Relative Error: 0.00000000%
+
+Error at position (842, 670):
+A_final(842, 670) = 0.0000000000000000
+AA(842, 670) = -0.0000063059222397
+Absolute Error: 0.00000631, Relative Error: 0.00000000%
+
+Error at position (842, 840):
+A_final(842, 840) = 0.0000000000000000
+AA(842, 840) = 0.0000158903769227
+Absolute Error: 0.00001589, Relative Error: 0.00000000%
+
+Error at position (842, 844):
+A_final(842, 844) = 0.0000000000000000
+AA(842, 844) = -0.0000247389429582
+Absolute Error: 0.00002474, Relative Error: 0.00000000%
+
+Error at position (842, 845):
+A_final(842, 845) = 0.0000000000000000
+AA(842, 845) = -0.0000835896178479
+Absolute Error: 0.00008359, Relative Error: 0.00000000%
+
+Error at position (842, 846):
+A_final(842, 846) = 0.0000000000000000
+AA(842, 846) = -0.0000919639887798
+Absolute Error: 0.00009196, Relative Error: 0.00000000%
+
+Error at position (844, 620):
+A_final(844, 620) = 0.0000000000000000
+AA(844, 620) = 0.0000019665659999
+Absolute Error: 0.00000197, Relative Error: 0.00000000%
+
+Error at position (844, 843):
+A_final(844, 843) = 0.0000000000000000
+AA(844, 843) = 0.0000276075030214
+Absolute Error: 0.00002761, Relative Error: 0.00000000%
+
+Error at position (844, 846):
+A_final(844, 846) = 0.0000000000000000
+AA(844, 846) = 0.0000060040831995
+Absolute Error: 0.00000600, Relative Error: 0.00000000%
+
+Error at position (845, 843):
+A_final(845, 843) = 0.0000000000000000
+AA(845, 843) = -0.0000085467834872
+Absolute Error: 0.00000855, Relative Error: 0.00000000%
+
+Error at position (845, 847):
+A_final(845, 847) = 0.0000000000000000
+AA(845, 847) = 0.0000052062003282
+Absolute Error: 0.00000521, Relative Error: 0.00000000%
+
+Error at position (846, 843):
+A_final(846, 843) = 0.0000000000000000
+AA(846, 843) = -0.0000085673229364
+Absolute Error: 0.00000857, Relative Error: 0.00000000%
+
+Error at position (846, 844):
+A_final(846, 844) = 0.0000000000000000
+AA(846, 844) = -0.0000122954476005
+Absolute Error: 0.00001230, Relative Error: 0.00000000%
+
+Error at position (847, 840):
+A_final(847, 840) = 0.0000000000000000
+AA(847, 840) = 0.0000027813240000
+Absolute Error: 0.00000278, Relative Error: 0.00000000%
+
+Error at position (847, 845):
+A_final(847, 845) = 0.0000000000000000
+AA(847, 845) = -0.0000034934303277
+Absolute Error: 0.00000349, Relative Error: 0.00000000%
+
+Error at position (847, 1041):
+A_final(847, 1041) = 0.0000000000000000
+AA(847, 1041) = 0.0000213836123146
+Absolute Error: 0.00002138, Relative Error: 0.00000000%
+
+Error at position (849, 591):
+A_final(849, 591) = 0.0000000000000000
+AA(849, 591) = -0.0000018486753800
+Absolute Error: 0.00000185, Relative Error: 0.00000000%
+
+Error at position (850, 844):
+A_final(850, 844) = 0.0000000000000000
+AA(850, 844) = 0.0000012673788000
+Absolute Error: 0.00000127, Relative Error: 0.00000000%
+
+Error at position (850, 854):
+A_final(850, 854) = 0.0000000000000000
+AA(850, 854) = -0.0000024215845973
+Absolute Error: 0.00000242, Relative Error: 0.00000000%
+
+Error at position (851, 611):
+A_final(851, 611) = 0.0000000000000000
+AA(851, 611) = -0.0000017366399999
+Absolute Error: 0.00000174, Relative Error: 0.00000000%
+
+Error at position (851, 620):
+A_final(851, 620) = 0.0000000000000000
+AA(851, 620) = 0.0000012994840000
+Absolute Error: 0.00000130, Relative Error: 0.00000000%
+
+Error at position (851, 855):
+A_final(851, 855) = 0.0000000000000000
+AA(851, 855) = 0.0000130394748066
+Absolute Error: 0.00001304, Relative Error: 0.00000000%
+
+Error at position (853, 592):
+A_final(853, 592) = 0.0000000000000000
+AA(853, 592) = 0.0000018985375121
+Absolute Error: 0.00000190, Relative Error: 0.00000000%
+
+Error at position (853, 850):
+A_final(853, 850) = 0.0000000000000000
+AA(853, 850) = -0.0000010794786832
+Absolute Error: 0.00000108, Relative Error: 0.00000000%
+
+Error at position (854, 619):
+A_final(854, 619) = 0.0000000000000000
+AA(854, 619) = 0.0000018530320000
+Absolute Error: 0.00000185, Relative Error: 0.00000000%
+
+Error at position (854, 620):
+A_final(854, 620) = 0.0000000000000000
+AA(854, 620) = 0.0000012755280000
+Absolute Error: 0.00000128, Relative Error: 0.00000000%
+
+Error at position (854, 850):
+A_final(854, 850) = 0.0000000000000000
+AA(854, 850) = -0.0000016709406039
+Absolute Error: 0.00000167, Relative Error: 0.00000000%
+
+Error at position (854, 851):
+A_final(854, 851) = 0.0000000000000000
+AA(854, 851) = 0.0000018829896029
+Absolute Error: 0.00000188, Relative Error: 0.00000000%
+
+Error at position (854, 855):
+A_final(854, 855) = 0.0000000000000000
+AA(854, 855) = 0.0000146996526809
+Absolute Error: 0.00001470, Relative Error: 0.00000000%
+
+Error at position (855, 501):
+A_final(855, 501) = 0.0000000000000000
+AA(855, 501) = 0.0000014730300001
+Absolute Error: 0.00000147, Relative Error: 0.00000000%
+
+Error at position (855, 505):
+A_final(855, 505) = 0.0000000000000000
+AA(855, 505) = 0.0000019790300000
+Absolute Error: 0.00000198, Relative Error: 0.00000000%
+
+Error at position (855, 526):
+A_final(855, 526) = 0.0000000000000000
+AA(855, 526) = -0.0000015822200000
+Absolute Error: 0.00000158, Relative Error: 0.00000000%
+
+Error at position (855, 530):
+A_final(855, 530) = 0.0000000000000000
+AA(855, 530) = -0.0000061764818704
+Absolute Error: 0.00000618, Relative Error: 0.00000000%
+
+Error at position (855, 547):
+A_final(855, 547) = 0.0000000000000000
+AA(855, 547) = -0.0000025556860000
+Absolute Error: 0.00000256, Relative Error: 0.00000000%
+
+Error at position (855, 558):
+A_final(855, 558) = 0.0000000000000000
+AA(855, 558) = 0.0000108667476232
+Absolute Error: 0.00001087, Relative Error: 0.00000000%
+
+Error at position (855, 560):
+A_final(855, 560) = 0.0000000000000000
+AA(855, 560) = -0.0000015053173667
+Absolute Error: 0.00000151, Relative Error: 0.00000000%
+
+Error at position (855, 561):
+A_final(855, 561) = 0.0000000000000000
+AA(855, 561) = -0.0000170145521527
+Absolute Error: 0.00001701, Relative Error: 0.00000000%
+
+Error at position (855, 562):
+A_final(855, 562) = 0.0000000000000000
+AA(855, 562) = 0.0000166867298541
+Absolute Error: 0.00001669, Relative Error: 0.00000000%
+
+Error at position (855, 564):
+A_final(855, 564) = 0.0000000000000000
+AA(855, 564) = -0.0000017526881975
+Absolute Error: 0.00000175, Relative Error: 0.00000000%
+
+Error at position (855, 574):
+A_final(855, 574) = 0.0000000000000000
+AA(855, 574) = 0.0000021468000000
+Absolute Error: 0.00000215, Relative Error: 0.00000000%
+
+Error at position (855, 578):
+A_final(855, 578) = 0.0000000000000000
+AA(855, 578) = -0.0000017417953453
+Absolute Error: 0.00000174, Relative Error: 0.00000000%
+
+Error at position (855, 579):
+A_final(855, 579) = 0.0000000000000000
+AA(855, 579) = -0.0000024461128749
+Absolute Error: 0.00000245, Relative Error: 0.00000000%
+
+Error at position (855, 591):
+A_final(855, 591) = 0.0000000000000000
+AA(855, 591) = -0.0000241238496814
+Absolute Error: 0.00002412, Relative Error: 0.00000000%
+
+Error at position (855, 592):
+A_final(855, 592) = 0.0000000000000000
+AA(855, 592) = -0.0000173719935899
+Absolute Error: 0.00001737, Relative Error: 0.00000000%
+
+Error at position (855, 848):
+A_final(855, 848) = 0.0000000000000000
+AA(855, 848) = 0.0000010838612893
+Absolute Error: 0.00000108, Relative Error: 0.00000000%
+
+Error at position (855, 849):
+A_final(855, 849) = 0.0000000000000000
+AA(855, 849) = 0.0000040381688751
+Absolute Error: 0.00000404, Relative Error: 0.00000000%
+
+Error at position (855, 851):
+A_final(855, 851) = 0.0000000000000000
+AA(855, 851) = 0.0000182667914093
+Absolute Error: 0.00001827, Relative Error: 0.00000000%
+
+Error at position (855, 854):
+A_final(855, 854) = 0.0000000000000000
+AA(855, 854) = -0.0000040238255838
+Absolute Error: 0.00000402, Relative Error: 0.00000000%
+
+Error at position (856, 145):
+A_final(856, 145) = 0.0000000000000000
+AA(856, 145) = 0.0000014789348000
+Absolute Error: 0.00000148, Relative Error: 0.00000000%
+
+Error at position (857, 1040):
+A_final(857, 1040) = 0.0000000000000000
+AA(857, 1040) = -0.0000012540465124
+Absolute Error: 0.00000125, Relative Error: 0.00000000%
+
+Error at position (858, 833):
+A_final(858, 833) = 0.0000000000000000
+AA(858, 833) = -0.0000083373800000
+Absolute Error: 0.00000834, Relative Error: 0.00000000%
+
+Error at position (858, 834):
+A_final(858, 834) = 0.0000000000000000
+AA(858, 834) = -0.0000022175350000
+Absolute Error: 0.00000222, Relative Error: 0.00000000%
+
+Error at position (883, 831):
+A_final(883, 831) = 0.0000000000000000
+AA(883, 831) = -0.0000012217599998
+Absolute Error: 0.00000122, Relative Error: 0.00000000%
+
+Error at position (883, 835):
+A_final(883, 835) = 0.0000000000000000
+AA(883, 835) = -0.0000031194198000
+Absolute Error: 0.00000312, Relative Error: 0.00000000%
+
+Error at position (883, 847):
+A_final(883, 847) = 0.0000000000000000
+AA(883, 847) = -0.0000019759405258
+Absolute Error: 0.00000198, Relative Error: 0.00000000%
+
+Error at position (883, 858):
+A_final(883, 858) = 0.0000000000000000
+AA(883, 858) = -0.0000020978200947
+Absolute Error: 0.00000210, Relative Error: 0.00000000%
+
+Error at position (930, 965):
+A_final(930, 965) = 0.0000000000000000
+AA(930, 965) = 0.0000020388070000
+Absolute Error: 0.00000204, Relative Error: 0.00000000%
+
+Error at position (931, 965):
+A_final(931, 965) = 0.0000000000000000
+AA(931, 965) = -0.0000013191812000
+Absolute Error: 0.00000132, Relative Error: 0.00000000%
+
+Error at position (962, 991):
+A_final(962, 991) = 0.0000000000000000
+AA(962, 991) = -0.0000011431930000
+Absolute Error: 0.00000114, Relative Error: 0.00000000%
+
+Error at position (965, 930):
+A_final(965, 930) = 0.0000000000000000
+AA(965, 930) = 0.0000010588380001
+Absolute Error: 0.00000106, Relative Error: 0.00000000%
+
+Error at position (978, 1030):
+A_final(978, 1030) = 0.0000000000000000
+AA(978, 1030) = 0.0000014915400000
+Absolute Error: 0.00000149, Relative Error: 0.00000000%
+
+Error at position (988, 1038):
+A_final(988, 1038) = 0.0000000000000000
+AA(988, 1038) = -0.0000011431930000
+Absolute Error: 0.00000114, Relative Error: 0.00000000%
+
+Error at position (990, 965):
+A_final(990, 965) = 0.0000000000000000
+AA(990, 965) = -0.0000012293115400
+Absolute Error: 0.00000123, Relative Error: 0.00000000%
+
+Error at position (991, 964):
+A_final(991, 964) = 0.0000000000000000
+AA(991, 964) = -0.0000015693923999
+Absolute Error: 0.00000157, Relative Error: 0.00000000%
+
+Error at position (1025, 847):
+A_final(1025, 847) = 0.0000000000000000
+AA(1025, 847) = 0.0000017336644106
+Absolute Error: 0.00000173, Relative Error: 0.00000000%
+
+Error at position (1030, 921):
+A_final(1030, 921) = 0.0000000000000000
+AA(1030, 921) = -0.0000010793600000
+Absolute Error: 0.00000108, Relative Error: 0.00000000%
+
+Error at position (1032, 116):
+A_final(1032, 116) = 0.0000000000000000
+AA(1032, 116) = -0.0000015183278000
+Absolute Error: 0.00000152, Relative Error: 0.00000000%
+
+Error at position (1032, 117):
+A_final(1032, 117) = 0.0000000000000000
+AA(1032, 117) = -0.0000023269739999
+Absolute Error: 0.00000233, Relative Error: 0.00000000%
+
+Error at position (1033, 1034):
+A_final(1033, 1034) = 0.0000000000000000
+AA(1033, 1034) = -0.0000011926875401
+Absolute Error: 0.00000119, Relative Error: 0.00000000%
+
+Error at position (1034, 990):
+A_final(1034, 990) = 0.0000000000000000
+AA(1034, 990) = 0.0000013104860000
+Absolute Error: 0.00000131, Relative Error: 0.00000000%
+
+Error at position (1035, 118):
+A_final(1035, 118) = 0.0000000000000000
+AA(1035, 118) = 0.0000028467929000
+Absolute Error: 0.00000285, Relative Error: 0.00000000%
+
+Error at position (1036, 118):
+A_final(1036, 118) = 0.0000000000000000
+AA(1036, 118) = 0.0000012738527000
+Absolute Error: 0.00000127, Relative Error: 0.00000000%
+
+Error at position (1039, 679):
+A_final(1039, 679) = 0.0000000000000000
+AA(1039, 679) = -0.0000014624500000
+Absolute Error: 0.00000146, Relative Error: 0.00000000%
+
+Error at position (1039, 783):
+A_final(1039, 783) = 0.0000000000000000
+AA(1039, 783) = 0.0000067202727734
+Absolute Error: 0.00000672, Relative Error: 0.00000000%
+
+Error at position (1039, 847):
+A_final(1039, 847) = 0.0000000000000000
+AA(1039, 847) = 0.0000290245146655
+Absolute Error: 0.00002902, Relative Error: 0.00000000%
+
+Error at position (1039, 1040):
+A_final(1039, 1040) = 0.0000000000000000
+AA(1039, 1040) = -0.0000079103608002
+Absolute Error: 0.00000791, Relative Error: 0.00000000%
+
+Error at position (1040, 604):
+A_final(1040, 604) = 0.0000000000000000
+AA(1040, 604) = 0.0000021192420001
+Absolute Error: 0.00000212, Relative Error: 0.00000000%
+
+Error at position (1040, 847):
+A_final(1040, 847) = 0.0000000000000000
+AA(1040, 847) = 0.0000019287330796
+Absolute Error: 0.00000193, Relative Error: 0.00000000%
+
+Error at position (1040, 1041):
+A_final(1040, 1041) = 0.0000000000000000
+AA(1040, 1041) = 0.0000327646788953
+Absolute Error: 0.00003276, Relative Error: 0.00000000%
+
+Correct comparisons: 1083450
+Incorrect comparisons: 231

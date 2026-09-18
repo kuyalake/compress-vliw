@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FRV新28nm综合结果：实验扩展判断与论文叙事更新</title>
+  <style>
+    :root {
+      --ink:#17202a; --muted:#5d6975; --blue:#165dba; --line:#d6dee8;
+      --pale:#edf5ff; --good:#eaf8f1; --warn:#fff7e5; --bad:#fff0ef;
+      --violet:#f4efff; --bg:#f3f6f9;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink);
+           font:15px/1.75 system-ui,-apple-system,"Segoe UI","Noto Sans SC",sans-serif; }
+    main { max-width:1180px; margin:28px auto; padding:42px 50px 64px; background:#fff;
+           box-shadow:0 8px 28px #25364a18; }
+    h1 { margin:0 0 8px; line-height:1.3; font-size:29px; }
+    h2 { margin-top:40px; padding-bottom:7px; border-bottom:2px solid #dce9f8; }
+    h3 { margin-top:27px; }
+    h4 { margin:20px 0 7px; }
+    .meta,.caption,.small { color:var(--muted); }
+    .caption,.small { font-size:13px; }
+    .box { margin:18px 0; padding:14px 18px; border-left:5px solid var(--blue); background:var(--pale); }
+    .good { border-left-color:#087f5b; background:var(--good); }
+    .warn { border-left-color:#a56600; background:var(--warn); }
+    .bad { border-left-color:#b42318; background:var(--bad); }
+    .violet { border-left-color:#6741a5; background:var(--violet); }
+    table { width:100%; border-collapse:collapse; margin:14px 0 7px; font-size:13.5px; }
+    th,td { border:1px solid var(--line); padding:8px 9px; vertical-align:top; }
+    th { background:#edf3fa; text-align:left; }
+    td.num { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+    tr.focus { background:#eff7ff; font-weight:650; }
+    tr.soft { background:#fafcff; }
+    code { background:#f1f3f5; padding:1px 4px; border-radius:3px; overflow-wrap:anywhere; }
+    pre { background:#f5f7fa; border:1px solid #e0e5eb; padding:12px 15px; overflow:auto; }
+    blockquote { margin:16px 0; padding:13px 18px; border-left:4px solid #8baed8; background:#f7f9fc; }
+    ul,ol { padding-left:24px; }
+    a { color:#145aa8; }
+    .kpi { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:18px 0; }
+    .card { border:1px solid var(--line); background:#f8fafc; border-radius:8px; padding:12px 14px; }
+    .card b { display:block; font-size:20px; color:#0c568e; }
+    .formula { font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+               background:#f5f7fa; border:1px solid #dde4ec; padding:12px 15px; overflow:auto; }
+    @media(max-width:820px) {
+      main { margin:0; padding:24px 17px; }
+      table { display:block; overflow:auto; }
+      .kpi { grid-template-columns:1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>FRV新28nm综合结果：实验扩展判断与论文叙事更新</h1>
+  <p class="meta">日期：2026-09-16 ｜ 远端版本：<code>main@297a9e6</code> ｜ 范围：FRV主平台E0、E1及E2-2/3/4/5，三个可替换模型程序池，28 nm、1 GHz。</p>
+
+  <div class="box good"><strong>总判断：</strong>FRV实验需要扩展，但当前最优先的工作不是立即实现更多压缩器，而是统一通用核的物理容量口径、修复调度比较中的启发式噪声，并补齐可审计的综合和功耗材料。新结果使论文主方案应从“固定减少为4 lane”升级为“逻辑slot与物理lane解耦，并结合离散SRAM宏选择lane数”。在必须覆盖三个可替换程序池的统一硬件上，<strong>E2-5而不是E2-4是面积最优点</strong>。</div>
+
+  <div class="kpi">
+    <div class="card">统一定容面积最优<b>E2-5</b><span>0.3803 mm²</span></div>
+    <div class="card">E2-5相对E1面积<b>−45.7%</b><span>调度完全相同</span></div>
+    <div class="card">E2-5相对E0面积<b>−67.1%</b><span>按LLaMA最大池</span></div>
+    <div class="card">E2解码面积占比<b>&lt;0.5%</b><span>SRAM量化主导选择</span></div>
+  </div>
+
+  <h2>1. 数据来源、验证状态与本文口径</h2>
+  <p>远端最新提交已经包含：</p>
+  <ul>
+    <li>三个程序池：BERT四个程序、LLaMA三个程序、SD-UNet五个程序；</li>
+    <li>E0不压缩、E1固定槽纵向压缩，以及E2的2/3/4/5-lane实现；</li>
+    <li>统一的门控SRAM tile构造、隐式EOP版本和逐周期功能回归；</li>
+    <li>28 nm下的Fetch+decode综合面积、综合功耗以及文档称为“实测功耗”的活动相关功耗。</li>
+  </ul>
+  <p>本报告使用以下部署语义：</p>
+  <blockquote>
+    一颗物理FRV核在任意时刻完整驻留一个模型的非线性函数程序池；BERT、LLaMA和SD-UNet可以覆盖替换。物理SRAM不能随当前模型重新定制，因此深度必须覆盖三个池中的最大需求。三个池不要求同时驻留，但使用同一套固定硬件。
+  </blockquote>
+  <div class="box warn"><strong>重要：</strong>按每个模型单独选择SRAM深度的综合结果可以用于解释容量变化，但不能作为通用核的主面积数字。主面积必须按最大LLaMA池统一定容；主功耗也应在同一份统一网表上分别回放三个模型池的活动。</div>
+
+  <h2>2. 新28nm综合结果的完整整理</h2>
+
+  <h3>2.1 BERT程序池</h3>
+  <table>
+    <thead><tr><th>方案</th><th>主要SRAM组织/说明</th><th>Fetch+decode面积<br>(µm²)</th><th>综合功耗<br>(mW)</th><th>活动相关总功耗<br>(mW)</th><th>程序池周期</th></tr></thead>
+    <tbody>
+      <tr><td>E0</td><td>完整171-bit指令，8192深</td><td class="num">289,093</td><td class="num">39.874</td><td class="num">55.4</td><td class="num">7,620†</td></tr>
+      <tr><td>E1</td><td>5个固定槽bank，payload深4096</td><td class="num">177,250</td><td class="num">6.955</td><td class="num">12.9</td><td class="num">7,620†</td></tr>
+      <tr><td>E2-5</td><td>5个共享lane，payload深2048</td><td class="num">96,785</td><td class="num">6.189</td><td class="num">12.8</td><td class="num">7,620†</td></tr>
+      <tr><td>E2-4</td><td>4个共享lane，payload深2048</td><td class="num">80,439</td><td class="num">5.480</td><td class="num">12.6</td><td class="num">7,620†</td></tr>
+      <tr><td>E2-3</td><td>3个共享lane，payload深4096</td><td class="num">112,653</td><td class="num">5.236</td><td class="num">12.8</td><td class="num">7,620†</td></tr>
+      <tr><td>E2-2</td><td>2个共享lane，payload深4096</td><td class="num">80,187</td><td class="num">4.139</td><td class="num">12.2</td><td class="num">7,838</td></tr>
+    </tbody>
+  </table>
+  <p class="caption"><strong>表头说明：</strong>面积和功耗仍是原综合top的结果；周期列已按逐程序候选继承规则校正。†表示max-3生成的合法trace被max-4/max-5机器继承，不表示重新综合了SRAM。原始独立index结果为max-5/4=7,667、max-3=7,620。</p>
+
+  <h3>2.2 SD-UNet程序池</h3>
+  <table>
+    <thead><tr><th>方案</th><th>主要SRAM组织/说明</th><th>Fetch+decode面积<br>(µm²)</th><th>综合功耗<br>(mW)</th><th>活动相关总功耗<br>(mW)</th><th>程序池周期</th></tr></thead>
+    <tbody>
+      <tr><td>E0</td><td>完整171-bit指令，16384深</td><td class="num">577,554</td><td class="num">38.711</td><td class="num">55.8</td><td class="num">11,461†</td></tr>
+      <tr><td>E1</td><td>5个固定槽bank，payload深8192</td><td class="num">351,065</td><td class="num">8.922</td><td class="num">18.0</td><td class="num">11,461†</td></tr>
+      <tr><td>E2-5</td><td>5个共享lane，payload深4096</td><td class="num">190,846</td><td class="num">7.726</td><td class="num">17.9</td><td class="num">11,461†</td></tr>
+      <tr><td>E2-4</td><td>4个共享lane，payload深4096</td><td class="num">158,657</td><td class="num">6.622</td><td class="num">17.8</td><td class="num">11,461†</td></tr>
+      <tr><td>E2-3</td><td>3个共享lane，payload深8192</td><td class="num">222,756</td><td class="num">6.660</td><td class="num">17.9</td><td class="num">11,461†</td></tr>
+      <tr><td>E2-2</td><td>2个共享lane，payload深8192</td><td class="num">158,378</td><td class="num">5.126</td><td class="num">17.5</td><td class="num">11,655</td></tr>
+    </tbody>
+  </table>
+  <p class="caption"><strong>表头说明：</strong>本表使用为SD-UNet单独定深的top，只能作为分池容量敏感性结果。†为逐程序继承：例如Silu和GEGLU的max-2 trace分别短于max-3 trace，因此max-3/4/5也选择这些合法trace；不是简单地对程序池总周期取最小值。</p>
+
+  <h3>2.3 LLaMA程序池</h3>
+  <table>
+    <thead><tr><th>方案</th><th>主要SRAM组织/说明</th><th>Fetch+decode面积<br>(µm²)</th><th>综合功耗<br>(mW)</th><th>活动相关总功耗<br>(mW)</th><th>程序池周期</th></tr></thead>
+    <tbody>
+      <tr><td>E0</td><td>完整171-bit指令，32768深</td><td class="num">1,154,305</td><td class="num">39.896</td><td class="num">56.8</td><td class="num">30,698†</td></tr>
+      <tr><td>E1</td><td>5个固定槽bank，payload深16384</td><td class="num">700,897</td><td class="num">11.849</td><td class="num">18.7</td><td class="num">30,698†</td></tr>
+      <tr class="focus"><td>E2-5</td><td>5个共享lane，payload深8192</td><td class="num">380,313</td><td class="num">9.303</td><td class="num">18.0</td><td class="num">30,698†</td></tr>
+      <tr><td>E2-4</td><td>4个共享lane，payload深16384</td><td class="num">572,749</td><td class="num">10.232</td><td class="num">18.7</td><td class="num">30,698†</td></tr>
+      <tr><td>E2-3</td><td>3个共享lane，payload深16384</td><td class="num">444,218</td><td class="num">8.299</td><td class="num">18.2</td><td class="num">30,698</td></tr>
+      <tr><td>E2-2</td><td>2个共享lane，payload深32768</td><td class="num">572,397</td><td class="num">8.432</td><td class="num">18.4</td><td class="num">30,871</td></tr>
+    </tbody>
+  </table>
+  <p class="caption"><strong>表头说明：</strong>LLaMA是三个池中的最大容量需求，因而该表的面积可以作为覆盖替换通用核的主面积结果。†为候选继承后的周期，原max-5/4独立index结果为30,704。综合功耗一列偏向E2-3，而活动相关总功耗一列偏向E2-5，说明功耗结论仍需统一网表和统一SAIF口径确认。</p>
+
+  <h2>3. 为什么统一硬件上E2-5最优</h2>
+  <p>LLaMA池包含33,104个有效34-bit payload事件。条带化能够把事件分配到各lane，使lane长度最多相差一项。但物理bank深度必须向可用SRAM宏档位取整：</p>
+  <table>
+    <thead><tr><th>方案</th><th>平均/最长lane负载</th><th>取整后单lane深度</th><th>payload总位置</th><th>解释</th></tr></thead>
+    <tbody>
+      <tr class="focus"><td>E2-5</td><td class="num">约6,621 / 6,622</td><td class="num">8,192</td><td class="num">40,960</td><td>未越过8192档，最小</td></tr>
+      <tr><td>E2-4</td><td class="num">约8,276</td><td class="num">16,384</td><td class="num">65,536</td><td>刚刚越过8192，容量跳变</td></tr>
+      <tr><td>E2-3</td><td class="num">约11,035</td><td class="num">16,384</td><td class="num">49,152</td><td>少两个bank，但每bank加深</td></tr>
+      <tr><td>E2-2</td><td class="num">16,552</td><td class="num">32,768</td><td class="num">65,536</td><td>越过16384，容量再次跳变</td></tr>
+    </tbody>
+  </table>
+  <p class="caption"><strong>表头说明：</strong>payload总位置只反映bank数量与深度，不含5-bit config SRAM。四种方案保存的有效payload信息量基本相同；差别来自物理宏取整。</p>
+
+  <div class="formula">C(N) = Cconfig(TN) + N × Q(ceil(E/N)) × 34 + Cdecoder(N)</div>
+  <ul>
+    <li><code>N</code>：物理lane数量；</li>
+    <li><code>TN</code>：max-N调度后的周期数；</li>
+    <li><code>E</code>：有效payload事件总数；</li>
+    <li><code>Q()</code>：向真实可用SRAM宏深度取整；</li>
+    <li><code>Cdecoder</code>：phase、rank、lane使能、计数器和scatter逻辑。</li>
+  </ul>
+  <div class="box violet"><strong>更新后的设计规律：</strong>减少lane只在“省下的bank容量大于bank深度跨档损失”时有效。因此lane数必须与调度结果和memory compiler提供的宏规格联合选择，不能根据平均并发度单独决定。</div>
+
+  <h2>4. 面积和功耗收益应该怎样归因</h2>
+  <h3>4.1 E0到E1：删除无效槽事件与读门控</h3>
+  <table>
+    <thead><tr><th>程序池</th><th>E1面积相对E0</th><th>E1综合功耗相对E0</th><th>E1活动相关功耗相对E0</th></tr></thead>
+    <tbody>
+      <tr><td>BERT</td><td class="num">−38.7%</td><td class="num">−82.6%</td><td class="num">−76.7%</td></tr>
+      <tr><td>SD-UNet</td><td class="num">−39.2%</td><td class="num">−77.0%</td><td class="num">−67.7%</td></tr>
+      <tr><td>LLaMA</td><td class="num">−39.3%</td><td class="num">−70.3%</td><td class="num">−67.1%</td></tr>
+    </tbody>
+  </table>
+  <p>E1的主要贡献是只保存槽事件，并仅在mask对应位有效时读取payload bank。因此E0到E1承担了大部分动态功耗下降。</p>
+
+  <h3>4.2 E1到E2-5：消除固定slot/bank绑定造成的容量碎片</h3>
+  <table>
+    <thead><tr><th>程序池</th><th>E2-5面积相对E1</th><th>E2-5综合功耗相对E1</th><th>E2-5活动相关功耗相对E1</th><th>性能变化</th></tr></thead>
+    <tbody>
+      <tr><td>BERT</td><td class="num">−45.4%</td><td class="num">−11.0%</td><td class="num">−0.8%</td><td class="num">0</td></tr>
+      <tr><td>SD-UNet</td><td class="num">−45.6%</td><td class="num">−13.4%</td><td class="num">−0.6%</td><td class="num">0</td></tr>
+      <tr><td>LLaMA</td><td class="num">−45.7%</td><td class="num">−21.5%</td><td class="num">−3.7%</td><td class="num">0</td></tr>
+    </tbody>
+  </table>
+  <p>E2-5与E1使用相同的max-5调度并保存相同的mask和payload。面积下降来自五个固定slot事件流被改为五个共享、均衡的物理lane事件流。活动相关功耗只小幅下降，原因是门控拼接宏每次只激活一个tile，减少未使用容量主要降低面积和泄漏，而不会按容量比例降低每次有效读取的能量。</p>
+  <blockquote>
+    推荐论文表述：纵向压缩主要解决“是否保存和读取无效槽信息”；slot/lane解耦进一步解决“有效槽信息如何映射到统一深度的物理bank”。前者贡献主要动态功耗收益，后者贡献主要面积和容量利用率收益。
+  </blockquote>
+
+  <h3>4.3 解码逻辑不是主导成本</h3>
+  <table>
+    <thead><tr><th>程序池</th><th>E2-5</th><th>E2-4</th><th>E2-3</th><th>E2-2</th></tr></thead>
+    <tbody>
+      <tr><td>BERT解码面积</td><td class="num">1,632</td><td class="num">1,425</td><td class="num">1,252</td><td class="num">1,106</td></tr>
+      <tr><td>SD-UNet解码面积</td><td class="num">1,563</td><td class="num">1,459</td><td class="num">1,289</td><td class="num">1,102</td></tr>
+      <tr><td>LLaMA解码面积</td><td class="num">1,566</td><td class="num">1,446</td><td class="num">1,290</td><td class="num">1,107</td></tr>
+    </tbody>
+  </table>
+  <p class="caption"><strong>表头说明：</strong>单位均为µm²。LLaMA下解码器只占对应Fetch+decode总面积约0.19%～0.41%。减少lane最多只节省数百µm²解码逻辑，却可能因为SRAM深度跨档增加十几万µm²。</p>
+
+  <h2>5. 与近十年代表性压缩方法的统一软件与CACTI对比（重做）</h2>
+  <p>本节已重新运行，不再混用“逻辑bit减少”“主存读取字数减少”和“旧报告数字”。所有方法都输入<strong>校正后的同一条max-5逻辑trace</strong>，均通过软件解码往返检查；SRAM统一使用CACTI 7.0、HP 32 nm、单读写口、深度向2次幂取整。功耗为一次程序池执行期间的SRAM读动态、Multanen字典装载写动态以及所有常驻宏泄漏之和，再除以运行周期；不含解压组合逻辑、变长取指buffer和时钟树。因此这是决定是否做RTL的存储侧筛选，不是最终芯片总功耗。</p>
+
+  <h3>5.1 被比较的方法到底是什么</h3>
+  <table>
+    <thead><tr><th>本文名称</th><th>对应参考文献</th><th>在FRV上的可执行编码</th><th>证据边界</th></tr></thead>
+    <tbody>
+      <tr><td>E1固定槽纵向压缩</td><td>Li等，<a href="https://doi.org/10.1109/ACCESS.2020.2985501">IEEE Access 2020</a></td><td>每周期读5-bit有效mask；五个34-bit槽各自写入固定bank，所有bank按最长槽统一定深。</td><td>已有RTL，精确机制复现。</td></tr>
+      <tr class="focus"><td>E2-5条带化</td><td>本文方案</td><td>mask不变；有效34-bit事件依次轮转写入五个共享lane，读出后按mask中的slot次序scatter回原槽。</td><td>已有RTL；峰值并发不减少。</td></tr>
+      <tr><td>Lee 2018时间保持＋固定五分区</td><td>Lee等，<a href="https://doi.org/10.1145/3162018">ACM TACO 2018</a></td><td>每槽保存1-bit“本周期是否改变”；为1时读新34-bit值，为0时保持上一值。五个1-bit流物理上合并为一个5-bit SRAM。</td><td>精确复现论文的逐分区保持子机制；FRV缺少其CGRA实体级don’t-care、ASAP-ALAN传播和bin-packing编译器，不能称完整论文复现。</td></tr>
+      <tr><td>Kultala 2016四模板变长编码</td><td>Kultala等，<a href="https://doi.org/10.1007/s11265-015-1081-6">JSP 2016</a></td><td>2-bit模板号表示空周期、两个全池最常见非空mask或escape；命中短模板时省去5-bit mask，其他周期带mask逃逸。变长bit流装入174-bit取指字。</td><td>机制移植。原文在特定TTA上还有move重分配后处理，FRV五个异构槽不能照搬，故未声称复现其编译器收益。</td></tr>
+      <tr><td>Brandon 2015 stop-bit</td><td>Brandon等，<a href="https://doi.org/10.1109/ReConFig.2015.7393361">ReConFig 2015</a></td><td>每个有效事件使用34-bit内容、3-bit逻辑slot身份和1-bit结束标志；空bundle用4-bit保留标记；变长流装入174-bit取指字。</td><td>FRV安全机制移植。原ρ-VEX可从syllable操作类型限制路由，FRV固定异构槽仍需显式slot身份。</td></tr>
+      <tr><td>Multanen 2024可编程并行字典</td><td>Multanen等，<a href="https://doi.org/10.1007/s10617-024-09290-2">DAES 2024</a></td><td>五槽分别查可写字典；连续多周期索引打包为一个174-bit字，不能成bundle的周期保留原宽；每个函数入口装载frame。搜索论文容量32/8/8/16/32、同预算重排和128×5，按SRAM总功耗选点。</td><td>论文形态trace模型且往返通过；原作者CFG区域构建、occurrence-cost代码及五字典RTL未公开，不能称完整工具链复现。</td></tr>
+    </tbody>
+  </table>
+  <p class="caption"><strong>表头说明：</strong>“可执行编码”说明压缩流怎样被硬件无损恢复；“证据边界”区分已有RTL、精确子机制和机制移植。前版所谓“15个mask＋escape”已删除，因为那并不是Kultala论文的四模板结构。</p>
+
+  <h3>5.2 定量结果：逻辑压缩率、CACTI面积和SRAM功耗</h3>
+  <table>
+    <thead><tr><th>程序池</th><th>方法</th><th class="num">逻辑压缩率<br>相对E0</th><th class="num">CACTI SRAM面积<br>相对E0减少</th><th class="num">CACTI SRAM功耗<br>相对E0减少</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="6"><strong>BERT</strong><br>校正后7,620周期</td><td>E1 / Li 2020</td><td class="num">78.49%</td><td class="num">55.50%</td><td class="num">59.90%</td></tr>
+      <tr class="focus"><td>E2-5 本文</td><td class="num">78.49%</td><td class="num">74.74%</td><td class="num">75.28%</td></tr>
+      <tr><td>Lee 2018 固定五分区保持</td><td class="num">70.11%</td><td class="num">55.50%</td><td class="num">56.62%</td></tr>
+      <tr><td>Kultala 2016 四模板移植</td><td class="num">79.11%</td><td class="num">75.00%</td><td class="num">85.13%</td></tr>
+      <tr><td>Brandon 2015 stop-bit移植</td><td class="num">78.43%</td><td class="num">75.00%</td><td class="num">84.98%</td></tr>
+      <tr><td>Multanen 2024 并行字典模型</td><td class="num">17.46%</td><td class="num">−2.35%</td><td class="num">11.26%</td></tr>
+      <tr><td rowspan="6"><strong>SD-UNet</strong><br>校正后11,461周期</td><td>E1 / Li 2020</td><td class="num">73.62%</td><td class="num">51.89%</td><td class="num">53.96%</td></tr>
+      <tr class="focus"><td>E2-5 本文</td><td class="num">73.62%</td><td class="num">76.22%</td><td class="num">70.81%</td></tr>
+      <tr><td>Lee 2018 固定五分区保持</td><td class="num">67.65%</td><td class="num">51.89%</td><td class="num">51.84%</td></tr>
+      <tr><td>Kultala 2016 四模板移植</td><td class="num">74.05%</td><td class="num">72.96%</td><td class="num">81.85%</td></tr>
+      <tr><td>Brandon 2015 stop-bit移植</td><td class="num">73.21%</td><td class="num">72.96%</td><td class="num">81.70%</td></tr>
+      <tr><td>Multanen 2024 并行字典模型</td><td class="num">19.07%</td><td class="num">−1.43%</td><td class="num">9.88%</td></tr>
+      <tr><td rowspan="6"><strong>LLaMA</strong><br>校正后30,698周期</td><td>E1 / Li 2020</td><td class="num">75.63%</td><td class="num">53.05%</td><td class="num">56.29%</td></tr>
+      <tr class="focus"><td>E2-5 本文</td><td class="num">75.63%</td><td class="num">73.34%</td><td class="num">74.48%</td></tr>
+      <tr><td>Lee 2018 固定五分区保持</td><td class="num">69.23%</td><td class="num">53.05%</td><td class="num">54.42%</td></tr>
+      <tr><td>Kultala 2016 四模板移植</td><td class="num">76.22%</td><td class="num">74.03%</td><td class="num">81.44%</td></tr>
+      <tr><td>Brandon 2015 stop-bit移植</td><td class="num">75.44%</td><td class="num">74.03%</td><td class="num">81.28%</td></tr>
+      <tr><td>Multanen 2024 并行字典模型</td><td class="num">15.28%</td><td class="num">−2.17%</td><td class="num">10.88%</td></tr>
+    </tbody>
+  </table>
+  <p class="caption"><strong>表头说明：</strong>逻辑压缩率=<code>1−编码有效bit/E0的171×周期</code>；面积减少=<code>1−该方案所有常驻SRAM面积/E0 SRAM面积</code>；功耗减少使用“执行读动态＋Multanen frame写动态＋泄漏”。负面积减少表示比E0更大。逻辑压缩率不等于CACTI面积减少，因为bank数量、端口宽度和2次幂深度量化不同。</p>
+
+  <h3>5.3 为什么Kultala/Brandon看起来与E2相近，甚至功耗更低</h3>
+  <p>在BERT和LLaMA上，Kultala移植的CACTI面积只比E2-5多省约0.26和0.69个百分点；Brandon因取整到同一个174-bit主SRAM深度，面积数字也相同。这说明它们是<strong>必须保留的强软件对照</strong>。但不能据此声称它们已经在系统层面胜过E2：</p>
+  <ul>
+    <li><strong>优势：</strong>单个宽主SRAM按需低频读取，压缩流可跨周期预取，所以存储读动态很低；不需要五个payload SRAM同时具备地址端口。</li>
+    <li><strong>代价：</strong>指令边界不是固定地址，必须有跨174-bit边界的bit对齐器、预取buffer、可变长PC和分支目标对齐机制。表中没有计这些逻辑、buffer和时钟功耗。</li>
+    <li><strong>吞吐风险：</strong>最长escape或五syllable bundle可超过一个174-bit取指字；要保证每周期恢复一条完整指令，需要证明预取队列在最坏连续长指令下不欠载，而不仅是平均bit率足够。</li>
+    <li><strong>通用性差异：</strong>Kultala短模板由本次三个池的mask频率选择；未知程序若分布变化，命中率下降。E2只依赖“最多五个有效槽”，不训练模板内容。</li>
+    <li><strong>SD-UNet反例：</strong>两种变长方案面积只减少72.96%，明显低于E2的76.22%，说明相近结果由2次幂深度边界决定，并非稳定支配。</li>
+  </ul>
+  <div class="box warn"><strong>结论：</strong>Kultala和Brandon值得作为软件/CACTI强对照，但在完成定长一拍恢复的buffer/aligner RTL和分支语义之前，不能用其“未计解码逻辑的SRAM功耗”否定E2。若论文资源允许，优先实现一个共同的174-bit变长取指前端作为强baseline；若时间不足，就在表中保持“存储侧上界”标签。</div>
+  <p>Lee在三个池上均劣于E2：FRV的无效槽是显式零，非零与零之间频繁切换；“保持上一配置”仍要存一次清零变化，而且固定五分区继续承受最长槽统一定深。Multanen能减少读能量，但大量34-bit值随地址变化而不重复，主流深度未下降，五张可写字典反而使面积比E0高1.43%–2.35%。</p>
+
+  <h2>6. 必须优先补做的FRV实验</h2>
+  <h3>6.1 P0：同一物理网表回放三个程序池</h3>
+  <ol>
+    <li>对E0、E1、E2-5、E2-4、E2-3、E2-2分别只综合一份覆盖LLaMA最大容量的通用top。</li>
+    <li>在每份固定网表上分别装载并运行BERT、SD-UNet、LLaMA trace。</li>
+    <li>常驻执行功耗不计初始程序SRAM写入；若加入Multanen，字典frame动态更新必须单列。</li>
+    <li>分别报告：SRAM读动态、字典写动态、组合逻辑、寄存器/时钟、泄漏、合计。</li>
+    <li>面积只报告一套固定硬件；每池独立定深结果移至容量敏感性分析。</li>
+  </ol>
+
+  <h3>6.2 P0：修复调度周期的理论单调性</h3>
+  <p>max-3调度天然可以在max-5机器上执行，所以真正的最优周期必须满足：</p>
+  <div class="formula">T5 ≤ T4 ≤ T3 ≤ T2</div>
+  <p>当前BERT和SD-UNet出现<code>T3&lt;T5</code>，说明index启发式在不同并发约束下走到了不同局部结果。建议无需搜索复杂priority，只加入一个候选继承规则：</p>
+  <blockquote>
+    对max-N机器，把所有小于等于N的已有合法调度也作为候选；最终选择周期最短者。这样既保持默认index策略，又不会出现“限制资源反而加速”的不可信结果。
+  </blockquote>
+  <p>本次已经按<strong>每个程序分别选择</strong>实现该规则，而不是对程序池总数事后取最小。例如SD-UNet中，GroupNorm、LayerNorm和Softmax选择max-3 trace，而Silu、GEGLU反而选择更短的max-2 trace；这些trace在max-3/4/5机器上都合法。校正结果如下：</p>
+  <table>
+    <thead><tr><th>程序池</th><th class="num">max-2</th><th class="num">max-3</th><th class="num">max-4</th><th class="num">max-5</th><th>校正说明</th></tr></thead>
+    <tbody>
+      <tr><td>BERT</td><td class="num">7,838</td><td class="num">7,620</td><td class="num">7,620</td><td class="num">7,620</td><td>max-4/5继承逐程序最优的≤3调度。</td></tr>
+      <tr><td>SD-UNet</td><td class="num">11,655</td><td class="num">11,461</td><td class="num">11,461</td><td class="num">11,461</td><td>混合继承max-2与max-3调度；原11,650不是正确校正值。</td></tr>
+      <tr><td>LLaMA</td><td class="num">30,871</td><td class="num">30,698</td><td class="num">30,698</td><td class="num">30,698</td><td>max-4/5继承max-3调度。</td></tr>
+    </tbody>
+  </table>
+  <p class="caption"><strong>表头说明：</strong>max-N表示硬件允许同周期最多N个有效槽；表中是程序池成员逐一选取所有issue≤N候选后的周期和，因此严格满足<code>T5≤T4≤T3≤T2</code>。该校正改变性能结论和第五部分的软件输入trace，不追溯改变已经综合出的SRAM面积。</p>
+
+  <h3>6.3 P0：补齐可审计的28nm证据</h3>
+  <p>最新仓库目前只有汇总文档，没有找到以下原始交付物：</p>
+  <ul>
+    <li>综合TCL、时钟约束和工具版本；</li>
+    <li><code>report_area</code>、<code>report_timing</code>及关键路径；</li>
+    <li><code>report_power</code>、SAIF/VCD和功耗分析窗口；</li>
+    <li>PVT corner、电压、温度、SRAM <code>.lib/.db</code>选择；</li>
+    <li>门级网表、活动回标率以及SRAM/逻辑功耗分解。</li>
+  </ul>
+  <div class="box bad"><strong>论文用词必须修改：</strong>文档中的“实测功耗”不是流片后的硅上测量。若它来自门级仿真和SAIF/VCD，应写成“基于门级活动回标的功耗估计”。在原始报告补齐前，只能说汇总文档报告1 GHz无建立时间违例，不能声称已独立完成时序签收复核。</div>
+
+  <h3>6.4 已完成：统一的软件baseline脚本</h3>
+  <p>本次已新增<code>experiments/frv_prior_work_monotonic_cacti_2026_09_16.py</code>，没有修改原调度脚本。它读取issue-2/3/4/5 trace，执行逐程序候选继承，并输出：</p>
+  <ul>
+    <li>未取整逻辑bit；</li>
+    <li>取2次幂/真实宏后的物理bit；</li>
+    <li>是否跨过SRAM深度档；</li>
+    <li>逐bit往返验证；</li>
+    <li>恢复吞吐是否可达到每周期一条完整指令；</li>
+    <li>是否依赖程序池训练、字典装载或可变长取指。</li>
+  </ul>
+  <p>完整机器可读结果保存在<code>analysis_output_frv_prior_work_monotonic_2026-09-16/results.json</code>，包含每个函数选择了哪一种issue trace、每个SRAM宏的宽度/深度/访问次数和CACTI原始派生指标。</p>
+  <p>只有满足以下至少一个条件，才进入新增RTL：</p>
+  <ol>
+    <li>统一容量下总SRAM面积预估比E2-5再低至少10%；</li>
+    <li>在至少两个程序池上动态功耗预估比E2-5低至少10%；</li>
+    <li>能够补上审稿人会要求、但当前E0/E1/Multanen/E2均未覆盖的重要功能。</li>
+  </ol>
+
+  <h2>7. 更新后的论文创新点与叙事</h2>
+  <h3>7.1 不再把“固定4 lane”写成核心</h3>
+  <p>建议把方法统一命名为参数化的E2-N：</p>
+  <ul>
+    <li><strong>E2-5：</strong>调度不变、峰值并发不变的纯存储组织方案，也是通用核主结果；</li>
+    <li><strong>E2-4/3/2：</strong>调度并发约束与bank数量联合变化的设计空间探索；</li>
+    <li><strong>OpenEdge N=M：</strong>跨平台证明条带化本身不依赖减少lane。</li>
+  </ul>
+
+  <h3>7.2 推荐的论文逻辑链</h3>
+  <ol>
+    <li>宽VLIW配置流中，许多逻辑槽在多数周期不需要更新。</li>
+    <li>传统纵向压缩删除无效槽事件，但每个逻辑槽永久绑定一个物理bank。</li>
+    <li>通用程序池要求bank统一定深，最热slot迫使所有bank过度配置。</li>
+    <li>本文把逻辑slot身份与物理lane位置解耦，将有效事件循环条带化，并在读出时精确scatter回原槽。</li>
+    <li>E2-5首先证明：不改变调度和并发能力，也能相对E1降低45.7%面积。</li>
+    <li>随后扫描lane数，建立调度周期、有效事件、bank数量和离散宏深度之间的模型。</li>
+    <li>结果表明更少lane不保证更小硬件，必须进行macro-aware选择。</li>
+    <li>FRV 28 nm RTL给出主要硬件证据，OpenEdgeCGRA给出跨平台软件证据。</li>
+  </ol>
+
+  <h3>7.3 可以直接放进论文摘要或引言的表述</h3>
+  <blockquote>
+    现有纵向VLIW压缩能够删除逻辑槽中的无效配置事件，但仍将每个逻辑槽固定映射到独立物理bank。在支持多程序覆盖替换且要求统一bank深度的通用核中，这种绑定使存储容量由负载最高的逻辑槽决定，造成显著的bank容量碎片。本文提出逻辑slot与物理lane解耦的条带化指令存储：有效槽事件按相位循环分布到等深lane，在读出端依据有效槽mask、事件rank和当前phase恢复原逻辑槽位置。五lane版本无需改变原调度或降低峰值并发，在28 nm FRV实现中相对固定槽纵向压缩降低45.7%的Fetch+decode面积。进一步的lane数扫描表明，减少bank数量可能使单bank跨越下一档SRAM深度，从而增加总面积；因此本文建立了联合考虑调度周期、事件总量和离散存储宏的lane数选择方法。
+  </blockquote>
+
+  <h3>7.4 最应强调的三项贡献</h3>
+  <ol>
+    <li><strong>机制贡献：</strong>逻辑slot/物理lane解耦，并能每周期精确恢复完整VLIW控制状态。</li>
+    <li><strong>理论与设计方法贡献：</strong>给出均衡下界和宏量化容量模型，解释为什么lane数减少并不单调降低面积。</li>
+    <li><strong>实验贡献：</strong>FRV三个可替换模型池的28 nm RTL结果，加OpenEdgeCGRA跨平台trace验证，并与纵向压缩、模板/stop-bit和可编程字典方法比较。</li>
+  </ol>
+
+  <h2>8. 最终决策</h2>
+  <table>
+    <thead><tr><th>问题</th><th>结论</th></tr></thead>
+    <tbody>
+      <tr><td>是否扩展FRV实验？</td><td><strong>需要。</strong>优先做统一网表三池功耗、调度单调性和综合证据归档。</td></tr>
+      <tr><td>是否立即实现更多压缩方法RTL？</td><td><strong>字典和Lee不需要；变长前端值得作为P1强baseline。</strong>Kultala/Brandon移植的SRAM面积与E2相近（不同池相差不到约3.3个百分点），但尚未计buffer、aligner、可变长PC和最坏吞吐代价，不能直接宣布胜负。</td></tr>
+      <tr><td>主方案应是E2-4还是E2-5？</td><td><strong>E2-5作为主方案。</strong>E2-4作为联合调度/压缩的设计点与消融。</td></tr>
+      <tr><td>论文主创新是否仍成立？</td><td><strong>成立且更清楚。</strong>创新应写成slot/lane解耦和macro-aware lane选择，而不是简单限制四槽并发。</td></tr>
+      <tr><td>当前最稳固的硬件结论？</td><td>统一最大容量下，E2-5相对E1面积降低45.7%，调度周期不变；功耗增益需统一网表活动回标后最终确认。</td></tr>
+    </tbody>
+  </table>
+
+  <div class="box good"><strong>一句话论文定位：</strong>本文提出面向稀疏宽指令流的slot/lane解耦存储，通过均衡有效事件消除固定槽纵向压缩的bank容量碎片，并进一步以真实SRAM宏量化为约束联合选择lane数量；它不是“把5 lane简单减成4 lane”。</div>
+
+  <p class="meta">操作说明：本地仓库<code>main</code>与远端发生分叉，本文分析通过独立worktree读取远端<code>297a9e6</code>，未重置、覆盖或push现有本地内容。本HTML写入当前工作区的<code>plan/</code>目录。</p>
+</main>
+</body>
+</html>

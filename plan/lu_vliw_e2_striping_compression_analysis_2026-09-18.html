@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>LU 分解 VLIW（832-bit）指令压缩：E0/E1/E2 对比与 E2 条带化方案评估</title>
+<style>
+body { font-family: -apple-system, "PingFang SC", sans-serif; max-width: 1100px; margin: 2em auto; padding: 0 1em; line-height: 1.6; color: #222; }
+h1, h2, h3 { color: #123; }
+table { border-collapse: collapse; margin: 1em 0; font-size: 0.92em; }
+th, td { border: 1px solid #bbb; padding: 4px 8px; text-align: right; }
+th { background: #eef2f7; }
+td.l, th.l { text-align: left; }
+.good { color: #0a7a0a; font-weight: bold; }
+.warn { color: #9a5a08; font-weight: bold; }
+.bad { color: #b00020; font-weight: bold; }
+code { background: #f4f4f4; padding: 1px 4px; border-radius: 3px; }
+pre { background: #f7f9fc; border: 1px solid #dde3ec; padding: 0.8em 1em; overflow-x: auto; font-size: 0.85em; }
+.box { background: #f7f9fc; border-left: 4px solid #36c; padding: 0.8em 1em; margin: 1em 0; }
+.box.neg { border-left-color: #9a5a08; background: #fffaf0; }
+</style>
+</head>
+<body>
+
+<h1>LU 分解 VLIW（832-bit）指令压缩：E0/E1/E2 对比与 E2 条带化方案评估</h1>
+<p>日期：2026-09-18 ｜ 对象平台：LU 分解逐拍静态发射 VLIW（<code>lu/version10</code>，16 PE + 32 bank 端口）｜
+数据：4 个代表矩阵的原始指令文件（sel1/sel2/op/wea/addr 五文件）｜
+口径：逻辑深度（精确位数）与严格 2 幂次深度（每 bank pad 到下一 2 幂次）｜
+全部结论经软件逐 bit 验证（见 §9）。</p>
+
+<div class="box">
+<b>一句话结论：</b>本机指令活动<b>密集且均衡</b>（addr 平均 16–25/32 端口/拍有效、op 平均 7–11/16 PE/拍、每拍最大并发 = 字段总数），
+mask 类压缩天花板 1.2–1.9x，远低于 FRV 平台（槽位活动率 9–31% 的稀疏负载）。
+逻辑容量上 E1（逐字段纵向）与 E2（条带化）<b>精确相等</b>；E2 的实际收益来自物理组织——
+共享 lane 深度 = 均值，而可实现 E1 的组内统一深度 = 最热字段（字段偏斜 1.26–2.12x）。
+<b>推荐方案 E2-M4（条带化 + 推导 mask 48b/拍）：严格 2 幂次 1.25–1.93x，统一池分时驻留 1.33x。</b>
+</div>
+
+<h2>1. 指令格式与有效性规则（已逐 bit 验证）</h2>
+<p>每拍 832 bit = sel1(48×5b) + sel2(32×4b) + op(16×5b) + wea(32×1b) + addr(32×11b)。
+文件内字段按高位在前排列（op 按 PE 15→0；sel1 按字段 47→0，字段 3j/3j+1/3j+2 = PE j 的 rd/rt/rs；sel2/wea/addr 按 bank 31→0）。</p>
+<table>
+<tr><th class="l">slot</th><th>位宽×数量</th><th class="l">有效值</th><th class="l">无效默认（don't-care）</th><th class="l">有效性判据</th></tr>
+<tr><td class="l">op</td><td>5b × 16</td><td class="l">1–23</td><td class="l">00000</td><td class="l">op ≠ 0（自我标记）</td></tr>
+<tr><td class="l">sel1</td><td>5b × 48</td><td class="l">bank 号 0–31</td><td class="l">字段序号 mod 32</td><td class="l">op_j≠0 且操作数在 op 模式表内（纯函数，已验证）</td></tr>
+<tr><td class="l">sel2</td><td>4b × 32</td><td class="l">PE 号 0–15</td><td class="l">bank 号 ÷ 2</td><td class="l">wea[b] = 1</td></tr>
+<tr><td class="l">wea</td><td>1b × 32</td><td class="l">1 = 写</td><td class="l">0</td><td class="l">始终有效，不压缩（兼作 sel2 的 mask）</td></tr>
+<tr><td class="l">addr</td><td>11b × 32</td><td class="l">0–2046</td><td class="l">全 1（2047）</td><td class="l">≠ 2047（自我标记）</td></tr>
+</table>
+<p><b>mask 共享（精确成立，全 trace 断言验证）</b>：op[j]≠0 ⇔ 该 PE 至少一个 sel1 字段有效；sel2[b] 有效 ⇔ wea[b]=1。
+推导链：op mask + op 值 →（22 项模式表）→ sel1 mask →（sel1 值并集）→ addr mask。
+显式只需存 <b>op mask 16b + wea 32b = 48b/拍</b>（对比显式 mask 128b/拍，bomhof 省 3.7M 逻辑 / 5.2M strict）。</p>
+<p>注：addr=2047 作为空闲标记只在 nnz_fill &lt; 65504 时无歧义（当前 4 矩阵 nnz_fill 最大约 4 万，安全）。</p>
+
+<h2>2. 活动统计：为什么压缩空间有限</h2>
+<table>
+<tr><th class="l">字段组</th><th class="l">平均每拍并发（bomhof/rajat/add20/oscil）</th><th class="l">每拍最大并发</th><th class="l">字段间不均衡 max/mean</th></tr>
+<tr><td class="l">op（16 字段）</td><td class="l">10.8 / 8.4 / 11.2 / 6.9</td><td class="l">16（满）</td><td class="l">1.26 / 1.53 / 1.41 / 1.93</td></tr>
+<tr><td class="l">sel1（48 字段）</td><td class="l">29.3 / 22.4 / 30.4 / 17.9</td><td class="l">48（满；oscil 41）</td><td class="l">1.31 / 1.64 / 1.47 / 2.12</td></tr>
+<tr><td class="l">sel2（32 字段）</td><td class="l">9.8 / 7.5 / 10.5 / 6.6</td><td class="l">16</td><td class="l">1.06 / 1.20 / 1.11 / 1.50</td></tr>
+<tr><td class="l">addr（32 字段）</td><td class="l">24.5 / 19.0 / 25.2 / 15.7</td><td class="l">32（满）</td><td class="l">1.02 / 1.08 / 1.04 / 1.16</td></tr>
+</table>
+<ul>
+<li>每拍最大并发 = 字段总数 → E2 的 lane 数无法少于字段数（与 FRV 的本质差别）。</li>
+<li>整拍全空很少（0.2% / 7.4% / 1.2% / 15.1%）；拍内空槽 30–57%；尾部 20% 拍活动率降至 3–37%（LU 依赖图收尾并行度枯竭）。</li>
+<li>PE 槽位有效率 67.2% / 52.5% / 69.9% / 42.9%；调度效率（(div+ms)/16 理想周期 / 实际）= 62.3% / 49.6% / 65.8% / 41.6%。</li>
+<li>寄存器→bank 映射（v mod 32）把访问均匀打散：addr 字段间不均衡仅 1.02–1.16。</li>
+</ul>
+
+<h2>3. 方案定义</h2>
+<table>
+<tr><th class="l">方案</th><th class="l">存储组织</th><th class="l">每拍元数据</th></tr>
+<tr><td class="l">E0 不压缩</td><td class="l">832b × C 单 bank</td><td class="l">无</td></tr>
+<tr><td class="l">E1 逐字段纵向（可实现）</td><td class="l">4 槽内每字段独立 bank；组内统一深度 = 组内最热字段计数</td><td class="l">48b 共享 mask</td></tr>
+<tr><td class="l">E1 逐字段纵向（下界）</td><td class="l">每字段独立深度 = 该字段有效计数（128 个不同深度 bank，物理不可实现）</td><td class="l">同上</td></tr>
+<tr><td class="l">E2-M1 条带化</td><td class="l">4 池共享 lane：逐 lane 独立流 + 相位滚动（见 §5）</td><td class="l">显式 mask 128b/拍</td></tr>
+<tr><td class="l">E2-M4 条带化（推荐）</td><td class="l">同 E2-M1</td><td class="l">推导 mask 48b/拍（op mask 16b + wea 32b）</td></tr>
+</table>
+
+<h2>4. 总存储对比（含 mask 与 wea；比率 = E0/方案，越大越好）</h2>
+<h3>4.1 逻辑深度（精确位数，Mbit）</h3>
+<table>
+<tr><th class="l">方案</th><th>2624bomhof_1 (46557 拍)</th><th>1041rajat04 (5516)</th><th>2395add20 (6113)</th><th>430oscil_dcop_11 (471)</th></tr>
+<tr><td class="l">E0</td><td>38.74</td><td>4.59</td><td>5.09</td><td>0.392</td></tr>
+<tr><td class="l">E1 逐字段（组内统一深度）</td><td>30.43 (1.27x)</td><td>3.25 (1.41x)</td><td>4.39 (1.16x)</td><td>0.270 (1.44x)</td></tr>
+<tr><td class="l">E1 逐字段（精确深度下界）</td><td>27.39 (1.41x)</td><td>2.61 (1.76x)</td><td>3.71 (1.37x)</td><td>0.190 (2.06x)</td></tr>
+<tr><td class="l">E2-M1（显式 mask）</td><td>31.12 (1.24x)</td><td>3.05 (1.51x)</td><td>4.20 (1.21x)</td><td>0.228 (1.72x)</td></tr>
+<tr><td class="l"><b>E2-M4（推导 mask）</b></td><td class="good">27.39 (1.41x)</td><td class="good">2.61 (1.76x)</td><td class="good">3.71 (1.37x)</td><td class="good">0.190 (2.06x)</td></tr>
+</table>
+<h3>4.2 严格 2 幂次深度（SRAM 比特，Mbit）</h3>
+<table>
+<tr><th class="l">方案</th><th>2624bomhof_1</th><th>1041rajat04</th><th>2395add20</th><th>430oscil_dcop_11</th></tr>
+<tr><td class="l">E0</td><td>54.53</td><td>6.82</td><td>6.82</td><td>0.432</td></tr>
+<tr><td class="l">E1 逐字段（组内统一深度）</td><td class="warn">51.38 (1.06x)</td><td>4.98 (1.37x)</td><td class="warn">6.68 (1.02x)</td><td class="warn">0.42 (1.02x)</td></tr>
+<tr><td class="l">E1 逐字段（精确深度下界）⚠️ 不可实现</td><td>28.91 (1.89x)</td><td>2.82 (2.42x)</td><td>3.88 (1.76x)</td><td>0.19 (2.20x)</td></tr>
+<tr><td class="l">E2-M1（显式 mask）</td><td>46.14 (1.18x)</td><td>4.33 (1.58x)</td><td>6.09 (1.12x)</td><td>0.264 (1.63x)</td></tr>
+<tr><td class="l"><b>E2-M4（推导 mask）</b></td><td class="good">40.89 (1.33x)</td><td class="good">3.67 (1.86x)</td><td class="good">5.44 (1.25x)</td><td class="good">0.224 (1.93x)</td></tr>
+</table>
+<ul>
+<li>逻辑口径 E1 精确深度 = E2-M4（都是 Σ有效位 + 48b/拍），但需 128 个不同深度 bank，物理不可实现。</li>
+<li>可实现 E1（组内统一深度 = 最热字段）被字段偏斜惩罚：如 bomhof op 组最热字段 39326 → pad 65536，而 E2 均值 31299 → 32768。</li>
+<li>对照基线（E1 族块丢弃 BLK / LANE4，非条带化主线）：严格 2 幂次 1.02–1.83x，全面低于 E2-M4。</li>
+</ul>
+
+<h2>5. E2-M4 池组织与端到端解码验证</h2>
+<p><b>机制</b>（与仓库 <code>encode_e2_5</code>/<code>decode_e2_5</code> 一致）：每拍该池有效字段按序号以字段粒度写入
+lane (phase+rank) mod N，命中 lane 各自追加、读指针前进；phase = (phase + k) mod N。<b>无填充</b>，深度恰好 = ⌈总有效数/N⌉（逐 lane 模拟确认）。</p>
+<p><b>等宽 4 lane 形态（推荐物理形态）</b>：每 slot 4 条等宽 lane；约束只有 N × lane宽 = 槽宽（每拍最大并发 = 字段总数，池每拍至少要能吐出一整槽），
+容量与 N 无关（N 是物理宽高比参数）。全机共 <b>16 个 payload bank + 2 个流 bank</b>。</p>
+<table>
+<tr><th class="l">池</th><th class="l">组织（4 条等宽 lane）</th><th>bomhof 深度</th><th>rajat 深度</th><th>add20 深度</th><th>oscil 深度</th><th class="l">存什么</th></tr>
+<tr><td class="l">op</td><td class="l">4 × 20b</td><td>31,299</td><td>2,898</td><td>4,271</td><td>203</td><td class="l">活跃 PE 的 5b 操作码</td></tr>
+<tr><td class="l">sel1</td><td class="l">4 × 60b</td><td>28,400</td><td>2,569</td><td>3,868</td><td>207</td><td class="l">有效操作数的 5b bank 选择号</td></tr>
+<tr><td class="l">sel2</td><td class="l">4 × 32b</td><td>14,211</td><td>1,292</td><td>2,011</td><td>98</td><td class="l">被写 bank 的 4b 写回源 PE 号</td></tr>
+<tr><td class="l">addr</td><td class="l">4 × 88b</td><td>35,589</td><td>3,270</td><td>4,815</td><td>232</td><td class="l">被读 bank 的 11b 读地址</td></tr>
+<tr><td class="l">op mask 流</td><td class="l">16b</td><td>46,557</td><td>5,516</td><td>6,113</td><td>471</td><td class="l">16 个 PE 活跃位</td></tr>
+<tr><td class="l">wea 流</td><td class="l">32b</td><td>46,557</td><td>5,516</td><td>6,113</td><td>471</td><td class="l">32 个 bank 写使能（兼 sel2 mask）</td></tr>
+</table>
+<p><b>解码（每拍，II=1 零停顿）</b>：① 读 op mask + wea → ② 按 popcount 从 op 池弹出 op 值 → ③ 模式表推 sel1 mask → sel1 池弹出
+→ ④ sel1 值并集推 addr mask → addr 池弹出 → ⑤ wea 直接驱动 sel2 池 → ⑥ 字段放回 832b 固定位置，无效字段填硬连线默认值
+（op=0、sel1=idx%32、sel2=b/2、addr=2047）。</p>
+<div class="box">
+<b>端到端硬件忠实验证（事实）</b>：软件模型严格按硬件约束（每 lane 2 字 skid 缓冲、每拍每 lane ≤1 字读、M4 推导链逐级产生、
+相位滚动 round-robin 提取）对 4 个矩阵做 编码→解码→与原文件逐 bit 比对：<b>全部逐 bit 一致、0 缓冲下溢</b>
+（<code>experiments/lu_e2_m4_4lane_roundtrip_check_2026_09_18.py</code>）。
+单 lane 单拍最多承担 ⌈k/4⌉ 个字段 ≤ 一个 lane 字宽（op 20b / sel1 60b / sel2 16b≤32b / addr 88b），故"每 lane 每拍 1 字"永远够用。
+</div>
+<div class="box neg">
+<b>硬件前提</b>：推导链串了 3 级 SRAM 读（op 池 → sel1 池 → addr 池），单拍组合逻辑不现实——取指/解码流水线需比执行消费<b>提前若干拍</b>运行
+（mask 流提前读、推导提前做、pool 提前读，结果进指令寄存器）。调度完全静态、无数据相关停顿，前瞻确定可行；代价是固定几拍解码延迟，不影响 II=1。
+</div>
+
+<h2>6. 统一程序池（4 矩阵共用一套 SRAM，严格 2 幂次）</h2>
+<table>
+<tr><th class="l">部署语义</th><th>E0</th><th>E1 逐字段（组内统一）</th><th>E2-M1</th><th>E2-M4</th></tr>
+<tr><td class="l">分时驻留（深度取 max）</td><td>54.53M</td><td>51.38M (1.06x)</td><td>46.14M (1.18x)</td><td class="good">40.89M (1.33x)</td></tr>
+<tr><td class="l">同时驻留（深度取 sum）</td><td>54.53M</td><td>51.38M (1.06x)</td><td class="bad">58.72M (0.93x)</td><td>53.48M (1.02x)</td></tr>
+</table>
+<p>分时驻留（任意时刻驻留一个矩阵程序、可覆盖替换）下池级结果由最大需求矩阵 bomhof_1 主导——小矩阵的好比率被稀释。
+同时驻留时各池深度求和后越过 32768 → 65536，收益基本消失。<b>池级结论：E2-M4 分时驻留 1.33x。</b></p>
+
+<h2>7. 超出 mask 类的方向（值域）</h2>
+<p>addr 每拍 distinct 值 7.3–17.2 个 vs 有效 15.7–25.2 个（约 30–50% 冗余，连续 bank 常共享同一地址）；op 分布高度集中（op4 占 53%）。
+mask 类方案的天花板由 addr payload 决定（addr 占有效 payload 一半以上），值域去重/广播是突破 2x 的候选方向。</p>
+
+<h2>8. 编码例子（op 池，N=4 条 lane，连续 4 拍有效数 k = 2,3,1,2）</h2>
+<pre>
+拍0: k=2, phase=0 → a→lane0, b→lane1         ; phase←2
+拍1: k=3, phase=2 → c→lane2, d→lane3, e→lane0 ; phase←1
+拍2: k=1, phase=1 → f→lane1                   ; phase←2
+拍3: k=2, phase=2 → g→lane2, h→lane3          ; phase←0
+
+lane0: a e      lane1: b f      lane2: c g      lane3: d h
+（8 个有效 op 装进 4 lane × 2 深；E0 需 4 拍 × 16 字段 = 64 个位置）
+</pre>
+
+<h2>9. 方法与验证记录</h2>
+<table>
+<tr><th class="l">项目</th><th class="l">结果</th></tr>
+<tr><td class="l">有效性规则来源</td><td class="l"><code>version10/mymethod.cpp</code> 的 <code>writeInst</code>；op→(rd,rt,rs) 模式为纯函数（5 条自洽重跑 trace、299 万字段 0 失配）；缺失 op 2/3/23 由默认填充值 + 读 bank 约束唯一推断</td></tr>
+<tr><td class="l">原始 trace 校验</td><td class="l">推导的 sel1 有效字段值并集与 addr.txt 逐拍 0 失配（4 矩阵）；同拍规则重建文件与原文件逐字节一致（<code>lu/rebuilt_vliw/</code>）</td></tr>
+<tr><td class="l">E2 机制核对</td><td class="l">与仓库 <code>encode_e2_5</code>/<code>decode_e2_5</code> 一致：逐 lane 独立流 + 相位滚动，无填充</td></tr>
+<tr><td class="l">宽 lane 解码端到端验证</td><td class="l">硬件忠实模型往返重建：4 矩阵全部逐 bit 一致、0 缓冲下溢（见 §5）</td></tr>
+<tr><td class="l">平台差异说明</td><td class="l">指令文件由 Linux x86-64 版 v10 生成；Mac 重编译因 std::sort 不稳定排序 tie-breaking 差异（libstdc++ vs libc++）周期差 0.2–5%；本分析基于现有原始文件，结论不受影响</td></tr>
+<tr><td class="l">既有 bug 提示</td><td class="l"><code>writeInst</code> 的 wea 循环 <code>for(j=NPE; j&gt;=0; j--)</code> 越界读 <code>inst[i][16]</code>（建议改 <code>j=NPE-1</code>）；本批 4 份文件中未产生实际幽灵位（已验证）</td></tr>
+</table>
+
+<h2>10. 文件与复现入口</h2>
+<ul>
+<li>分析脚本（<code>experiments/</code>）：<code>lu_e2_striping_study_2026_09_18.py</code>（有效性/方案对比主分析）、
+<code>lu_e2_exact_lane_study_2026_09_18.py</code>（E2 逐 lane 精确模拟 + 统一池）、
+<code>lu_e1_perfield_study_2026_09_18.py</code>（正确版 E1 逐字段）、
+<code>lu_e2_n_lane_per_slot_2026_09_18.py</code>（E2-4/8lane 等宽变体）、
+<code>lu_vliw_rebuild_samecycle_2026_09_18.py</code>（同拍规则重建 + 校验）、
+<code>lu_e2_m4_4lane_roundtrip_check_2026_09_18.py</code>（硬件忠实端到端解码验证）</li>
+<li>数据：<code>lu/e2_mask_run/*.json</code>；重建指令文件：<code>lu/rebuilt_vliw/&lt;matrix&gt;/</code>（与原文件逐字节一致）</li>
+<li>可视化画布：<code>lu-vliw-e2-striping-analysis.canvas.tsx</code></li>
+</ul>
+
+</body>
+</html>

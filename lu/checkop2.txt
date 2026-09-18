@@ -1,0 +1,70 @@
+Error at position (48, 51):
+A_final(48, 51) = -0.0000000000587433
+AA(48, 51) = -0.0000000054424500
+Absolute Error: 0.00000001, Relative Error: 9164.79414313%
+
+Error at position (80, 103):
+A_final(80, 103) = -0.0000000000661405
+AA(80, 103) = -0.0000000000399960
+Absolute Error: 0.00000000, Relative Error: 39.52874851%
+
+Error at position (194, 197):
+A_final(194, 197) = -0.0000000000587526
+AA(194, 197) = -0.0000000016250000
+Absolute Error: 0.00000000, Relative Error: 2665.83520591%
+
+Error at position (226, 249):
+A_final(226, 249) = -0.0000000000661969
+AA(226, 249) = 0.0000000006609910
+Absolute Error: 0.00000000, Relative Error: 1098.52287137%
+
+Error at position (388, 390):
+A_final(388, 390) = -0.0000000000013848
+AA(388, 390) = -0.0000000007861080
+Absolute Error: 0.00000000, Relative Error: 56665.51105051%
+
+Error at position (486, 489):
+A_final(486, 489) = -0.0000000000587428
+AA(486, 489) = 0.0000000045575500
+Absolute Error: 0.00000000, Relative Error: 7858.48045553%
+
+Error at position (518, 541):
+A_final(518, 541) = -0.0000000000661390
+AA(518, 541) = -0.0000000000121040
+Absolute Error: 0.00000000, Relative Error: 81.69916192%
+
+Error at position (632, 635):
+A_final(632, 635) = -0.0000000000587559
+AA(632, 635) = -0.0000000016250000
+Absolute Error: 0.00000000, Relative Error: 2665.68047442%
+
+Error at position (664, 687):
+A_final(664, 687) = -0.0000000000662006
+AA(664, 687) = 0.0000000006331000
+Absolute Error: 0.00000000, Relative Error: 1056.33574563%
+
+Error at position (778, 781):
+A_final(778, 781) = -0.0000000000587565
+AA(778, 781) = -0.0000000016250000
+Absolute Error: 0.00000000, Relative Error: 2665.65353785%
+
+Error at position (810, 833):
+A_final(810, 833) = -0.0000000000662007
+AA(810, 833) = 0.0000000006331000
+Absolute Error: 0.00000000, Relative Error: 1056.33367575%
+
+Error at position (993, 1004):
+A_final(993, 1004) = -0.0000000000587788
+AA(993, 1004) = -0.0000000035924100
+Absolute Error: 0.00000000, Relative Error: 6011.74248425%
+
+Error at position (1021, 1044):
+A_final(1021, 1044) = -0.0000000000662263
+AA(1021, 1044) = -0.0000000005063550
+Absolute Error: 0.00000000, Relative Error: 664.58326277%
+
+Error at position (1140, 1142):
+A_final(1140, 1142) = -0.0000000000013872
+AA(1140, 1142) = 0.0000000001088680
+Absolute Error: 0.00000000, Relative Error: 7948.22888334%
+

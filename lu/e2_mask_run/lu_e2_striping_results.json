@@ -1,0 +1,774 @@
+[
+ {
+  "matrix": "2624bomhof_1",
+  "cycles": 46557,
+  "addr_validation_mismatch_cycles": 0,
+  "groups": {
+   "op": {
+    "total": 500774,
+    "max_conc": 16,
+    "mean_conc": 10.756148377257984,
+    "field_max": 39326,
+    "field_min": 6715,
+    "imbalance": 1.256486958188724
+   },
+   "sel1": {
+    "total": 1363188,
+    "max_conc": 48,
+    "mean_conc": 29.2799793801147,
+    "field_max": 37089,
+    "field_min": 2625,
+    "imbalance": 1.3059622003714821
+   },
+   "sel2": {
+    "total": 454721,
+    "max_conc": 16,
+    "mean_conc": 9.766973817041476,
+    "field_max": 15043,
+    "field_min": 13543,
+    "imbalance": 1.0586183615887543
+   },
+   "addr": {
+    "total": 1138829,
+    "max_conc": 32,
+    "mean_conc": 24.460961831733144,
+    "field_max": 36183,
+    "field_min": 34928,
+    "imbalance": 1.0167075127170102
+   }
+  },
+  "fully_idle_cycles": 98,
+  "E0": 38735424,
+  "E1c": {
+   "total": 37742673,
+   "payload": 37509888,
+   "mask": 232785,
+   "depths": {
+    "op": 46459,
+    "sel1": 46459,
+    "sel2": 39309,
+    "wea": 39309,
+    "addr": 46459
+   }
+  },
+  "E1f": {
+   "total": 29625109,
+   "payload": 23665813,
+   "mask": 5959296
+  },
+  "E2g": {
+   "total": 34655776,
+   "payload": 28696480,
+   "mask": 5959296,
+   "pools": {
+    "op": {
+     "N": 16,
+     "rows": 38934,
+     "width": 5,
+     "bits": 3114720,
+     "util": 0.8038828530333385
+    },
+    "sel1": {
+     "N": 48,
+     "rows": 38522,
+     "width": 5,
+     "bits": 9245280,
+     "util": 0.7372345672602668
+    },
+    "sel2": {
+     "N": 16,
+     "rows": 37991,
+     "width": 4,
+     "bits": 2431424,
+     "util": 0.7480735568950541
+    },
+    "addr": {
+     "N": 32,
+     "rows": 39503,
+     "width": 11,
+     "bits": 13905056,
+     "util": 0.9009038870465534
+    }
+   }
+  },
+  "E2g5": {
+   "total": 34671456,
+   "payload": 28712160,
+   "mask": 5959296,
+   "pools": {
+    "opsel1": {
+     "N": 64,
+     "rows": 38674,
+     "width": 5,
+     "bits": 12375680,
+     "util": 0.7530745785282101
+    },
+    "sel2": {
+     "N": 16,
+     "rows": 37991,
+     "width": 4,
+     "bits": 2431424,
+     "util": 0.7480735568950541
+    },
+    "addr": {
+     "N": 32,
+     "rows": 39503,
+     "width": 11,
+     "bits": 13905056,
+     "util": 0.9009038870465534
+    }
+   }
+  },
+  "E2p": {
+   "Lmax": 736,
+   "Lmean": 508.3191142040939,
+   "variants": {
+    "w16": {
+     "lanes": 46,
+     "row_bits": 736,
+     "rows": 39166,
+     "payload": 28826176,
+     "total": 34785472,
+     "util": 0.8209834353332194
+    },
+    "w32": {
+     "lanes": 23,
+     "row_bits": 736,
+     "rows": 39166,
+     "payload": 28826176,
+     "total": 34785472,
+     "util": 0.8209834353332194
+    },
+    "w64": {
+     "lanes": 12,
+     "row_bits": 768,
+     "rows": 39064,
+     "payload": 30001152,
+     "total": 35960448,
+     "util": 0.7888301422558707
+    }
+   },
+   "mask": 5959296
+  },
+  "E2g5_M2": {
+   "total": 36010528,
+   "payload": 29306320,
+   "mask": 6704208
+  },
+  "E2p_M2": {
+   "total": 36706656,
+   "payload": 30002448,
+   "mask": 6704208,
+   "lanes": 21,
+   "rows": 39104
+  },
+  "SLICE": {
+   "13x64": {
+    "droppable_per_cycle": 1.4171445754666323,
+    "frac": 0.10901112118974095,
+    "total": 35118073
+   },
+   "26x32": {
+    "droppable_per_cycle": 4.0629765663595165,
+    "frac": 0.156268329475366,
+    "total": 33892786
+   },
+   "52x16": {
+    "droppable_per_cycle": 11.160469961552506,
+    "frac": 0.2146244223375482,
+    "total": 32842820
+   }
+  },
+  "M4_bits_per_cycle": 48,
+  "E1f_M4": 25900549,
+  "E2g_nopad_M4": {
+   "total": 25900928,
+   "payload": 23666192,
+   "mask": 2234736
+  },
+  "E2g_M4": {
+   "total": 30931216,
+   "payload": 28696480,
+   "mask": 2234736
+  }
+ },
+ {
+  "matrix": "1041rajat04",
+  "cycles": 5516,
+  "addr_validation_mismatch_cycles": 0,
+  "groups": {
+   "op": {
+    "total": 46356,
+    "max_conc": 16,
+    "mean_conc": 8.40391588107324,
+    "field_max": 4428,
+    "field_min": 275,
+    "imbalance": 1.5283458451980325
+   },
+   "sel1": {
+    "total": 123294,
+    "max_conc": 48,
+    "mean_conc": 22.352066715010878,
+    "field_max": 4203,
+    "field_min": 168,
+    "imbalance": 1.6362840040877902
+   },
+   "sel2": {
+    "total": 41315,
+    "max_conc": 16,
+    "mean_conc": 7.490029006526468,
+    "field_max": 1550,
+    "field_min": 1056,
+    "imbalance": 1.2005324942514826
+   },
+   "addr": {
+    "total": 104629,
+    "max_conc": 32,
+    "mean_conc": 18.968274111675125,
+    "field_max": 3545,
+    "field_min": 2991,
+    "imbalance": 1.0842118341951084
+   }
+  },
+  "fully_idle_cycles": 410,
+  "E0": 4589312,
+  "E1c": {
+   "total": 4080732,
+   "payload": 4053152,
+   "mask": 27580,
+   "depths": {
+    "op": 5106,
+    "sel1": 5106,
+    "sel2": 3887,
+    "wea": 3887,
+    "addr": 5106
+   }
+  },
+  "E1f": {
+   "total": 2870477,
+   "payload": 2164429,
+   "mask": 706048
+  },
+  "E2g": {
+   "total": 3455600,
+   "payload": 2749552,
+   "mask": 706048,
+   "pools": {
+    "op": {
+     "N": 16,
+     "rows": 3726,
+     "width": 5,
+     "bits": 298080,
+     "util": 0.7775764895330113
+    },
+    "sel1": {
+     "N": 48,
+     "rows": 3607,
+     "width": 5,
+     "bits": 865680,
+     "util": 0.7121222622678126
+    },
+    "sel2": {
+     "N": 16,
+     "rows": 3515,
+     "width": 4,
+     "bits": 224960,
+     "util": 0.7346194879089616
+    },
+    "addr": {
+     "N": 32,
+     "rows": 3866,
+     "width": 11,
+     "bits": 1360832,
+     "util": 0.8457465726849457
+    }
+   }
+  },
+  "E2g5": {
+   "total": 3461760,
+   "payload": 2755712,
+   "mask": 706048,
+   "pools": {
+    "opsel1": {
+     "N": 64,
+     "rows": 3656,
+     "width": 5,
+     "bits": 1169920,
+     "util": 0.7250495760393874
+    },
+    "sel2": {
+     "N": 16,
+     "rows": 3515,
+     "width": 4,
+     "bits": 224960,
+     "util": 0.7346194879089616
+    },
+    "addr": {
+     "N": 32,
+     "rows": 3866,
+     "width": 11,
+     "bits": 1360832,
+     "util": 0.8457465726849457
+    }
+   }
+  },
+  "E2p": {
+   "Lmax": 717,
+   "Lmean": 392.39104423495286,
+   "variants": {
+    "w16": {
+     "lanes": 45,
+     "row_bits": 720,
+     "rows": 3787,
+     "payload": 2726640,
+     "total": 3432688,
+     "util": 0.7938081301528621
+    },
+    "w32": {
+     "lanes": 23,
+     "row_bits": 736,
+     "rows": 3767,
+     "payload": 2772512,
+     "total": 3478560,
+     "util": 0.7806743487494373
+    },
+    "w64": {
+     "lanes": 12,
+     "row_bits": 768,
+     "rows": 3728,
+     "payload": 2863104,
+     "total": 3569152,
+     "util": 0.7559728881661302
+    }
+   },
+   "mask": 706048
+  },
+  "E2g5_M2": {
+   "total": 3687056,
+   "payload": 2892752,
+   "mask": 794304
+  },
+  "E2p_M2": {
+   "total": 3657984,
+   "payload": 2863680,
+   "mask": 794304,
+   "lanes": 20,
+   "rows": 3785
+  },
+  "SLICE": {
+   "13x64": {
+    "droppable_per_cycle": 2.6963379260333573,
+    "frac": 0.20741060969487365,
+    "total": 3709148
+   },
+   "26x32": {
+    "droppable_per_cycle": 7.344089920232053,
+    "frac": 0.282464996932002,
+    "total": 3436408
+   },
+   "52x16": {
+    "droppable_per_cycle": 18.525743292240755,
+    "frac": 0.35626429408155297,
+    "total": 3241136
+   }
+  },
+  "M4_bits_per_cycle": 48,
+  "E1f_M4": 2429197,
+  "E2g_nopad_M4": {
+   "total": 2429520,
+   "payload": 2164752,
+   "mask": 264768
+  },
+  "E2g_M4": {
+   "total": 3014320,
+   "payload": 2749552,
+   "mask": 264768
+  }
+ },
+ {
+  "matrix": "2395add20",
+  "cycles": 6113,
+  "addr_validation_mismatch_cycles": 0,
+  "groups": {
+   "op": {
+    "total": 68335,
+    "max_conc": 16,
+    "mean_conc": 11.178635694421724,
+    "field_max": 6021,
+    "field_min": 734,
+    "imbalance": 1.4097607375429868
+   },
+   "sel1": {
+    "total": 185649,
+    "max_conc": 48,
+    "mean_conc": 30.369540323899887,
+    "field_max": 5702,
+    "field_min": 491,
+    "imbalance": 1.4742659534928817
+   },
+   "sel2": {
+    "total": 64331,
+    "max_conc": 16,
+    "mean_conc": 10.523638148208736,
+    "field_max": 2224,
+    "field_min": 1808,
+    "imbalance": 1.1062784660583544
+   },
+   "addr": {
+    "total": 154058,
+    "max_conc": 32,
+    "mean_conc": 25.201701292327826,
+    "field_max": 5010,
+    "field_min": 4546,
+    "imbalance": 1.0406470290410106
+   }
+  },
+  "fully_idle_cycles": 75,
+  "E0": 5086016,
+  "E1c": {
+   "total": 5051621,
+   "payload": 5021056,
+   "mask": 30565,
+   "depths": {
+    "op": 6038,
+    "sel1": 6038,
+    "sel2": 6022,
+    "wea": 6022,
+    "addr": 6038
+   }
+  },
+  "E1f": {
+   "total": 4004346,
+   "payload": 3221882,
+   "mask": 782464
+  },
+  "E2g": {
+   "total": 4952528,
+   "payload": 4170064,
+   "mask": 782464,
+   "pools": {
+    "op": {
+     "N": 16,
+     "rows": 5614,
+     "width": 5,
+     "bits": 449120,
+     "util": 0.760765496971856
+    },
+    "sel1": {
+     "N": 48,
+     "rows": 5537,
+     "width": 5,
+     "bits": 1328880,
+     "util": 0.6985167960989705
+    },
+    "sel2": {
+     "N": 16,
+     "rows": 5531,
+     "width": 4,
+     "bits": 353984,
+     "util": 0.7269368107033086
+    },
+    "addr": {
+     "N": 32,
+     "rows": 5790,
+     "width": 11,
+     "bits": 2038080,
+     "util": 0.8314874784110535
+    }
+   }
+  },
+  "E2g5": {
+   "total": 4956288,
+   "payload": 4173824,
+   "mask": 782464,
+   "pools": {
+    "opsel1": {
+     "N": 64,
+     "rows": 5568,
+     "width": 5,
+     "bits": 1781760,
+     "util": 0.7127334770114943
+    },
+    "sel2": {
+     "N": 16,
+     "rows": 5531,
+     "width": 4,
+     "bits": 353984,
+     "util": 0.7269368107033086
+    },
+    "addr": {
+     "N": 32,
+     "rows": 5790,
+     "width": 11,
+     "bits": 2038080,
+     "util": 0.8314874784110535
+    }
+   }
+  },
+  "E2p": {
+   "Lmax": 736,
+   "Lmean": 527.0541469000491,
+   "variants": {
+    "w16": {
+     "lanes": 46,
+     "row_bits": 736,
+     "rows": 5731,
+     "payload": 4218016,
+     "total": 5000480,
+     "util": 0.7638382595039943
+    },
+    "w32": {
+     "lanes": 23,
+     "row_bits": 736,
+     "rows": 5731,
+     "payload": 4218016,
+     "total": 5000480,
+     "util": 0.7638382595039943
+    },
+    "w64": {
+     "lanes": 12,
+     "row_bits": 768,
+     "rows": 5697,
+     "payload": 4375296,
+     "total": 5157760,
+     "util": 0.7363803500380317
+    }
+   },
+   "mask": 782464
+  },
+  "E2g5_M2": {
+   "total": 5090256,
+   "payload": 4209984,
+   "mask": 880272
+  },
+  "E2p_M2": {
+   "total": 5215168,
+   "payload": 4334896,
+   "mask": 880272,
+   "lanes": 21,
+   "rows": 5723
+  },
+  "SLICE": {
+   "13x64": {
+    "droppable_per_cycle": 0.5858007524946834,
+    "frac": 0.04506159634574488,
+    "total": 4936301
+   },
+   "26x32": {
+    "droppable_per_cycle": 2.5077703255357435,
+    "frac": 0.09645270482829783,
+    "total": 4754394
+   },
+   "52x16": {
+    "droppable_per_cycle": 8.393751022411255,
+    "frac": 0.16141828889252413,
+    "total": 4582916
+   }
+  },
+  "M4_bits_per_cycle": 48,
+  "E1f_M4": 3515306,
+  "E2g_nopad_M4": {
+   "total": 3515648,
+   "payload": 3222224,
+   "mask": 293424
+  },
+  "E2g_M4": {
+   "total": 4463488,
+   "payload": 4170064,
+   "mask": 293424
+  }
+ },
+ {
+  "matrix": "430oscil_dcop_11",
+  "cycles": 471,
+  "addr_validation_mismatch_cycles": 0,
+  "groups": {
+   "op": {
+    "total": 3233,
+    "max_conc": 16,
+    "mean_conc": 6.86411889596603,
+    "field_max": 389,
+    "field_min": 5,
+    "imbalance": 1.9251469223631301
+   },
+   "sel1": {
+    "total": 8449,
+    "max_conc": 41,
+    "mean_conc": 17.93842887473461,
+    "field_max": 373,
+    "field_min": 0,
+    "imbalance": 2.119067345247958
+   },
+   "sel2": {
+    "total": 3117,
+    "max_conc": 16,
+    "mean_conc": 6.617834394904459,
+    "field_max": 146,
+    "field_min": 79,
+    "imbalance": 1.4988771254411293
+   },
+   "addr": {
+    "total": 7406,
+    "max_conc": 32,
+    "mean_conc": 15.723991507430998,
+    "field_max": 268,
+    "field_min": 209,
+    "imbalance": 1.1579800162030787
+   }
+  },
+  "fully_idle_cycles": 71,
+  "E0": 391872,
+  "E1c": {
+   "total": 334515,
+   "payload": 332160,
+   "mask": 2355,
+   "depths": {
+    "op": 400,
+    "sel1": 400,
+    "sel2": 396,
+    "wea": 396,
+    "addr": 400
+   }
+  },
+  "E1f": {
+   "total": 212632,
+   "payload": 152344,
+   "mask": 60288
+  },
+  "E2g": {
+   "total": 262080,
+   "payload": 201792,
+   "mask": 60288,
+   "pools": {
+    "op": {
+     "N": 16,
+     "rows": 280,
+     "width": 5,
+     "bits": 22400,
+     "util": 0.7216517857142857
+    },
+    "sel1": {
+     "N": 41,
+     "rows": 288,
+     "width": 5,
+     "bits": 59040,
+     "util": 0.7155318428184282
+    },
+    "sel2": {
+     "N": 16,
+     "rows": 269,
+     "width": 4,
+     "bits": 17216,
+     "util": 0.7242100371747212
+    },
+    "addr": {
+     "N": 32,
+     "rows": 293,
+     "width": 11,
+     "bits": 103136,
+     "util": 0.7898890784982935
+    }
+   }
+  },
+  "E2g5": {
+   "total": 260720,
+   "payload": 200432,
+   "mask": 60288,
+   "pools": {
+    "opsel1": {
+     "N": 56,
+     "rows": 286,
+     "width": 5,
+     "bits": 80080,
+     "util": 0.7293956043956044
+    },
+    "sel2": {
+     "N": 16,
+     "rows": 269,
+     "width": 4,
+     "bits": 17216,
+     "util": 0.7242100371747212
+    },
+    "addr": {
+     "N": 32,
+     "rows": 293,
+     "width": 11,
+     "bits": 103136,
+     "util": 0.7898890784982935
+    }
+   }
+  },
+  "E2p": {
+   "Lmax": 667,
+   "Lmean": 323.447983014862,
+   "variants": {
+    "w16": {
+     "lanes": 42,
+     "row_bits": 672,
+     "rows": 294,
+     "payload": 197568,
+     "total": 257856,
+     "util": 0.7710965338516359
+    },
+    "w32": {
+     "lanes": 21,
+     "row_bits": 672,
+     "rows": 294,
+     "payload": 197568,
+     "total": 257856,
+     "util": 0.7710965338516359
+    },
+    "w64": {
+     "lanes": 11,
+     "row_bits": 704,
+     "rows": 291,
+     "payload": 204864,
+     "total": 265152,
+     "util": 0.7436348016244924
+    }
+   },
+   "mask": 60288
+  },
+  "E2g5_M2": {
+   "total": 284896,
+   "payload": 217072,
+   "mask": 67824
+  },
+  "E2p_M2": {
+   "total": 283648,
+   "payload": 215824,
+   "mask": 67824,
+   "lanes": 19,
+   "rows": 293
+  },
+  "SLICE": {
+   "13x64": {
+    "droppable_per_cycle": 3.5265392781316347,
+    "frac": 0.2712722521639719,
+    "total": 291691
+   },
+   "26x32": {
+    "droppable_per_cycle": 9.318471337579618,
+    "frac": 0.35840274375306225,
+    "total": 263670
+   },
+   "52x16": {
+    "droppable_per_cycle": 22.639065817409765,
+    "frac": 0.4353666503348032,
+    "total": 245756
+   }
+  },
+  "M4_bits_per_cycle": 48,
+  "E1f_M4": 174952,
+  "E2g_nopad_M4": {
+   "total": 175427,
+   "payload": 152819,
+   "mask": 22608
+  },
+  "E2g_M4": {
+   "total": 224400,
+   "payload": 201792,
+   "mask": 22608
+  }
+ }
+]
